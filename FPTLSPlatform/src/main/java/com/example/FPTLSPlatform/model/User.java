@@ -47,12 +47,12 @@ public class User {
     @ManyToMany(mappedBy = "users")
     private Set<Class> classes;
 
-    @OneToOne(mappedBy = "user")
+    @OneToOne(mappedBy = "users")
     private Teacher teacher;
 
     @ManyToMany(mappedBy = "users")
     private List<Rating> ratings;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Wallet wallet;
+    @OneToOne(mappedBy = "users", cascade = CascadeType.ALL, orphanRemoval = true)
+        private Wallet wallet;
 }

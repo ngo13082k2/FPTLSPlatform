@@ -23,7 +23,7 @@ public class Wallet {
 
     @OneToOne
     @JoinColumn(name = "user_id", referencedColumnName = "user_id", nullable = false)
-    private User user;
+    private User users;
 
     @OneToMany(mappedBy = "wallet")
     private Set<Transaction> transactions;
