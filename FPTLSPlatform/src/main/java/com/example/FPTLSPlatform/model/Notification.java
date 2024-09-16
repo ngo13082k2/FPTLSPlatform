@@ -1,4 +1,4 @@
-package model;
+package com.example.FPTLSPlatform.model;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -6,25 +6,21 @@ import lombok.*;
 @Getter
 @Setter
 @Entity
-@Table(name = "application")
+@Table(name = "notification")
 @NoArgsConstructor
 @AllArgsConstructor
-public class Application {
+public class Notification {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "application_id")
-    private Long applicationId;
+    @Column(name = "notification_id")
+    private Long notificationId;
 
     @Column(nullable = false)
-    private String status;
+    private String name;
 
     @Column(nullable = false)
     private String title;
 
     private String description;
-
-    @OneToOne
-    @JoinColumn(name = "teacher_id", referencedColumnName = "teacherId")
-    private Teacher teacher;
 }

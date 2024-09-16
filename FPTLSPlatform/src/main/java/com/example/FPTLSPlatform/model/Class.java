@@ -1,10 +1,11 @@
-package model;
+package com.example.FPTLSPlatform.model;
 
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
 import java.util.Set;
+
 @Builder
 @Getter
 @Setter
@@ -59,4 +60,8 @@ public class Class {
             inverseJoinColumns = @JoinColumn(name = "transaction_id")
     )
     private Set<Transaction> transactions;
+
+    @ManyToOne
+    @JoinColumn(name = "category_id")
+    private Category category;
 }

@@ -1,4 +1,4 @@
-package model;
+package com.example.FPTLSPlatform.model;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -19,7 +19,7 @@ public class Teacher {
     private Long teacherId;
 
     @OneToOne
-    @JoinColumn(name = "user_id", referencedColumnName = "userId", nullable = false)
+    @JoinColumn(name = "user_id", referencedColumnName = "user_id", nullable = false)
     private User user;
 
     @OneToMany(mappedBy = "teacher", cascade = CascadeType.ALL, orphanRemoval = true)
