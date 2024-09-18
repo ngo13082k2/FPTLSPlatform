@@ -1,15 +1,15 @@
-
 spring:
   datasource:
-    url: jdbc:sqlserver://localhost:1433;databaseName=fptlsplatform;encrypt=true;trustServerCertificate=true
-    username: sa
+    url: jdbc:mysql://localhost:3306/fptlsplatform
+    username: root
     password: 12345
-    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
     properties:
       hibernate:
-        format_sql: false
-        dialect: org.hibernate.dialect.SQLServerDialect
+        format_sql: true
+        database: mysql
+        database-platform: org.hibernate.dialect.MySQL8Dialect

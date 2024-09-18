@@ -1,5 +1,6 @@
 package com.example.FPTLSPlatform.model;
 
+import com.example.FPTLSPlatform.model.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -55,4 +56,9 @@ public class User {
 
     @OneToOne(mappedBy = "users", cascade = CascadeType.ALL, orphanRemoval = true)
         private Wallet wallet;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role")
+    private Role role;
+
 }
