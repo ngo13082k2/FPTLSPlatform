@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.List;
+
 @Builder
 @Getter
 @Setter
@@ -23,6 +24,7 @@ public class Category {
 
     private String description;
 
+
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Class> classes;
+    private List<Course> courses;
 }

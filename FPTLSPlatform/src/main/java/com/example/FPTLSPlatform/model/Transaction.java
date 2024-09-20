@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
-import java.util.Set;
+
 @Builder
 @Getter
 @Setter
@@ -23,13 +23,10 @@ public class Transaction {
     @JoinColumn(name = "wallet_id", nullable = false)
     private Wallet wallet;
 
-    @ManyToMany
-    @JoinTable(
-            name = "transaction_class",
-            joinColumns = @JoinColumn(name = "transaction_id"),
-            inverseJoinColumns = @JoinColumn(name = "class_id")
-    )
-    private Set<Class> classes;
+
+    @OneToOne
+    @JoinColumn(name = "order_id", nullable = false)
+    private Order order;
 
     @Column(name = "amount", nullable = false)
     private Double amount;

@@ -49,19 +49,15 @@ public class Class {
     )
     private Set<User> users;
 
+    @ManyToMany
+    @JoinTable(
+            name = "order_class",
+            joinColumns = @JoinColumn(name = "class_id"),
+            inverseJoinColumns = @JoinColumn(name = "order_id")
+    )
+    private Set<Order> orders;
+
     @ManyToOne
     @JoinColumn(name = "course_id", nullable = false)
     private Course course;
-
-    @ManyToMany
-    @JoinTable(
-            name = "transaction_class",
-            joinColumns = @JoinColumn(name = "class_id"),
-            inverseJoinColumns = @JoinColumn(name = "transaction_id")
-    )
-    private Set<Transaction> transactions;
-
-    @ManyToOne
-    @JoinColumn(name = "category_id")
-    private Category category;
 }
