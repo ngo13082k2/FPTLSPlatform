@@ -3,6 +3,8 @@ package com.example.FPTLSPlatform.response;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 public class UserResponse {
@@ -10,8 +12,10 @@ public class UserResponse {
     private String email;
     private String fullname;
     private String status;
-    private String token; // Optional, only for login
-
+    private String token;
+    private String address;
+    private LocalDateTime createdDate;
+    private LocalDateTime modifiedDate;
     public UserResponse(String username, String email, String fullname, String status) {
         this.username = username;
         this.email = email;
@@ -19,9 +23,15 @@ public class UserResponse {
         this.status = status;
     }
 
-    public UserResponse(String username, String email, String fullname, String status, String token) {
-        this(username, email, fullname, status);
-        this.token = token;
+    public UserResponse(String username, String email, String fullname, String status, String address, LocalDateTime createdDate, LocalDateTime modifiedDate) {
+        this.username = username;
+        this.email = email;
+        this.fullname = fullname;
+        this.status = status;
+        this.address = address;
+        this.createdDate = createdDate;
+        this.modifiedDate = modifiedDate;
+
     }
 
 

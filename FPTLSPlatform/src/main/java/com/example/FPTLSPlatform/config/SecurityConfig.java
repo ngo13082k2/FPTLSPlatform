@@ -31,13 +31,13 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable) // Disable CSRF
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/login", "/auth/register").permitAll() // Publicly accessible endpoints
-                        .requestMatchers("/staff/**").hasRole("STAFF") // Staff role-based access
-                        .requestMatchers("/teacher/**").hasRole("TEACHER") // Teacher role-based access
-                        .requestMatchers("/student/**").hasRole("STUDENT") // Student role-based access
-                        .anyRequest().authenticated() // Any other request must be authenticated
+                        .requestMatchers("/staff/**").hasRole("STAFF")
+                        .requestMatchers("/teacher/**").hasRole("TEACHER")
+                        .requestMatchers("/student/**").hasRole("STUDENT")
+                        .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // No session creation
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 );
 
         http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);

@@ -1,8 +1,6 @@
 package com.example.FPTLSPlatform.service.impl;
 
 
-
-import com.example.FPTLSPlatform.util.JwtUtil;
 import com.example.FPTLSPlatform.model.User;
 import com.example.FPTLSPlatform.model.enums.Role;
 import com.example.FPTLSPlatform.repository.UserRepository;
@@ -10,6 +8,7 @@ import com.example.FPTLSPlatform.request.AuthenticationRequest;
 import com.example.FPTLSPlatform.request.RegisterRequest;
 import com.example.FPTLSPlatform.response.AuthenticationResponse;
 import com.example.FPTLSPlatform.response.UserResponse;
+import com.example.FPTLSPlatform.util.JwtUtil;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -17,6 +16,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -42,7 +42,6 @@ public class AuthService {
         this.userDetailsService = userDetailsService;
     }
 
-    // Register user
     public UserResponse register(RegisterRequest request) {
         User user = new User();
         user.setUsername(request.getUsername());
@@ -75,6 +74,63 @@ public class AuthService {
                 jwt
         );
     }
+    public UserResponse viewCurrentUser(String token) {
+        String username = jwtUtil.extractUsername(token.substring(7));
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return new UserResponse(
+                user.getUsername(),
+                user.getEmail(),
+                user.getFullname(),
+                user.getStatus(),
+                user.getAddress(),
+                user.getCreatedDate(),
+                user.getModifiedDate()
+
+        );
+    }
+    public UserResponse updateCurrentUser(String token, AuthenticationRequest request) {
+        String username = jwtUtil.extractUsername(token.substring(7));
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setFullname(request.getFullname());
+        user.setAddress(request.getAddress());
+        user.setModifiedDate(LocalDateTime.now());
+
+        if (request.getPassword() != null && !request.getPassword().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
+
+        userRepository.save(user);
+
+        return new UserResponse(
+                user.getUsername(),
+                user.getEmail(),
+                user.getFullname(),
+                user.getStatus(),
+                user.getAddress(),
+                user.getCreatedDate(),
+                user.getModifiedDate()
+
+        );
+    }
+    public UserResponse getUserById(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+
+        return new UserResponse(
+                user.getUsername(),
+                user.getEmail(),
+                user.getFullname(),
+                user.getStatus(),
+                user.getAddress(),
+                user.getCreatedDate(),
+                user.getModifiedDate()
+     );
+    }
+
 
     private Set<Role> extractRoles(UserDetails userDetails) {
         return Arrays.stream(userDetails.getAuthorities().toArray())
