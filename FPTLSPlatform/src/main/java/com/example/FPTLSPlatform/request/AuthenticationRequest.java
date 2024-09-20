@@ -1,6 +1,7 @@
 package com.example.FPTLSPlatform.request;
 
 
+import com.example.FPTLSPlatform.model.enums.Role;
 import lombok.*;
 
 @Getter
@@ -13,4 +14,5 @@ public class AuthenticationRequest {
     private String password;
     private String address;
     private String fullname;
+
 }

@@ -1,10 +1,12 @@
 package com.example.FPTLSPlatform.Controller;
 
+import com.example.FPTLSPlatform.model.enums.Role;
 import com.example.FPTLSPlatform.request.AuthenticationRequest;
 import com.example.FPTLSPlatform.request.RegisterRequest;
 import com.example.FPTLSPlatform.response.AuthenticationResponse;
 import com.example.FPTLSPlatform.response.UserResponse;
 import com.example.FPTLSPlatform.service.impl.AuthService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,17 +20,27 @@ public class AuthController {
         this.authService = authService;
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody RegisterRequest request) {
-        authService.register(request);
-        return ResponseEntity.ok("User registered successfully");
+    @PostMapping("/register-student")
+    public ResponseEntity<String> registerStudent(@RequestBody RegisterRequest request) {
+        authService.register(request, Role.STUDENT);
+        return ResponseEntity.ok("Student registered successfully");
+    }
+    @PostMapping("/register-teacher")
+    public ResponseEntity<String> registerTeacher(@RequestBody RegisterRequest request) {
+        authService.register(request, Role.TEACHER);
+        return ResponseEntity.ok("Teacher registered successfully. Status: Pending");
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthenticationResponse> login(@RequestBody AuthenticationRequest request) {
-        AuthenticationResponse response = authService.login(request);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<?> login(@RequestBody AuthenticationRequest request) {
+        try {
+            AuthenticationResponse response = authService.login(request);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException ex) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
+        }
     }
+
     @GetMapping("/byToken")
     public ResponseEntity<UserResponse> viewCurrentUser(@RequestHeader("Authorization") String token) {
         UserResponse userResponse = authService.viewCurrentUser(token);
