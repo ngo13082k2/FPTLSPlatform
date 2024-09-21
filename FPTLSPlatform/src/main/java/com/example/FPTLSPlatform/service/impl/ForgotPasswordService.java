@@ -25,7 +25,6 @@ public class ForgotPasswordService implements IForgotPasswordService {
         User user = userRepository.findByPhonenumber(request.getPhonenumber())
                 .orElseThrow(() -> new RuntimeException("Phone number not found"));
 
-        // Tạo và gửi mã OTP tới số điện thoại của người dùng
         String otp = otpService.generateOtp(user.getPhonenumber());
         otpService.sendOtpToPhone(user.getPhonenumber(), otp);
     }
@@ -41,7 +40,6 @@ public class ForgotPasswordService implements IForgotPasswordService {
             throw new RuntimeException("Invalid OTP");
         }
 
-        // Nếu OTP hợp lệ, cập nhật mật khẩu mới
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
     }
