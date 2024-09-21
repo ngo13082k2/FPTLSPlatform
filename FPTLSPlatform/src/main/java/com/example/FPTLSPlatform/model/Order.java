@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Set;
 
 @Builder
@@ -20,24 +21,16 @@ public class Order {
     @Column(name = "order_id")
     private Long orderId;
 
-    @Column(name = "order_date")
-    private LocalDate orderDate;
+    @ManyToOne
+    @JoinColumn(name = "username", referencedColumnName = "user_name", nullable = false)
+    private User users;
 
-    @Column(nullable = false)
-    private Double amount;
+    @Column(name = "create_at", nullable = false)
+    private LocalDateTime createAt;
 
+    @Column(name = "total_price", nullable = false)
+    private Long totalPrice;
+
+    @Column(name = "status", nullable = false)
     private String status;
-
-    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
-    private Transaction transaction;
-
-    @ManyToMany
-    @JoinTable(
-            name = "order_class",
-            joinColumns = @JoinColumn(name = "order_id"),
-            inverseJoinColumns = @JoinColumn(name = "class_id")
-    )
-    private Set<Class> classes;
-    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
-    private Payment payment;
 }

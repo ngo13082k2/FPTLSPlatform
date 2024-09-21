@@ -3,22 +3,22 @@ package com.example.FPTLSPlatform.model;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.List;
-
 @Builder
 @Getter
 @Setter
 @Entity
-@Table(name = "category")
+@Table(name = "systems")
 @NoArgsConstructor
 @AllArgsConstructor
-public class Category {
-
+public class System {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "category_id")
-    private Long categoryId;
+    @Column(name = "id")
+    private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "name", nullable = false, unique = true)
     private String name;
+
+    @Column(name = "value")
+    private String value;
 }

@@ -9,33 +9,28 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
-@Table(name = "course")
+@Table(name = "courses")
 @NoArgsConstructor
 @AllArgsConstructor
 public class Course {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "course_id")
-    private Long courseId;
+    @Column(name = "course_code", nullable = false, unique = true)
+    private String courseCode;
 
-    @Column(nullable = false, unique = true)
-    private String code;
-
-    @Column(nullable = false)
+    @Column(name = "name", nullable = false)
     private String name;
 
+    @Column(name = "description")
     private String description;
 
-    @ManyToOne
-    @JoinColumn(name = "category_id", nullable = false)
-    private Category category;
-
+    @Column(name = "status")
     private String status;
 
+    @Column(name = "image")
     private String image;
 
-
-    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Class> classes;
+    @ManyToOne
+    @JoinColumn(name = "category_id", referencedColumnName = "category_id", nullable = false)
+    private Category categories;
 }

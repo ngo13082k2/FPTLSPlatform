@@ -44,11 +44,11 @@ public class AuthService {
 
     public UserResponse register(RegisterRequest request, Role role) {
         User user = new User();
-        user.setUsername(request.getUsername());
+        user.setUserName(request.getUsername());
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setFullname(request.getFullname());
-        user.setPhonenumber(request.getPhonenumber());
+        user.setFullName(request.getFullName());
+        user.setPhoneNumber(request.getPhoneNumber());
         if (role == Role.TEACHER) {
             user.setStatus("PENDING");
             user.setRole(Role.TEACHER);
@@ -57,7 +57,7 @@ public class AuthService {
             user.setRole(Role.STUDENT);
         }
         userRepository.save(user);
-        return new UserResponse(user.getUsername(), user.getEmail(), user.getFullname(), user.getStatus(), user.getPhonenumber());
+        return new UserResponse(user.getUserName(), user.getEmail(), user.getFullName(), user.getStatus(), user.getPhoneNumber());
 
     }
 
@@ -69,7 +69,7 @@ public class AuthService {
         );
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(request.getUsername());
-        User user = userRepository.findByUsername(request.getUsername())
+        User user = userRepository.findByUserName(request.getUsername())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         if (user.getRole() == Role.TEACHER && "PENDING".equals(user.getStatus())) {
@@ -79,9 +79,9 @@ public class AuthService {
         String jwt = jwtUtil.generateToken(userDetails.getUsername(), extractRoles(userDetails));
 
         return new AuthenticationResponse(
-                user.getUsername(),
+                user.getUserName(),
                 user.getEmail(),
-                user.getFullname(),
+                user.getFullName(),
                 user.getStatus(),
                 jwt
         );
@@ -89,27 +89,27 @@ public class AuthService {
 
     public UserResponse viewCurrentUser(String token) {
         String username = jwtUtil.extractUsername(token.substring(7));
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByUserName(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         return new UserResponse(
-                user.getUsername(),
+                user.getUserName(),
                 user.getEmail(),
-                user.getFullname(),
+                user.getFullName(),
                 user.getStatus(),
                 user.getAddress(),
                 user.getCreatedDate(),
                 user.getModifiedDate(),
-                user.getPhonenumber()
+                user.getPhoneNumber()
 
         );
     }
     public UserResponse updateCurrentUser(String token, AuthenticationRequest request) {
         String username = jwtUtil.extractUsername(token.substring(7));
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByUserName(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        user.setFullname(request.getFullname());
+        user.setFullName(request.getFullName());
         user.setAddress(request.getAddress());
         user.setModifiedDate(LocalDateTime.now());
 
@@ -120,14 +120,14 @@ public class AuthService {
         userRepository.save(user);
 
         return new UserResponse(
-                user.getUsername(),
+                user.getUserName(),
                 user.getEmail(),
-                user.getFullname(),
+                user.getFullName(),
                 user.getStatus(),
                 user.getAddress(),
                 user.getCreatedDate(),
                 user.getModifiedDate(),
-                user.getPhonenumber()
+                user.getPhoneNumber()
 
         );
     }
@@ -136,14 +136,14 @@ public class AuthService {
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
 
         return new UserResponse(
-                user.getUsername(),
+                user.getUserName(),
                 user.getEmail(),
-                user.getFullname(),
+                user.getFullName(),
                 user.getStatus(),
                 user.getAddress(),
                 user.getCreatedDate(),
                 user.getModifiedDate(),
-                user.getPhonenumber()
+                user.getPhoneNumber()
      );
     }
 

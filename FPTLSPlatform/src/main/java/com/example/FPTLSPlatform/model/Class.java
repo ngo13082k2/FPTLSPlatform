@@ -4,13 +4,14 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Set;
 
 @Builder
 @Getter
 @Setter
 @Entity
-@Table(name = "class")
+@Table(name = "classes")
 @NoArgsConstructor
 @AllArgsConstructor
 public class Class {
@@ -20,44 +21,37 @@ public class Class {
     @Column(name = "class_id")
     private Long classId;
 
-    @Column(nullable = false)
+    @Column(name = "name", nullable = false)
     private String name;
 
+    @Column(name = "code", nullable = false, unique = true)
     private String code;
+
+    @Column(name = "description")
     private String description;
 
+    @Column(name = "status")
     private String status;
+
+    @Column(name = "location")
     private String location;
 
     @Column(name = "max_students")
-    private int maxStudents;
+    private Integer maxStudents;
 
-    @Column(name = "enrolled_students")
-    private int enrolledStudents;
+    @Column(name = "price", nullable = false)
+    private Long price;
+
+    @Column(name = "teacher_name", nullable = false)
+    private String teacherName;
 
     @Column(name = "start_date")
-    private LocalDate startDate;
+    private LocalDateTime startDate;
 
     @Column(name = "end_date")
-    private LocalDate endDate;
-
-    @ManyToMany
-    @JoinTable(
-            name = "user_class",
-            joinColumns = @JoinColumn(name = "class_id"),
-            inverseJoinColumns = @JoinColumn(name = "user_id")
-    )
-    private Set<User> users;
-
-    @ManyToMany
-    @JoinTable(
-            name = "order_class",
-            joinColumns = @JoinColumn(name = "class_id"),
-            inverseJoinColumns = @JoinColumn(name = "order_id")
-    )
-    private Set<Order> orders;
+    private LocalDateTime endDate;
 
     @ManyToOne
-    @JoinColumn(name = "course_id", nullable = false)
-    private Course course;
+    @JoinColumn(name = "course_code", referencedColumnName = "course_code", nullable = false)
+    private Course courses;
 }

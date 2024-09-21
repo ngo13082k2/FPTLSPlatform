@@ -8,7 +8,7 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
-@Table(name = "rating")
+@Table(name = "ratings")
 @NoArgsConstructor
 @AllArgsConstructor
 public class Rating {
@@ -18,18 +18,13 @@ public class Rating {
     @Column(name = "rating_id")
     private Long ratingId;
 
-    @Column(nullable = false)
-    private int score;
-
     @ManyToOne
-    @JoinColumn(name = "teacher_id", nullable = false)
-    private Teacher teacher;
+    @JoinColumn(name = "order_id", referencedColumnName = "order_id", nullable = false)
+    private Order orders;
 
-    @ManyToMany
-    @JoinTable(
-            name = "user_rating",
-            joinColumns = @JoinColumn(name = "rating_id"),
-            inverseJoinColumns = @JoinColumn(name = "user_id")
-    )
-    private List<User> users;
+    @Column(name = "score", nullable = false)
+    private Integer score;
+
+    @Column(name = "description")
+    private String description;
 }

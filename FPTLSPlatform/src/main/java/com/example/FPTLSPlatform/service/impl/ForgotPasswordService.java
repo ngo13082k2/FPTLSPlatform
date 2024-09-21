@@ -24,13 +24,13 @@ public class ForgotPasswordService implements IForgotPasswordService {
 
     @Override
     public void forgotPassword(ForgotPasswordRequest request, HttpSession session) {
-        User user = userRepository.findByPhonenumber(request.getPhonenumber())
+        User user = userRepository.findByPhoneNumber(request.getPhoneNumber())
                 .orElseThrow(() -> new RuntimeException("Phone number not found"));
 
-        String otp = otpService.generateOtp(user.getPhonenumber());
-        otpService.sendOtpToPhone(user.getPhonenumber(), otp);
+        String otp = otpService.generateOtp(user.getPhoneNumber());
+        otpService.sendOtpToPhone(user.getPhoneNumber(), otp);
 
-        session.setAttribute("phoneNumber", user.getPhonenumber());
+        session.setAttribute("phoneNumber", user.getPhoneNumber());
     }
     @Override
     public void verifyOtp(VerifyOtpRequest request, HttpSession session) {
@@ -57,7 +57,7 @@ public class ForgotPasswordService implements IForgotPasswordService {
             throw new RuntimeException("Session expired or information missing");
         }
 
-        User user = userRepository.findByPhonenumber(phoneNumber)
+        User user = userRepository.findByPhoneNumber(phoneNumber)
                 .orElseThrow(() -> new RuntimeException("Phone number not found"));
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));

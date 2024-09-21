@@ -17,21 +17,17 @@ import java.util.Set;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id")
-    private Long userId;
+    @Column(name = "user_name", nullable = false, unique = true)
+    private String userName;
 
-    @Column(name = "username", nullable = false, unique = true)
-    private String username;
-
-    @Column(name = "phonenumber", nullable = false, unique = true)
-    private String phonenumber;
+    @Column(name = "phone_number", nullable = false, unique = true)
+    private String phoneNumber;
 
     @Column(name = "email", nullable = false, unique = true)
     private String email;
 
-    @Column(name = "fullname", nullable = false)
-    private String fullname;
+    @Column(name = "fullName", nullable = false)
+    private String fullName;
 
     @Column(name = "password", nullable = false)
     private String password;
@@ -48,17 +44,9 @@ public class User {
     @Column(name = "address")
     private String address;
 
-    @ManyToMany(mappedBy = "users")
-    private Set<Class> classes;
-
-    @OneToOne(mappedBy = "users")
-    private Teacher teacher;
-
-    @ManyToMany(mappedBy = "users")
-    private List<Rating> ratings;
-
-    @OneToOne(mappedBy = "users", cascade = CascadeType.ALL, orphanRemoval = true)
-        private Wallet wallet;
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "wallet_id", referencedColumnName = "wallet_id")
+    private Wallet wallet;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role")

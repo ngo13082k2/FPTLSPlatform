@@ -20,11 +20,4 @@ public class Wallet {
 
     @Column(name = "balance", nullable = false)
     private Double balance;
-
-    @OneToOne
-    @JoinColumn(name = "user_id", referencedColumnName = "user_id", nullable = false)
-    private User users;
-
-    @OneToMany(mappedBy = "wallet")
-    private Set<Transaction> transactions;
 }

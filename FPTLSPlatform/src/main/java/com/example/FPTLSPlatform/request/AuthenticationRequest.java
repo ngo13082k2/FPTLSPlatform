@@ -13,7 +13,7 @@ public class AuthenticationRequest {
     private String username;
     private String password;
     private String address;
-    private String fullname;
-    private String phonenumber;
+    private String fullName;
+    private String phoneNumber;
 
 }

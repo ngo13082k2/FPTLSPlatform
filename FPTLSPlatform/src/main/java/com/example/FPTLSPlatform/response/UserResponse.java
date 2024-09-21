@@ -10,30 +10,30 @@ import java.time.LocalDateTime;
 public class UserResponse {
     private String username;
     private String email;
-    private String fullname;
+    private String fullName;
     private String status;
     private String token;
     private String address;
     private LocalDateTime createdDate;
     private LocalDateTime modifiedDate;
-    private String phonenumber;
-    public UserResponse(String username, String email, String fullname, String status, String phonenumber) {
+    private String phoneNumber;
+    public UserResponse(String username, String email, String fullName, String status, String phoneNumber) {
         this.username = username;
         this.email = email;
-        this.fullname = fullname;
+        this.fullName = fullName;
         this.status = status;
-        this.phonenumber = phonenumber;
+        this.phoneNumber = phoneNumber;
     }
 
-    public UserResponse(String username, String email, String fullname, String status, String address, LocalDateTime createdDate, LocalDateTime modifiedDate, String phonenumber) {
+    public UserResponse(String username, String email, String fullName, String status, String address, LocalDateTime createdDate, LocalDateTime modifiedDate, String phoneNumber) {
         this.username = username;
         this.email = email;
-        this.fullname = fullname;
+        this.fullName = fullName;
         this.status = status;
         this.address = address;
         this.createdDate = createdDate;
         this.modifiedDate = modifiedDate;
-        this.phonenumber = phonenumber;
+        this.phoneNumber = phoneNumber;
 
     }
 

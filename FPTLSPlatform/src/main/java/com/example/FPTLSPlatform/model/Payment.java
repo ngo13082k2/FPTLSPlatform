@@ -3,13 +3,13 @@ package com.example.FPTLSPlatform.model;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Builder
 @Getter
 @Setter
 @Entity
-@Table(name = "payment")
+@Table(name = "payments")
 @NoArgsConstructor
 @AllArgsConstructor
 public class Payment {
@@ -19,21 +19,16 @@ public class Payment {
     @Column(name = "payment_id")
     private Long paymentId;
 
-
-    @OneToOne
-    @JoinColumn(name = "order_id", nullable = false, unique = true)
-    private Order order;
-
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "order_id", referencedColumnName = "order_id", nullable = false)
+    private Order orders;
 
-    @Column(name = "amount", nullable = false)
-    private Double amount;
+    @Column(name = "payment_type", nullable = false)
+    private String paymentType;
 
     @Column(name = "status", nullable = false)
     private String status;
 
     @Column(name = "payment_date", nullable = false)
-    private LocalDate paymentDate;
+    private LocalDateTime paymentDate;
 }

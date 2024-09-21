@@ -17,13 +17,13 @@
 
 spring:
   datasource:
-    url: jdbc:sqlserver://localhost:1433;databaseName=fptlsplatform;encrypt=true;trustServerCertificate=true
+    url: jdbc:sqlserver://localhost:1433;databaseName=FPTLS_Platform;encrypt=true;trustServerCertificate=true
     username: sa
     password: 12345
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
     show-sql: true
     properties:
       hibernate:

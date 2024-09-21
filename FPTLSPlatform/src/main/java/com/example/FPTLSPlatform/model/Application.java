@@ -7,7 +7,7 @@ import lombok.*;
 @Getter
 @Setter
 @Entity
-@Table(name = "application")
+@Table(name = "applications")
 @NoArgsConstructor
 @AllArgsConstructor
 public class Application {
@@ -17,15 +17,12 @@ public class Application {
     @Column(name = "application_id")
     private Long applicationId;
 
-    @Column(nullable = false)
+    @Column(name = "status", nullable = false)
     private String status;
 
-    @Column(nullable = false)
+    @Column(name = "title", nullable = false)
     private String title;
 
+    @Column(name = "description")
     private String description;
-
-    @OneToOne
-    @JoinColumn(name = "teacher_id", referencedColumnName = "teacher_id")
-    private Teacher teacher;
 }

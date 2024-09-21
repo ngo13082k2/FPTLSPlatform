@@ -33,7 +33,6 @@ public class CategoryService implements ICategoryService {
                 .orElseThrow(() -> new RuntimeException("Category not found with id: " + id));
 
         existingCategory.setName(categoryDTO.getName());
-        existingCategory.setDescription(categoryDTO.getDescription());
 
         Category updatedCategory = categoryRepository.save(existingCategory);
         return mapToDto(updatedCategory);
@@ -45,8 +44,7 @@ public class CategoryService implements ICategoryService {
     private CategoryDTO mapToDto(Category category) {
         return new CategoryDTO(
                 category.getCategoryId(),
-                category.getName(),
-                category.getDescription()
+                category.getName()
         );
     }
 
@@ -54,7 +52,6 @@ public class CategoryService implements ICategoryService {
         return Category.builder()
                 .categoryId(categoryDTO.getCategoryId())
                 .name(categoryDTO.getName())
-                .description(categoryDTO.getDescription())
                 .build();
     }
 }

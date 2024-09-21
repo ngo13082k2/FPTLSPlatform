@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Entity
-@Table(name = "feedback")
+@Table(name = "feedbacks")
 @NoArgsConstructor
 @AllArgsConstructor
 public class Feedback {
@@ -19,10 +19,14 @@ public class Feedback {
     @Column(name = "feedback_id")
     private Long feedbackId;
 
+    @ManyToOne
+    @JoinColumn(name = "order_id", referencedColumnName = "order_id", nullable = false)
+    private Order orders;
+
     @Column(name = "content_feedback", nullable = false)
     private String contentFeedback;
 
-    @Column(nullable = false)
+    @Column(name = "timestamp", nullable = false)
     private LocalDateTime timestamp;
 
 }

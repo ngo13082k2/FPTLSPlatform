@@ -6,7 +6,7 @@ import lombok.*;
 import java.util.List;
 @Builder
 @Entity
-@Table(name = "teacher")
+@Table(name = "teachers ")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -14,17 +14,29 @@ import java.util.List;
 public class Teacher {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "teacher_id")
-    private Long teacherId;
+    @Column(name = "teacher_name", nullable = false, unique = true)
+    private String teacherName;
 
-    @OneToOne
-    @JoinColumn(name = "user_id", referencedColumnName = "user_id", nullable = false)
-    private User users;
+    @Column(name = "password", nullable = false)
+    private String password;
 
-    @OneToMany(mappedBy = "teacher", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Rating> ratings;
+    @Column(name = "major")
+    private String major;
 
-    @OneToOne(mappedBy = "teacher")
+    @Column(name = "address")
+    private String address;
+
+    @Column(name = "fullname", nullable = false)
+    private String fullName;
+
+    @Column(name = "status")
+    private String status;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "wallet_id", referencedColumnName = "wallet_id")
+    private Wallet wallet;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "application_id", referencedColumnName = "application_id")
     private Application application;
 }

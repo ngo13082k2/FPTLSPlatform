@@ -10,5 +10,5 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ForgotPasswordRequest {
-    private String phonenumber;
+    private String phoneNumber;
 }
