@@ -1,50 +1,54 @@
-#spring:
-#  datasource:
-#    url: jdbc:mysql://localhost:3306/fptlsplatform
-#    username: root
-#    password: 12345
-#    driver-class-name: com.mysql.cj.jdbc.Driver
-#  jpa:
-#    hibernate:
-#      ddl-auto: update
-#    show-sql: true
-#    properties:
-#      hibernate:
-#        format_sql: true
-#        database: mysql
-#        database-platform: org.hibernate.dialect.MySQL8Dialect
-
-
 spring:
   datasource:
-    url: jdbc:sqlserver://localhost:1433;databaseName=FPTLS_Platform;encrypt=true;trustServerCertificate=true
-    username: sa
+    url: jdbc:mysql://localhost:3306/fptlsplatform
+    username: root
     password: 12345
-    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
         format_sql: true
-        database: sql_server
-        database-platform: org.hibernate.dialect.SQLServerDialect
-springdoc:
-  api-docs:
-    path: /v3/api-docs
-  swagger-ui:
-    enabled: true
-    path: /swagger-ui.html
-    operationsSorter: method
-    tagsSorter: name
-    display-request-duration: true
-  show-actuator: true
-  model-and-view-allowed: true
-logging:
-  level:
-    org.springframework.ws.config.annotation.DelegatingWsConfiguration: ERROR
+        database: mysql
+        database-platform: org.hibernate.dialect.MySQL8Dialect
 twilio:
   accountSid: AC39f68922dc6590cdcc2567ebf84ca070
   authToken: 95a66e71fe959e451cd9c7c190daeeb9
   phoneNumber: +18147475403
+#
+#spring:
+#  datasource:
+#    url: jdbc:sqlserver://localhost:1433;databaseName=FPTLS_Platform;encrypt=true;trustServerCertificate=true
+#    username: sa
+#    password: 12345
+#    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+#  jpa:
+#    hibernate:
+#      ddl-auto: create
+#    show-sql: true
+#    properties:
+#      hibernate:
+#        format_sql: true
+#        database: sql_server
+#        database-platform: org.hibernate.dialect.SQLServerDialect
+#springdoc:
+#  api-docs:
+#    path: /v3/api-docs
+#  swagger-ui:
+#    enabled: true
+#    path: /swagger-ui.html
+#    operationsSorter: method
+#    tagsSorter: name
+#    display-request-duration: true
+#  show-actuator: true
+#  model-and-view-allowed: true
+#logging:
+#  level:
+#    org.springframework.ws.config.annotation.DelegatingWsConfiguration: ERROR
+
+#twilio:
+#  accountSid: AC39f68922dc6590cdcc2567ebf84ca070
+#  authToken: 95a66e71fe959e451cd9c7c190daeeb9
+#  phoneNumber: +18147475403
