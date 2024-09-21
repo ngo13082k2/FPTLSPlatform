@@ -16,14 +16,16 @@ public class UserResponse {
     private String address;
     private LocalDateTime createdDate;
     private LocalDateTime modifiedDate;
-    public UserResponse(String username, String email, String fullname, String status) {
+    private String phonenumber;
+    public UserResponse(String username, String email, String fullname, String status, String phonenumber) {
         this.username = username;
         this.email = email;
         this.fullname = fullname;
         this.status = status;
+        this.phonenumber = phonenumber;
     }
 
-    public UserResponse(String username, String email, String fullname, String status, String address, LocalDateTime createdDate, LocalDateTime modifiedDate) {
+    public UserResponse(String username, String email, String fullname, String status, String address, LocalDateTime createdDate, LocalDateTime modifiedDate, String phonenumber) {
         this.username = username;
         this.email = email;
         this.fullname = fullname;
@@ -31,6 +33,7 @@ public class UserResponse {
         this.address = address;
         this.createdDate = createdDate;
         this.modifiedDate = modifiedDate;
+        this.phonenumber = phonenumber;
 
     }
 

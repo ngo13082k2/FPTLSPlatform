@@ -48,6 +48,7 @@ public class AuthService {
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setFullname(request.getFullname());
+        user.setPhonenumber(request.getPhonenumber());
         if (role == Role.TEACHER) {
             user.setStatus("PENDING");
             user.setRole(Role.TEACHER);
@@ -56,7 +57,7 @@ public class AuthService {
             user.setRole(Role.STUDENT);
         }
         userRepository.save(user);
-        return new UserResponse(user.getUsername(), user.getEmail(), user.getFullname(), user.getStatus());
+        return new UserResponse(user.getUsername(), user.getEmail(), user.getFullname(), user.getStatus(), user.getPhonenumber());
 
     }
 
@@ -98,7 +99,8 @@ public class AuthService {
                 user.getStatus(),
                 user.getAddress(),
                 user.getCreatedDate(),
-                user.getModifiedDate()
+                user.getModifiedDate(),
+                user.getPhonenumber()
 
         );
     }
@@ -124,7 +126,8 @@ public class AuthService {
                 user.getStatus(),
                 user.getAddress(),
                 user.getCreatedDate(),
-                user.getModifiedDate()
+                user.getModifiedDate(),
+                user.getPhonenumber()
 
         );
     }
@@ -139,9 +142,12 @@ public class AuthService {
                 user.getStatus(),
                 user.getAddress(),
                 user.getCreatedDate(),
-                user.getModifiedDate()
+                user.getModifiedDate(),
+                user.getPhonenumber()
      );
     }
+
+
 
 
     private Set<Role> extractRoles(UserDetails userDetails) {

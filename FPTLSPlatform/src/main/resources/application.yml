@@ -13,3 +13,7 @@ spring:
         format_sql: true
         database: mysql
         database-platform: org.hibernate.dialect.MySQL8Dialect
+twilio:
+  accountSid: AC39f68922dc6590cdcc2567ebf84ca070
+  authToken: 95a66e71fe959e451cd9c7c190daeeb9
+  phoneNumber: +18147475403

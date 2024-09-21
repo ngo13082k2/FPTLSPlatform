@@ -30,7 +30,7 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable) // Disable CSRF
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/login", "/auth/register-student", "/auth/register-teacher").permitAll() // Publicly accessible endpoints
+                        .requestMatchers("/auth/login", "/auth/register-student", "/auth/register-teacher","/forgotpassword/forgot-password","/forgotpassword/reset-password").permitAll() // Publicly accessible endpoints
                         .requestMatchers("/staff/**").hasRole("STAFF")
                         .requestMatchers("/teacher/**").hasRole("TEACHER")
                         .requestMatchers("/student/**").hasRole("STUDENT")
