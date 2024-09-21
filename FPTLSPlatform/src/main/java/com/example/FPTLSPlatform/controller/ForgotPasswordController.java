@@ -1,4 +1,4 @@
-package com.example.FPTLSPlatform.Controller;
+package com.example.FPTLSPlatform.controller;
 
 import com.example.FPTLSPlatform.request.ForgotPasswordRequest;
 import com.example.FPTLSPlatform.request.ResetPasswordRequest;
