@@ -53,6 +53,7 @@ public class OTPService {
         return storedOtp.equals(otp);
     }
 
+
     private String formatPhoneNumberTo84(String phonenumber) {
         if (phonenumber.startsWith("0")) {
             return "+84" + phonenumber.substring(1);
