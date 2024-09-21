@@ -1,4 +1,4 @@
-package com.example.FPTLSPlatform.Controller;
+package com.example.FPTLSPlatform.controller;
 
 import com.example.FPTLSPlatform.dto.CategoryDTO;
 import com.example.FPTLSPlatform.service.impl.CategoryService;

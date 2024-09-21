@@ -1,4 +1,4 @@
-package com.example.FPTLSPlatform.Controller;
+package com.example.FPTLSPlatform.controller;
 
 import com.example.FPTLSPlatform.model.enums.Role;
 import com.example.FPTLSPlatform.request.AuthenticationRequest;
