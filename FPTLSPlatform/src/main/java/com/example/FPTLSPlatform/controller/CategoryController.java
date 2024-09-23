@@ -2,6 +2,8 @@ package com.example.FPTLSPlatform.controller;
 
 import com.example.FPTLSPlatform.dto.CategoryDTO;
 import com.example.FPTLSPlatform.service.impl.CategoryService;
+import com.example.FPTLSPlatform.service.impl.EmailService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +15,7 @@ import java.util.List;
 public class CategoryController {
 
     private final CategoryService categoryService;
+
 
     public CategoryController(CategoryService categoryService) {
         this.categoryService = categoryService;
@@ -40,4 +43,5 @@ public class CategoryController {
         List<CategoryDTO> categories = categoryService.getAllCategories();
         return ResponseEntity.ok(categories);
     }
+
 }
