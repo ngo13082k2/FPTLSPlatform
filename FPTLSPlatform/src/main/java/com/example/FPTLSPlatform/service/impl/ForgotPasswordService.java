@@ -1,6 +1,8 @@
 package com.example.FPTLSPlatform.service.impl;
 
+import com.example.FPTLSPlatform.model.Teacher;
 import com.example.FPTLSPlatform.model.User;
+import com.example.FPTLSPlatform.repository.TeacherRepository;
 import com.example.FPTLSPlatform.repository.UserRepository;
 import com.example.FPTLSPlatform.request.ForgotPasswordRequest;
 import com.example.FPTLSPlatform.request.ResetPasswordRequest;
@@ -10,28 +12,46 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 public class ForgotPasswordService implements IForgotPasswordService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final OTPService otpService;
-
-    public ForgotPasswordService(UserRepository userRepository, PasswordEncoder passwordEncoder, OTPService otpService) {
+    private final TeacherRepository teacherRepository;
+    public ForgotPasswordService(UserRepository userRepository, PasswordEncoder passwordEncoder, OTPService otpService, TeacherRepository teacherRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.otpService = otpService;
+        this.teacherRepository = teacherRepository;
     }
 
     @Override
     public void forgotPassword(ForgotPasswordRequest request, HttpSession session) {
-        User user = userRepository.findByPhoneNumber(request.getPhoneNumber())
-                .orElseThrow(() -> new RuntimeException("Phone number not found"));
+        Optional<User> optionalUser = userRepository.findByPhoneNumber(request.getPhoneNumber());
 
-        String otp = otpService.generateOtp(user.getPhoneNumber());
-        otpService.sendOtpToPhone(user.getPhoneNumber(), otp);
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            String otp = otpService.generateOtp(user.getPhoneNumber());
+            otpService.sendOtpToPhone(user.getPhoneNumber(), otp);
 
-        session.setAttribute("phoneNumber", user.getPhoneNumber());
+            session.setAttribute("phoneNumber", user.getPhoneNumber());
+        } else {
+            Optional<Teacher> optionalTeacher = teacherRepository.findByPhoneNumber(request.getPhoneNumber());
+
+            if (optionalTeacher.isPresent()) {
+                Teacher teacher = optionalTeacher.get();
+                String otp = otpService.generateOtp(teacher.getPhoneNumber());
+                otpService.sendOtpToPhone(teacher.getPhoneNumber(), otp);
+
+                session.setAttribute("phoneNumber", teacher.getPhoneNumber());
+            } else {
+                throw new RuntimeException("Phone number not found for User or Teacher");
+            }
+        }
     }
+
     @Override
     public void verifyOtp(VerifyOtpRequest request, HttpSession session) {
         String phoneNumber = (String) session.getAttribute("phoneNumber");
@@ -57,11 +77,23 @@ public class ForgotPasswordService implements IForgotPasswordService {
             throw new RuntimeException("Session expired or information missing");
         }
 
-        User user = userRepository.findByPhoneNumber(phoneNumber)
-                .orElseThrow(() -> new RuntimeException("Phone number not found"));
+        Optional<User> optionalUser = userRepository.findByPhoneNumber(phoneNumber);
 
-        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-        userRepository.save(user);
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+            userRepository.save(user);
+        } else {
+            Optional<Teacher> optionalTeacher = teacherRepository.findByPhoneNumber(phoneNumber);
+
+            if (optionalTeacher.isPresent()) {
+                Teacher teacher = optionalTeacher.get();
+                teacher.setPassword(passwordEncoder.encode(request.getNewPassword()));
+                teacherRepository.save(teacher);
+            } else {
+                throw new RuntimeException("Phone number not found for User or Teacher");
+            }
+        }
 
         session.invalidate();
     }

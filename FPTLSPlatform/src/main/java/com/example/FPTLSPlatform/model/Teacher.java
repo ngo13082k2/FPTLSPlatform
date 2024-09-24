@@ -24,7 +24,7 @@ public class Teacher {
 
     @Column(name = "major")
     private String major;
-    @Column(name = "number_phone")
+    @Column(name = "phone_number")
     private String phoneNumber;
     @Column(name = "address")
     private String address;
@@ -51,4 +51,5 @@ public class Teacher {
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "application_id", referencedColumnName = "application_id")
     private Application application;
+
 }
