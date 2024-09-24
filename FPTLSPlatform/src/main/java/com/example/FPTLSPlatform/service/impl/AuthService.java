@@ -1,8 +1,10 @@
 package com.example.FPTLSPlatform.service.impl;
 
 
+import com.example.FPTLSPlatform.model.Teacher;
 import com.example.FPTLSPlatform.model.User;
 import com.example.FPTLSPlatform.model.enums.Role;
+import com.example.FPTLSPlatform.repository.TeacherRepository;
 import com.example.FPTLSPlatform.repository.UserRepository;
 import com.example.FPTLSPlatform.request.AuthenticationRequest;
 import com.example.FPTLSPlatform.request.RegisterRequest;
@@ -17,7 +19,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -30,16 +34,18 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final CustomUserDetailsService userDetailsService;
+    private final TeacherRepository teacherRepository;
 
     public AuthService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, JwtUtil jwtUtil,
-                       CustomUserDetailsService userDetailsService) {
+                       CustomUserDetailsService userDetailsService, TeacherRepository teacherRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
 
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
+        this.teacherRepository = teacherRepository;
     }
 
     public UserResponse register(RegisterRequest request, Role role) {
@@ -49,10 +55,12 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setFullName(request.getFullName());
         user.setPhoneNumber(request.getPhoneNumber());
-        if (role == Role.TEACHER) {
-            user.setStatus("PENDING");
-            user.setRole(Role.TEACHER);
-        } else if (role == Role.STUDENT) {
+        user.setCreatedDate(request.getCreatedDate());
+        user.setCreatedDate(LocalDateTime.now());
+
+
+
+        if (role == Role.STUDENT) {
             user.setStatus("ACTIVE");
             user.setRole(Role.STUDENT);
         }
@@ -60,6 +68,30 @@ public class AuthService {
         return new UserResponse(user.getUserName(), user.getEmail(), user.getFullName(), user.getStatus(), user.getPhoneNumber());
 
     }
+    public UserResponse registerTeacher(RegisterRequest request) {
+        if (teacherRepository.existsByTeacherName(request.getUsername())) {
+            throw new RuntimeException("Username already exists");
+        }
+        if (teacherRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+            throw new RuntimeException("Phone number already exists");
+        }
+
+        Teacher teacher = Teacher.builder()
+                .teacherName(request.getUsername())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .email(request.getEmail())
+                .phoneNumber(request.getPhoneNumber())
+                .fullName(request.getFullName())
+                .createdDate(LocalDateTime.now())
+                .role(Role.TEACHER)
+                .status("PENDING")
+                .build();
+
+        teacherRepository.save(teacher);
+
+        return new UserResponse(teacher.getTeacherName(), teacher.getEmail(), teacher.getFullName(), teacher.getStatus(), teacher.getPhoneNumber());
+    }
+
 
 
 
@@ -69,22 +101,27 @@ public class AuthService {
         );
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(request.getUsername());
-        User user = userRepository.findByUserName(request.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (user.getRole() == Role.TEACHER && "PENDING".equals(user.getStatus())) {
-            throw new RuntimeException("Your account has not been approved as a teacher");
+        Optional<User> optionalUser = userRepository.findByUserName(request.getUsername());
+        Optional<Teacher> optionalTeacher = teacherRepository.findByTeacherName(request.getUsername());
+
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            if (user.getRole() == Role.TEACHER && "PENDING".equals(user.getStatus())) {
+                throw new RuntimeException("Your account has not been approved as a teacher");
+            }
+            String jwt = jwtUtil.generateToken(userDetails.getUsername(), extractRoles(userDetails));
+            return new AuthenticationResponse(user.getUserName(), user.getEmail(), user.getFullName(), user.getStatus(), jwt);
+        } else if (optionalTeacher.isPresent()) {
+            Teacher teacher = optionalTeacher.get();
+            if ("PENDING".equals(teacher.getStatus())) {
+                throw new RuntimeException("Your account has not been approved as a teacher");
+            }
+            String jwt = jwtUtil.generateToken(userDetails.getUsername(), extractRoles(userDetails));
+            return new AuthenticationResponse(teacher.getTeacherName(), null, teacher.getFullName(), teacher.getStatus(), jwt);
+        } else {
+            throw new RuntimeException("User not found");
         }
-
-        String jwt = jwtUtil.generateToken(userDetails.getUsername(), extractRoles(userDetails));
-
-        return new AuthenticationResponse(
-                user.getUserName(),
-                user.getEmail(),
-                user.getFullName(),
-                user.getStatus(),
-                jwt
-        );
     }
 
     public UserResponse viewCurrentUser(String token) {
@@ -131,9 +168,9 @@ public class AuthService {
 
         );
     }
-    public UserResponse getUserById(Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+    public UserResponse getUserByUserName(String username) {
+        User user = userRepository.findByUserName(username)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + username));
 
         return new UserResponse(
                 user.getUserName(),

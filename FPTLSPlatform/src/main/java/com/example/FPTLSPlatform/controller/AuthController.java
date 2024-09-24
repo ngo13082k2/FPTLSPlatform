@@ -25,19 +25,27 @@ public class AuthController {
         authService.register(request, Role.STUDENT);
         return ResponseEntity.ok("Student registered successfully");
     }
-    @PostMapping("/register-teacher")
-    public ResponseEntity<String> registerTeacher(@RequestBody RegisterRequest request) {
-        authService.register(request, Role.TEACHER);
-        return ResponseEntity.ok("Teacher registered successfully. Status: Pending");
+//    @PostMapping("/register-teacher")
+//    public ResponseEntity<String> registerTeacher(@RequestBody RegisterRequest request) {
+//        authService.register(request, Role.TEACHER);
+//        return ResponseEntity.ok("Teacher registered successfully. Status: Pending");
+//    }
+@PostMapping("/register-teacher")
+public ResponseEntity<UserResponse> register(@RequestBody RegisterRequest request) {
+    try {
+        UserResponse response = authService.registerTeacher(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    } catch (RuntimeException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new UserResponse(null, null, null, "Error: " + e.getMessage(), null));
     }
-
+}
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthenticationRequest request) {
         try {
             AuthenticationResponse response = authService.login(request);
             return ResponseEntity.ok(response);
-        } catch (RuntimeException ex) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Error: " + e.getMessage());
         }
     }
 
@@ -52,8 +60,8 @@ public class AuthController {
         return ResponseEntity.ok(updatedUser);
     }
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
-        UserResponse userResponse = authService.getUserById(id);
+    public ResponseEntity<UserResponse> getUserById(@PathVariable String username) {
+        UserResponse userResponse = authService.getUserByUserName(username);
         return ResponseEntity.ok(userResponse);
     }
 }
