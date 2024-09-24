@@ -7,6 +7,7 @@ import com.example.FPTLSPlatform.response.AuthenticationResponse;
 import com.example.FPTLSPlatform.response.UserResponse;
 import com.example.FPTLSPlatform.service.impl.AuthService;
 import com.example.FPTLSPlatform.service.impl.EmailService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,9 +34,9 @@ public class AuthController {
 //        return ResponseEntity.ok("Teacher registered successfully. Status: Pending");
 //    }
 @PostMapping("/register-teacher")
-public ResponseEntity<UserResponse> register(@RequestBody RegisterRequest request) {
+public ResponseEntity<UserResponse> register(@RequestBody RegisterRequest request, HttpSession session) {
     try {
-        UserResponse response = authService.registerTeacher(request);
+        UserResponse response = authService.registerTeacher(request, session);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     } catch (RuntimeException e) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new UserResponse(null, null, null, "Error: " + e.getMessage(), null));
