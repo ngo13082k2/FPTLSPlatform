@@ -36,7 +36,7 @@ public class JwtUtil {
 
     public String generateToken(String username, Set<Role> roles) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("roles", roles.stream().map(Role::name).collect(Collectors.toSet())); // Convert Role to String
+        claims.put("role", roles.stream().map(Role::name).collect(Collectors.toSet())); // Convert Role to String
         return createToken(claims, username);
     }
 

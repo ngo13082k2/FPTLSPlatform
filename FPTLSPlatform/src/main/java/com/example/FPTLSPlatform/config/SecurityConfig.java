@@ -28,13 +28,17 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable) // Disable CSRF
+                .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/login", "/applications/**", "/auth/register-student", "/auth/register-teacher","/forgotpassword/**").permitAll() // Publicly accessible endpoints
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
-                        .requestMatchers("/staff/**").hasRole("STAFF")
+                        .requestMatchers("/staff/**", "/courses/**").hasRole("STAFF")
                         .requestMatchers("/teacher/**").hasRole("TEACHER")
                         .requestMatchers("/student/**").hasRole("STUDENT")
+                        .requestMatchers("/courses/**").hasRole("STAFF")
+                        .requestMatchers("/categories/**").hasRole("STUDENT")
+
+
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
