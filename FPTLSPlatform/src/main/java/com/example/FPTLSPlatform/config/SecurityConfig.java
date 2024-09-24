@@ -32,11 +32,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/login", "/applications/**", "/auth/register-student", "/auth/register-teacher","/forgotpassword/**").permitAll() // Publicly accessible endpoints
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
-                        .requestMatchers("/staff/**", "/courses/**").hasRole("STAFF")
-                        .requestMatchers("/teacher/**").hasRole("TEACHER")
-                        .requestMatchers("/student/**").hasRole("STUDENT")
-                        .requestMatchers("/courses/**").hasRole("STAFF")
-                        .requestMatchers("/categories/**").hasRole("STUDENT")
+                        .requestMatchers("/staff/**", "/courses/**").hasAuthority("STAFF")
+                        .requestMatchers("/teacher/**").hasAuthority("TEACHER")
+                        .requestMatchers("/student/**").hasAuthority("STUDENT")
+                        .requestMatchers("/courses/**").hasAuthority("STAFF")
+                        .requestMatchers("/categories/**").hasAuthority("STUDENT")
 
 
                         .anyRequest().authenticated()
