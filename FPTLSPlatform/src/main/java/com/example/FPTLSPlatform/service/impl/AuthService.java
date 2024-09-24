@@ -11,7 +11,6 @@ import com.example.FPTLSPlatform.request.RegisterRequest;
 import com.example.FPTLSPlatform.response.AuthenticationResponse;
 import com.example.FPTLSPlatform.response.UserResponse;
 import com.example.FPTLSPlatform.util.JwtUtil;
-import jakarta.servlet.http.HttpSession;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -69,7 +68,7 @@ public class AuthService {
         return new UserResponse(user.getUserName(), user.getEmail(), user.getFullName(), user.getStatus(), user.getPhoneNumber());
 
     }
-    public UserResponse registerTeacher(RegisterRequest request, HttpSession session) {
+    public UserResponse registerTeacher(RegisterRequest request) {
         if (teacherRepository.existsByTeacherName(request.getUsername())) {
             throw new RuntimeException("Username already exists");
         }
@@ -89,7 +88,7 @@ public class AuthService {
                 .build();
 
         teacherRepository.save(teacher);
-        session.setAttribute("teacher", teacher);
+
         return new UserResponse(teacher.getTeacherName(), teacher.getEmail(), teacher.getFullName(), teacher.getStatus(), teacher.getPhoneNumber());
     }
 

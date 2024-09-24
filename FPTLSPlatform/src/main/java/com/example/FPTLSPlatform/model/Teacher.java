@@ -48,4 +48,8 @@ public class Teacher {
     @Enumerated(EnumType.STRING)
     @Column(name = "role")
     private Role role;
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "application_id", referencedColumnName = "application_id")
+    private Application application;
+
 }

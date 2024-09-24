@@ -30,7 +30,7 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable) // Disable CSRF
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/login", "/applications/**", "/auth/register-student", "/auth/register-teacher","/forgotpassword/**").permitAll() // Publicly accessible endpoints
+                        .requestMatchers("/auth/login", "/applications/approve_application", "/auth/register-student", "/auth/register-teacher","/forgotpassword/forgot-password","/forgotpassword/reset-password","/forgotpassword/**").permitAll() // Publicly accessible endpoints
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
                         .requestMatchers("/staff/**").hasRole("STAFF")
                         .requestMatchers("/teacher/**").hasRole("TEACHER")
