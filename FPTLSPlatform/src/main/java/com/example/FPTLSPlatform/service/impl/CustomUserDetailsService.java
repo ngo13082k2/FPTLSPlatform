@@ -27,11 +27,9 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // Tìm kiếm User trước
         User user = userRepository.findByUserName(username).orElse(null);
 
         if (user != null) {
-            // Nếu tìm thấy User, trả về UserDetails
             Set<SimpleGrantedAuthority> authorities = new HashSet<>();
             authorities.add(new SimpleGrantedAuthority(user.getRole().name()));
 
@@ -42,11 +40,9 @@ public class CustomUserDetailsService implements UserDetailsService {
             );
         }
 
-        // Nếu không tìm thấy User, tìm kiếm Teacher
         Teacher teacher = teacherRepository.findByTeacherName(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User or Teacher not found"));
 
-        // Nếu tìm thấy Teacher, trả về UserDetails cho Teacher
         Set<SimpleGrantedAuthority> authorities = new HashSet<>();
         authorities.add(new SimpleGrantedAuthority(teacher.getRole().name()));
 
