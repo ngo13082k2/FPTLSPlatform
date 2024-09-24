@@ -13,4 +13,7 @@ public interface TeacherRepository extends JpaRepository<Teacher, String> {
     Optional<Teacher> findByPhoneNumber(String phoneNumber);
 
     boolean existsByPhoneNumber(String phoneNumber);
+
+    Teacher getTeacherByTeacherName(String teacherName);
+
 }
