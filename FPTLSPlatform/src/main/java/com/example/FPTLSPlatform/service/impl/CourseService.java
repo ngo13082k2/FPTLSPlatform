@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 @Service
 public class CourseService implements ICourseService {
@@ -51,22 +52,33 @@ public class CourseService implements ICourseService {
             String imageUrl = cloudinaryService.uploadImage(image);
             course.setImage(imageUrl);
         }
-
         if (courseDTO.getCategoryId() != null) {
             Category category = categoryRepository.findById(courseDTO.getCategoryId())
                     .orElseThrow(() -> new RuntimeException("Category not found"));
             course.setCategories(category);
         }
-
         Course updatedCourse = courseRepository.save(course);
         return mapEntityToDTO(updatedCourse);
     }
+    public void deleteCourse(String courseCode) {
+        Course course = courseRepository.findById(courseCode)
+                .orElseThrow(() -> new RuntimeException("Course not found with courseCode: " + courseCode));
+
+        courseRepository.delete(course);
+    }
+    public List<CourseDTO> getAllCourses() {
+        List<Course> courses = courseRepository.findAll();
+        if (courses.isEmpty()) {
+            throw new RuntimeException("No courses found");
+        }
+        return courses.stream().map(this::mapEntityToDTO).toList();
+    }
+
     private Course mapDTOToEntity(CourseDTO courseDTO, MultipartFile image) throws IOException {
         String imageUrl = null;
         if (image != null && !image.isEmpty()) {
             imageUrl = cloudinaryService.uploadImage(image);
         }
-
         Category category = categoryRepository.findById(courseDTO.getCategoryId())
                 .orElseThrow(() -> new RuntimeException("Category not found"));
 
@@ -88,6 +100,7 @@ public class CourseService implements ICourseService {
                 .status(course.getStatus())
                 .image(course.getImage())
                 .categoryId(course.getCategories().getCategoryId())
+                .categoryName(course.getCategories().getName())
                 .build();
     }
 }
