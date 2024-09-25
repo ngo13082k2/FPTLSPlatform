@@ -42,8 +42,9 @@ public class Class {
     @Column(name = "price", nullable = false)
     private Long price;
 
-    @Column(name = "teacher_name", nullable = false)
-    private String teacherName;
+    @ManyToOne
+    @JoinColumn(name = "teacher_name", referencedColumnName = "teacher_name", nullable = false)
+    private Teacher teacher;
 
     @Column(name = "start_date")
     private LocalDateTime startDate;
