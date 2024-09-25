@@ -38,10 +38,9 @@ public class SecurityConfig {
                         .requestMatchers("/student/**").hasAuthority("STUDENT")
                         .requestMatchers("/courses/**").hasAuthority("STAFF")
                         .requestMatchers("/categories/**").hasAuthority("STAFF")
-                        .requestMatchers(String.valueOf(HttpMethod.POST), "/classes").hasAuthority("TEACHER")
-                        .requestMatchers(String.valueOf(HttpMethod.PUT), "/classes/**").hasAuthority("TEACHER")
-
-
+                        .requestMatchers("/classes/byCourse/**").hasAuthority("STUDENT")
+                        .requestMatchers("/classes/{classId}").hasAuthority("STUDENT")
+                        .requestMatchers("/classes/**").hasAuthority("TEACHER")
 
 
                         .anyRequest().authenticated()

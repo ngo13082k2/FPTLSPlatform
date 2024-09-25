@@ -13,7 +13,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ClassService implements IClassService {
@@ -72,6 +74,23 @@ public class ClassService implements IClassService {
 
         Class updatedClass = classRepository.save(existingClass);
         return mapEntityToDTO(updatedClass);
+    }
+    public List<ClassDTO> getClassesByCourse(String courseCode) {
+        List<Class> classes = classRepository.findByCoursesCourseCode(courseCode);
+
+        if (classes.isEmpty()) {
+            throw new RuntimeException("No classes found for course code: " + courseCode);
+        }
+
+        return classes.stream()
+                .map(this::mapEntityToDTO)
+                .collect(Collectors.toList());
+    }
+    public ClassDTO getClassById(Long classId) {
+        Class clazz = classRepository.findById(classId)
+                .orElseThrow(() -> new RuntimeException("Class with id " + classId + " not found"));
+
+        return mapEntityToDTO(clazz);
     }
     private Class mapDTOToEntity(ClassDTO classDTO, Course course, Teacher teacher) {
         return Class.builder()
