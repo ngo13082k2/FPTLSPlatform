@@ -2,10 +2,18 @@ package com.example.FPTLSPlatform.service;
 
 import com.example.FPTLSPlatform.dto.ApplicationDTO;
 import jakarta.servlet.http.HttpSession;
-import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import java.util.List;
 
 public interface IApplicationService {
-    ResponseEntity<?> createApplication(ApplicationDTO applicationDTO, HttpSession session);
+    ApplicationDTO createApplication(ApplicationDTO applicationDTO, HttpSession session);
 
-    ResponseEntity<ApplicationDTO> updateApplication(Long id);
+    ApplicationDTO updateApplication(Long id);
+
+    Page<ApplicationDTO> getAllApplications(Pageable pageable);
+
+
+    Page<ApplicationDTO> getApplicationsByStaff(String staffUsername, Pageable pageable);
 }

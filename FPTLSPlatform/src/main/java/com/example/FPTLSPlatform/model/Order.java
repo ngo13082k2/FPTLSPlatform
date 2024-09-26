@@ -22,8 +22,8 @@ public class Order {
     private Long orderId;
 
     @ManyToOne
-    @JoinColumn(name = "username", referencedColumnName = "user_name", nullable = false)
-    private User users;
+    @JoinColumn(name = "user_name", referencedColumnName = "user_name", nullable = false)
+    private User user;
 
     @Column(name = "create_at", nullable = false)
     private LocalDateTime createAt;

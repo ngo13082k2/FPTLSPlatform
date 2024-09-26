@@ -29,4 +29,8 @@ public class Application {
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "teacher_name", referencedColumnName = "teacher_name")
     private Teacher teacher;
+
+    @ManyToOne
+    @JoinColumn(name = "assigned_staff_id", referencedColumnName = "id")
+    private User assignedStaff;
 }

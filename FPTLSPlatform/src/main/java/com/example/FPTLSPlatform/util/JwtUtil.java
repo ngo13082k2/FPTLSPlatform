@@ -33,7 +33,12 @@ public class JwtUtil {
         byte[] keyBytes = secretKey.getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(keyBytes);
     }
-
+    public Set<Role> extractRoles(String token) {
+        return extractClaim(token, claims -> {
+            Set<String> roles = claims.get("role", Set.class);
+            return roles.stream().map(Role::valueOf).collect(Collectors.toSet());
+        });
+    }
     private Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
