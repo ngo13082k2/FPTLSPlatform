@@ -31,6 +31,6 @@ public class Application {
     private Teacher teacher;
 
     @ManyToOne
-    @JoinColumn(name = "assigned_staff_id", referencedColumnName = "id")
+    @JoinColumn(name = "assigned_staff_id", referencedColumnName = "user_name")
     private User assignedStaff;
 }

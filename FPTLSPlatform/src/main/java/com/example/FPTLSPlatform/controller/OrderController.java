@@ -2,7 +2,7 @@ package com.example.FPTLSPlatform.controller;
 
 import com.example.FPTLSPlatform.dto.OrderDTO;
 import com.example.FPTLSPlatform.exception.ResourceNotFoundException;
-import com.example.FPTLSPlatform.service.impl.OrderService;
+import com.example.FPTLSPlatform.service.IOrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +15,7 @@ import java.util.List;
 public class OrderController {
 
     @Autowired
-    private OrderService orderService;
+    private IOrderService orderService;
 
     @PostMapping("/{classId}/{username}")
     public ResponseEntity<OrderDTO> createOrder(@PathVariable Long classId, @PathVariable String username) {

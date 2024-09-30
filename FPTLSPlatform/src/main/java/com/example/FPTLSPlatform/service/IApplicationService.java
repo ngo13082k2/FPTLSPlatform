@@ -1,11 +1,10 @@
 package com.example.FPTLSPlatform.service;
 
 import com.example.FPTLSPlatform.dto.ApplicationDTO;
+import com.example.FPTLSPlatform.model.Application;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-
-import java.util.List;
 
 public interface IApplicationService {
     ApplicationDTO createApplication(ApplicationDTO applicationDTO, HttpSession session);
@@ -14,6 +13,11 @@ public interface IApplicationService {
 
     Page<ApplicationDTO> getAllApplications(Pageable pageable);
 
-
     Page<ApplicationDTO> getApplicationsByStaff(String staffUsername, Pageable pageable);
+
+    Application assignApplicationToStaff(Long applicationId, String staffUsername);
+
+    Page<ApplicationDTO> getPendingApplications(Pageable pageable);
+
+    void assignApplicationsToAllStaff();
 }

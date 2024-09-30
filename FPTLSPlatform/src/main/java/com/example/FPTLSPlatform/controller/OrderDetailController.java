@@ -1,7 +1,7 @@
 package com.example.FPTLSPlatform.controller;
 
 import com.example.FPTLSPlatform.dto.OrderDetailDTO;
-import com.example.FPTLSPlatform.service.impl.OrderDetailService;
+import com.example.FPTLSPlatform.service.IOrderDetailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +13,7 @@ import java.util.List;
 @RequestMapping("/api/order-details")
 public class OrderDetailController {
     @Autowired
-    private OrderDetailService orderDetailService;
+    private IOrderDetailService orderDetailService;
 
     @GetMapping("/order/{orderId}")
     public ResponseEntity<List<OrderDetailDTO>> getOrderDetailsByOrderId(@PathVariable Long orderId) {

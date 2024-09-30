@@ -11,23 +11,19 @@ import com.example.FPTLSPlatform.repository.ApplicationRepository;
 import com.example.FPTLSPlatform.repository.TeacherRepository;
 import com.example.FPTLSPlatform.repository.UserRepository;
 import com.example.FPTLSPlatform.service.IApplicationService;
-import com.example.FPTLSPlatform.util.JwtUtil;
 import jakarta.servlet.http.HttpSession;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @Service
 public class ApplicationService implements IApplicationService {
 
     private final ApplicationRepository applicationRepository;
 
-    @Autowired
-    private JwtUtil jwtUtil;
     private final TeacherRepository teacherRepository;
     private final UserRepository userRepository;
     public ApplicationService(ApplicationRepository applicationRepository,
@@ -50,7 +46,6 @@ public class ApplicationService implements IApplicationService {
                 throw new ApplicationAlreadyApprovedException("Application has already been approved and cannot be modified.");
             }
 
-            if (applicationDTO.getStatus().equalsIgnoreCase("PENDING")) {
                 Application application = Application.builder()
                         .title(applicationDTO.getTitle())
                         .description(applicationDTO.getDescription())
@@ -62,9 +57,6 @@ public class ApplicationService implements IApplicationService {
                 applicationDTO.setTeacherName(teacher.getTeacherName());
                 session.invalidate();
                 return applicationDTO;
-            } else {
-                throw new IllegalArgumentException("Invalid status provided for application.");
-            }
     }
 
     @Override
@@ -119,15 +111,9 @@ public class ApplicationService implements IApplicationService {
     }
 
     @Override
-    public Page<ApplicationDTO> getApplicationsByStaff(String token, Pageable pageable) {
-        String staffUsername = jwtUtil.extractUsername(token);
-        Set<Role> roles = jwtUtil.extractRoles(token);
-
-        // Check if user has a specific role (example: "STAFF")
-        if (!roles.contains(Role.STAFF)) {
-            throw new SecurityException("User does not have permission to access this resource.");
-        }
-
+    public Page<ApplicationDTO> getApplicationsByStaff(String staffUsername, Pageable pageable) {
+        userRepository.findByUserName(staffUsername)
+                .orElseThrow(() -> new ResourceNotFoundException("Staff not found with username: " + staffUsername));
         Page<Application> applications = applicationRepository.findByAssignedStaffUserName(staffUsername, pageable);
         return applications.map(app -> ApplicationDTO.builder()
                 .applicationId(app.getApplicationId())
@@ -138,7 +124,7 @@ public class ApplicationService implements IApplicationService {
                 .build());
     }
 
-
+    @Override
     public Application assignApplicationToStaff(Long applicationId, String staffUsername) {
         Application application = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Application not found"));
@@ -154,4 +140,44 @@ public class ApplicationService implements IApplicationService {
         application.setStatus("ASSIGNED");
         return applicationRepository.save(application);
     }
+
+    @Override
+    public Page<ApplicationDTO> getPendingApplications(Pageable pageable) {
+        Page<Application> applications = applicationRepository.findByStatusAndAssignedStaffIsNull("PENDING", pageable);
+        return applications.map(app -> ApplicationDTO.builder()
+                .applicationId(app.getApplicationId())
+                .title(app.getTitle())
+                .description(app.getDescription())
+                .status(app.getStatus())
+                .teacherName(app.getTeacher().getTeacherName())
+                .build());
+    }
+
+    @Override
+    public void assignApplicationsToAllStaff() {
+        List<User> allStaff = userRepository.findByRole(Role.STAFF);
+
+        if (allStaff.isEmpty()) {
+            throw new ResourceNotFoundException("No staff members available for assignment.");
+        }
+        List<Application> pendingApplications = applicationRepository.findByStatus("PENDING");
+
+        if (pendingApplications.isEmpty()) {
+            throw new ResourceNotFoundException("No pending applications available for assignment.");
+        }
+
+        int staffCount = allStaff.size();
+        int index = 0;
+        for (Application application : pendingApplications) {
+            User staff = allStaff.get(index % staffCount);
+
+            application.setAssignedStaff(staff);
+            application.setStatus("ASSIGNED");
+
+            applicationRepository.save(application);
+
+            index++;
+        }
+    }
+
 }
