@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.thymeleaf.context.Context;
 
 @RestController
 @RequestMapping("/applications")
@@ -30,7 +31,11 @@ public class ApplicationController {
         try {
             ApplicationDTO applicationDTO = applicationService.updateApplication(id);
             if (applicationDTO != null) {
-                emailService.sendSimpleMessage(applicationDTO.getTeacherName(), "Your application had been approved", "Congratulations!");
+                Context context = new Context();
+                context.setVariable("teacherName", applicationDTO.getTeacherName());
+                context.setVariable("applicationTitle", applicationDTO.getTitle());
+
+                emailService.sendEmail(applicationDTO.getTeacherName(), "Application Approved", "approval-email", context);
             }
             return ResponseEntity.ok(applicationDTO);
         } catch (ResourceNotFoundException e) {
@@ -41,6 +46,7 @@ public class ApplicationController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred." + e.getMessage());
         }
     }
+
 
     @PostMapping("/create-application")
     public ResponseEntity<?> createApplication(@RequestBody ApplicationDTO applicationDTO, HttpSession session) {
