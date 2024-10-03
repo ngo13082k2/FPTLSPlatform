@@ -1,6 +1,7 @@
 package com.example.FPTLSPlatform.controller;
 
 import com.example.FPTLSPlatform.dto.ClassDTO;
+import com.example.FPTLSPlatform.service.IClassService;
 import com.example.FPTLSPlatform.service.impl.ClassService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,7 +13,7 @@ import java.util.List;
 @RequestMapping("/classes")
 public class ClassController {
 
-    private final ClassService classService;
+    private final IClassService classService;
 
     public ClassController(ClassService classService) {
         this.classService = classService;

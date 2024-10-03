@@ -1,6 +1,7 @@
 package com.example.FPTLSPlatform.controller;
 
 import com.example.FPTLSPlatform.dto.CategoryDTO;
+import com.example.FPTLSPlatform.service.ICategoryService;
 import com.example.FPTLSPlatform.service.impl.CategoryService;
 import com.example.FPTLSPlatform.service.impl.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +15,7 @@ import java.util.List;
 @RequestMapping("/categories")
 public class CategoryController {
 
-    private final CategoryService categoryService;
+    private final ICategoryService categoryService;
 
 
     public CategoryController(CategoryService categoryService) {

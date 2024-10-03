@@ -1,6 +1,7 @@
 package com.example.FPTLSPlatform.controller;
 
 import com.example.FPTLSPlatform.dto.CourseDTO;
+import com.example.FPTLSPlatform.service.ICourseService;
 import com.example.FPTLSPlatform.service.impl.CourseService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,11 +17,11 @@ import java.util.List;
 @RequestMapping("/courses")
 public class CourseController {
 
-    private final CourseService courseService;
+    private final ICourseService courseService;
     private final ObjectMapper objectMapper;
 
     @Autowired
-    public CourseController(CourseService courseService, ObjectMapper objectMapper) {
+    public CourseController(ICourseService courseService, ObjectMapper objectMapper) {
         this.courseService = courseService;
         this.objectMapper = objectMapper;
     }

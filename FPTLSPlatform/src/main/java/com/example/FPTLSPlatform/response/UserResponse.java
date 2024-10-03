@@ -1,5 +1,6 @@
 package com.example.FPTLSPlatform.response;
 
+import com.example.FPTLSPlatform.model.enums.Role;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,12 +21,17 @@ public class UserResponse {
     private LocalDateTime createdDate;
     private LocalDateTime modifiedDate;
     private String phoneNumber;
-    public UserResponse(String username, String email, String fullName, String status, String phoneNumber) {
+
+
+
+    private Role role;
+    public UserResponse(String username, String email, String fullName, String status, String phoneNumber, Role role) {
         this.username = username;
         this.email = email;
         this.fullName = fullName;
         this.status = status;
         this.phoneNumber = phoneNumber;
+        this.role = role;
     }
 
     public UserResponse(String username, String email, String fullName, String status, String address, LocalDateTime createdDate, LocalDateTime modifiedDate, String phoneNumber) {

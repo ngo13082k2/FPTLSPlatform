@@ -3,9 +3,11 @@ package com.example.FPTLSPlatform.service.impl;
 
 import com.example.FPTLSPlatform.model.Teacher;
 import com.example.FPTLSPlatform.model.User;
+import com.example.FPTLSPlatform.model.Wallet;
 import com.example.FPTLSPlatform.model.enums.Role;
 import com.example.FPTLSPlatform.repository.TeacherRepository;
 import com.example.FPTLSPlatform.repository.UserRepository;
+import com.example.FPTLSPlatform.repository.WalletRepository;
 import com.example.FPTLSPlatform.request.AuthenticationRequest;
 import com.example.FPTLSPlatform.request.RegisterRequest;
 import com.example.FPTLSPlatform.response.AuthenticationResponse;
@@ -20,7 +22,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
@@ -36,10 +37,10 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final CustomUserDetailsService userDetailsService;
     private final TeacherRepository teacherRepository;
-
+    private final WalletRepository walletRepository;
     public AuthService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, JwtUtil jwtUtil,
-                       CustomUserDetailsService userDetailsService, TeacherRepository teacherRepository) {
+                       CustomUserDetailsService userDetailsService, TeacherRepository teacherRepository, WalletRepository walletRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
@@ -47,9 +48,15 @@ public class AuthService {
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
         this.teacherRepository = teacherRepository;
+        this.walletRepository = walletRepository;
     }
 
     public UserResponse register(RegisterRequest request, Role role) {
+        Wallet wallet = new Wallet();
+        wallet.setBalance(0.0);
+
+        walletRepository.save(wallet);
+
         User user = new User();
         user.setUserName(request.getUsername());
         user.setEmail(request.getEmail());
@@ -59,16 +66,18 @@ public class AuthService {
         user.setCreatedDate(request.getCreatedDate());
         user.setCreatedDate(LocalDateTime.now());
 
-
+        user.setWallet(wallet);
 
         if (role == Role.STUDENT) {
             user.setStatus("ACTIVE");
             user.setRole(Role.STUDENT);
         }
-        userRepository.save(user);
-        return new UserResponse(user.getUserName(), user.getEmail(), user.getFullName(), user.getStatus(), user.getPhoneNumber());
 
+        userRepository.save(user);
+
+        return new UserResponse(user.getUserName(), user.getEmail(), user.getFullName(), user.getStatus(), user.getPhoneNumber(), user.getRole());
     }
+
     public UserResponse registerTeacher(RegisterRequest request, HttpSession session) {
         if (teacherRepository.existsByTeacherName(request.getUsername())) {
             throw new RuntimeException("Username already exists");
@@ -90,7 +99,7 @@ public class AuthService {
 
         teacherRepository.save(teacher);
         session.setAttribute("teacher", teacher);
-        return new UserResponse(teacher.getTeacherName(), teacher.getEmail(), teacher.getFullName(), teacher.getStatus(), teacher.getPhoneNumber());
+        return new UserResponse(teacher.getTeacherName(), teacher.getEmail(), teacher.getFullName(), teacher.getStatus(), teacher.getPhoneNumber(), teacher.getRole());
     }
 
 
@@ -112,14 +121,14 @@ public class AuthService {
                 throw new RuntimeException("Your account has not been approved as a teacher");
             }
             String jwt = jwtUtil.generateToken(userDetails.getUsername(), extractRoles(userDetails));
-            return new AuthenticationResponse(user.getUserName(), user.getEmail(), user.getFullName(), user.getStatus(), jwt);
+            return new AuthenticationResponse(user.getUserName(), user.getEmail(), user.getFullName(), user.getStatus(), jwt,user.getRole());
         } else if (optionalTeacher.isPresent()) {
             Teacher teacher = optionalTeacher.get();
             if ("PENDING".equals(teacher.getStatus())) {
                 throw new RuntimeException("Your account has not been approved as a teacher");
             }
             String jwt = jwtUtil.generateToken(userDetails.getUsername(), extractRoles(userDetails));
-            return new AuthenticationResponse(teacher.getTeacherName(), null, teacher.getFullName(), teacher.getStatus(), jwt);
+            return new AuthenticationResponse(teacher.getTeacherName(), null, teacher.getFullName(), teacher.getStatus(), jwt,teacher.getRole());
         } else {
             throw new RuntimeException("User not found");
         }

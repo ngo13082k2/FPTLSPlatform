@@ -39,7 +39,7 @@ public ResponseEntity<UserResponse> register(@RequestBody RegisterRequest reques
         UserResponse response = authService.registerTeacher(request, session);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     } catch (RuntimeException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new UserResponse(null, null, null, "Error: " + e.getMessage(), null));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new UserResponse(null, null, null, "Error: " + e.getMessage(), null, null));
     }
 }
     @PostMapping("/login")
