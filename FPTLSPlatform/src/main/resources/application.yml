@@ -81,3 +81,8 @@ vnpay:
 #  accountSid: AC39f68922dc6590cdcc2567ebf84ca070
 #  authToken: 95a66e71fe959e451cd9c7c190daeeb9
 #  phoneNumber: +18147475403
+#vnpay:
+#  tmn_code: WF0GYR4R
+#  hash_secret: NX15BK4HGP1K8CE3GJY8KPR4165S6N0A
+#  api_url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+#  return_url: http://localhost:8080/vnpay_return
