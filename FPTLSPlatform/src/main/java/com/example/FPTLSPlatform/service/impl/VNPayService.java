@@ -4,6 +4,7 @@ import com.example.FPTLSPlatform.config.VNPayConfig;
 import com.example.FPTLSPlatform.model.User;
 import com.example.FPTLSPlatform.repository.UserRepository;
 import com.example.FPTLSPlatform.repository.WalletRepository;
+import com.example.FPTLSPlatform.service.IVNPayService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,7 +17,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service
-public class VNPayService {
+public class VNPayService implements IVNPayService {
 
     @Value("${vnpay.tmn_code}")
     private String vnp_TmnCode;
