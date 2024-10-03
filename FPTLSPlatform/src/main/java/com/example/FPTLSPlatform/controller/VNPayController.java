@@ -1,9 +1,7 @@
 package com.example.FPTLSPlatform.controller;
 
 import com.example.FPTLSPlatform.service.IVNPayService;
-import com.example.FPTLSPlatform.service.impl.VNPayService;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -13,6 +11,10 @@ import java.util.Map;
 public class VNPayController {
 
     private IVNPayService vnpayService;
+
+    public VNPayController(IVNPayService vnpayService) {
+        this.vnpayService = vnpayService;
+    }
 
 
     @PostMapping("/recharge")
