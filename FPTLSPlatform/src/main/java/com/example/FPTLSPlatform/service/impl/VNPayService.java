@@ -1,7 +1,9 @@
 package com.example.FPTLSPlatform.service.impl;
 
 import com.example.FPTLSPlatform.config.VNPayConfig;
+import com.example.FPTLSPlatform.model.TransactionHistory;
 import com.example.FPTLSPlatform.model.User;
+import com.example.FPTLSPlatform.repository.TransactionHistoryRepository;
 import com.example.FPTLSPlatform.repository.UserRepository;
 import com.example.FPTLSPlatform.repository.WalletRepository;
 import com.example.FPTLSPlatform.service.IVNPayService;
@@ -11,9 +13,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -33,10 +37,11 @@ public class VNPayService implements IVNPayService {
 
     private final UserRepository userRepository;
     private final WalletRepository walletRepository;
-
-    public VNPayService(UserRepository userRepository, WalletRepository walletRepository) {
+    private final TransactionHistoryRepository transactionHistoryRepository;
+    public VNPayService(UserRepository userRepository, WalletRepository walletRepository, TransactionHistoryRepository transactionHistoryRepository) {
         this.userRepository = userRepository;
         this.walletRepository = walletRepository;
+        this.transactionHistoryRepository = transactionHistoryRepository;
     }
 
     public String generatePaymentUrl(Long amount, HttpServletRequest request) {
@@ -103,28 +108,37 @@ public class VNPayService implements IVNPayService {
         }
     }
 
-    public String processVNPayReturn(HttpServletRequest request) {
+    public String processVNPayReturn(HttpServletRequest request) throws UnsupportedEncodingException {
         Map<String, String[]> paramMap = request.getParameterMap();
         List<String> fieldNames = new ArrayList<>(paramMap.keySet());
         Collections.sort(fieldNames);
 
         StringBuilder hashData = new StringBuilder();
         String vnpSecureHash = "";
+
+        // Loại bỏ vnp_SecureHash và vnp_SecureHashType khi tính toán chữ ký
         for (String fieldName : fieldNames) {
             if (!"vnp_SecureHash".equals(fieldName) && !"vnp_SecureHashType".equals(fieldName)) {
                 String[] fieldValueArr = paramMap.get(fieldName);
                 String fieldValue = fieldValueArr[0];
-                hashData.append(fieldName).append('=').append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
+
+                // Sử dụng mã hóa UTF-8 thay vì US-ASCII
+                hashData.append(fieldName).append('=').append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8.toString()));
                 hashData.append('&');
             } else if ("vnp_SecureHash".equals(fieldName)) {
                 vnpSecureHash = paramMap.get(fieldName)[0];
             }
         }
 
-        hashData.setLength(hashData.length() - 1);
+        // Xóa ký tự '&' cuối cùng nếu có
+        if (hashData.length() > 0) {
+            hashData.setLength(hashData.length() - 1);
+        }
 
+        // Tính toán chữ ký hash
         String calculatedHash = VNPayConfig.hmacSHA512(vnp_HashSecret, hashData.toString());
 
+        // So sánh chữ ký
         if (vnpSecureHash.equalsIgnoreCase(calculatedHash)) {
             String amount = request.getParameter("vnp_Amount");
             String responseCode = request.getParameter("vnp_ResponseCode");
@@ -141,13 +155,20 @@ public class VNPayService implements IVNPayService {
                 }
 
                 return "Thanh toán thành công! Số dư ví đã được cập nhật cho người dùng: " + username;
+
+
             } else {
                 return "Giao dịch không thành công!";
             }
         } else {
+            System.out.println("Chữ ký không hợp lệ! Dữ liệu tính toán: " + hashData.toString());
+            System.out.println("Chữ ký tính toán: " + calculatedHash);
+            System.out.println("Chữ ký VNPay trả về: " + vnpSecureHash);
             return "Chữ ký không hợp lệ!";
         }
     }
+
+
 
 
 
@@ -179,6 +200,12 @@ public class VNPayService implements IVNPayService {
                 walletRepository.save(user.getWallet());
 
                 System.out.println("Số dư mới của ví: " + user.getWallet().getBalance());
+                TransactionHistory transactionHistory = new TransactionHistory();
+                transactionHistory.setAmount(amount);
+                transactionHistory.setTransactionDate(LocalDateTime.now());
+                transactionHistory.setUser(user);
+
+                transactionHistoryRepository.save(transactionHistory);
             } else {
                 throw new Exception("Người dùng không có ví.");
             }

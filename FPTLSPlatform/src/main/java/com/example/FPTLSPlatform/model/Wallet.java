@@ -20,4 +20,6 @@ public class Wallet {
 
     @Column(name = "balance", nullable = false)
     private Double balance;
+    @OneToOne(mappedBy = "wallet", cascade = CascadeType.ALL)
+    private User user;
 }

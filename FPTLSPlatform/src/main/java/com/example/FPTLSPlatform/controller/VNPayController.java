@@ -4,6 +4,7 @@ import com.example.FPTLSPlatform.service.IVNPayService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Map;
 @RequestMapping("/payment")
 
@@ -27,7 +28,7 @@ public class VNPayController {
     }
 
     @GetMapping("/return")
-    public String handleVNPayReturn(HttpServletRequest request) {
+    public String handleVNPayReturn(HttpServletRequest request) throws UnsupportedEncodingException {
         return vnpayService.processVNPayReturn(request);
     }
 }
