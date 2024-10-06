@@ -30,13 +30,6 @@ public class ApplicationController {
     public ResponseEntity<?> approveApplication(@RequestParam Long id) {
         try {
             ApplicationDTO applicationDTO = applicationService.updateApplication(id);
-            if (applicationDTO != null) {
-                Context context = new Context();
-                context.setVariable("teacherName", applicationDTO.getTeacherName());
-                context.setVariable("applicationTitle", applicationDTO.getTitle());
-
-                emailService.sendEmail(applicationDTO.getTeacherName(), "Application Approved", "approval-email", context);
-            }
             return ResponseEntity.ok(applicationDTO);
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());

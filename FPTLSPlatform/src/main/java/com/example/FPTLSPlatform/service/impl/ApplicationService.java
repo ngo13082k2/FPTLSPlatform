@@ -11,10 +11,12 @@ import com.example.FPTLSPlatform.repository.ApplicationRepository;
 import com.example.FPTLSPlatform.repository.TeacherRepository;
 import com.example.FPTLSPlatform.repository.UserRepository;
 import com.example.FPTLSPlatform.service.IApplicationService;
+import com.example.FPTLSPlatform.service.IEmailService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.context.Context;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,13 +25,15 @@ import java.util.Optional;
 public class ApplicationService implements IApplicationService {
 
     private final ApplicationRepository applicationRepository;
-
+    private final IEmailService emailService;
     private final TeacherRepository teacherRepository;
     private final UserRepository userRepository;
     public ApplicationService(ApplicationRepository applicationRepository,
+                              IEmailService emailService,
                               TeacherRepository teacherRepository,
                               UserRepository userRepository) {
         this.applicationRepository = applicationRepository;
+        this.emailService = emailService;
         this.teacherRepository = teacherRepository;
         this.userRepository = userRepository;
     }
@@ -62,7 +66,7 @@ public class ApplicationService implements IApplicationService {
     @Override
     public ApplicationDTO updateApplication(Long id) {
         Optional<Application> optionalApplication = applicationRepository.findById(id);
-
+        Context context = new Context();
         if (optionalApplication.isPresent()) {
             Application application = optionalApplication.get();
             if (application.getStatus().equalsIgnoreCase("APPROVED")) {
@@ -82,6 +86,10 @@ public class ApplicationService implements IApplicationService {
                 application.setStatus("APPROVE");
                 applicationRepository.save(application);
 
+
+                    context.setVariable("applicationTitle", application.getTitle());
+                    context.setVariable("teacherName", application.getTeacher().getTeacherName());
+                    emailService.sendEmail(application.getTeacher().getTeacherName(), "Application Approved", "approval-email", context);
                 return ApplicationDTO.builder()
                         .applicationId(application.getApplicationId())
                         .title(application.getTitle())

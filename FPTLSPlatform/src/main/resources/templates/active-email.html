@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <title>Your class has been active</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+        }
+        h3 {
+            color: #4CAF50;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #f4f4f4;
+            font-weight: bold;
+        }
+        td {
+            text-align: left;
+        }
+        p {
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+<h3>Dear <span th:text="${teacherName}">Teacher name</span>,</h3>
+<p>Congratulations! Your have successfully active the following class:</p>
+<table>
+    <tr>
+        <th>Class Name:</th>
+        <td th:text="${class.name}">Class Name</td>
+    </tr>
+    <tr>
+        <th>Teacher:</th>
+        <td th:text="${teacherName}">Teacher Name</td>
+    </tr>
+    <tr>
+        <th>Start Time:</th>
+        <td th:text="${class.getStartDate()}">Start time</td>
+    </tr>
+    <tr>
+        <th>End Time:</th>
+        <td th:text="${class.getEndDate()}">End time</td>
+    </tr>
+</table>
+<p>Thank you for choosing our platform!</p>
+<p>Best regards,</p>
+<p>FPT Learning Support</p>
+</body>
+</html>

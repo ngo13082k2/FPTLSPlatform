@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <title>Class Booking Confirmation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+        }
+        h3 {
+            color: #4CAF50;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #f4f4f4;
+            font-weight: bold;
+        }
+        td {
+            text-align: left;
+        }
+        p {
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+<h3>Dear <span th:text="${username}">User</span>,</h3>
+<p>Congratulations! You have cancel class:</p>
+<table>
+    <tr>
+        <th>Class Name:</th>
+        <td th:text="${class.name}">Class Name</td>
+    </tr>
+    <tr>
+        <th>Price:</th>
+        <td th:text="${class.price}">Price</td>
+    </tr>
+</table>
+<p>The system has refunded to your wallet.</p>
+<p>Thank you for choosing our platform!</p>
+<p>Best regards,</p>
+<p>FPT Learning Support</p>
+</body>
+</html>
