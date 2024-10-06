@@ -1,6 +1,7 @@
 package com.example.FPTLSPlatform.service.impl;
 
 import com.example.FPTLSPlatform.config.VNPayConfig;
+import com.example.FPTLSPlatform.exception.ResourceNotFoundException;
 import com.example.FPTLSPlatform.model.TransactionHistory;
 import com.example.FPTLSPlatform.model.User;
 import com.example.FPTLSPlatform.repository.TransactionHistoryRepository;
@@ -181,8 +182,8 @@ public class VNPayService implements IVNPayService {
             return principal.toString();
         }
     }
-
-    public void updateWalletBalance(String username, long amount) throws Exception {
+    @Override
+    public void updateWalletBalance(String username, long amount) throws ResourceNotFoundException {
         System.out.println("Cập nhật ví cho người dùng: " + username + " với số tiền: " + amount);
 
         Optional<User> optionalUser = userRepository.findByUserName(username);
@@ -207,10 +208,10 @@ public class VNPayService implements IVNPayService {
 
                 transactionHistoryRepository.save(transactionHistory);
             } else {
-                throw new Exception("Người dùng không có ví.");
+                throw new ResourceNotFoundException("Người dùng không có ví.");
             }
         } else {
-            throw new Exception("Không tìm thấy người dùng: " + username);
+            throw new ResourceNotFoundException("Không tìm thấy người dùng: " + username);
         }
     }
 
