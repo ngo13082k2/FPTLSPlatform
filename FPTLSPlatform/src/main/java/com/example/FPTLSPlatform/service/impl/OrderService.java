@@ -42,19 +42,23 @@ public class OrderService implements IOrderService {
 
     private final IEmailService emailService;
 
+    private final TransactionHistoryRepository transactionHistoryRepository;
+
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
 
     public OrderService(OrderRepository orderRepository,
                         ClassRepository classRepository,
                         OrderDetailRepository orderDetailRepository,
                         UserRepository userRepository,
-                        IWalletService walletService, IEmailService emailService) {
+                        IWalletService walletService, IEmailService emailService,
+                        TransactionHistoryRepository transactionHistoryRepository) {
         this.orderRepository = orderRepository;
         this.classRepository = classRepository;
         this.orderDetailRepository = orderDetailRepository;
         this.userRepository = userRepository;
         this.walletService = walletService;
         this.emailService = emailService;
+        this.transactionHistoryRepository = transactionHistoryRepository;
     }
 
     @Override
@@ -149,6 +153,7 @@ public class OrderService implements IOrderService {
 
                 // Refund and update order status
                 walletService.refundToWallet(order.getTotalPrice());
+                saveTransactionHistory(order.getUser(), orderDetail.getPrice());
                 order.setStatus(String.valueOf(OrderStatus.CANCELLED));
                 orderRepository.save(order);
                 Context context = new Context();
@@ -176,7 +181,7 @@ public class OrderService implements IOrderService {
     @Transactional
     public void checkAndActivateClasses() {
         LocalDateTime twoDaysFromNow = LocalDateTime.now().plusDays(2);
-        Pageable pageable = PageRequest.of(0, 100);
+        Pageable pageable = PageRequest.of(0, 50);
         Page<Class> classesPage = classRepository.findByStatusAndStartDateBefore(String.valueOf(OrderStatus.PENDING), twoDaysFromNow, pageable);
 
         for (Class scheduledClass : classesPage) {
@@ -190,19 +195,50 @@ public class OrderService implements IOrderService {
 
     private void activateClassIfEligible(Class scheduledClass) throws MessagingException {
         int registeredStudents = orderDetailRepository.countByClasses_ClassId(scheduledClass.getClassId());
+        int minimumRequiredStudents = (int) (scheduledClass.getMaxStudents() * 0.8);
 
-        if (registeredStudents >= scheduledClass.getMaxStudents() * 0.8) {
+        if (registeredStudents >= minimumRequiredStudents) {
+            // Kích hoạt lớp học nếu đủ số lượng sinh viên
             scheduledClass.setStatus(String.valueOf(OrderStatus.ACTIVE));
             classRepository.save(scheduledClass);
             log.info("Class with ID {} has been activated.", scheduledClass.getClassId());
 
             sendActivationEmail(scheduledClass);
         } else {
-            log.info("Class with ID {} cannot be activated. Only {} students registered, minimum required is {}.",
-                    scheduledClass.getClassId(), registeredStudents, (int)(scheduledClass.getMaxStudents() * 0.8));
+            // Hủy lớp học nếu không đủ số lượng sinh viên
+            scheduledClass.setStatus(String.valueOf(OrderStatus.CANCELLED));
+            classRepository.save(scheduledClass);
+            log.info("Class with ID {} has been cancelled due to insufficient students. Only {} registered, minimum required is {}.",
+                    scheduledClass.getClassId(), registeredStudents, minimumRequiredStudents);
+
+            // Hoàn tiền cho các học sinh đã đăng ký
+            refundStudents(scheduledClass);
         }
     }
 
+    private void refundStudents(Class cancelledClass) {
+        List<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(cancelledClass.getClassId());
+
+        for (OrderDetail orderDetail : orderDetails) {
+            Order order = orderDetail.getOrder();
+            User student = order.getUser();
+
+            Wallet wallet = student.getWallet();
+            wallet.setBalance(student.getWallet().getBalance() + (orderDetail.getPrice()));
+            userRepository.save(student);
+            saveTransactionHistory(wallet.getUser(), orderDetail.getPrice());
+
+            log.info("Refunded {} to student {} for class {} cancellation.", orderDetail.getPrice(), student.getUserName(), cancelledClass.getClassId());
+        }
+    }
+    private void saveTransactionHistory(User user, Long amount) {
+        TransactionHistory transactionHistory = new TransactionHistory();
+        transactionHistory.setAmount(amount);
+        transactionHistory.setTransactionDate(LocalDateTime.now());
+        transactionHistory.setUser(user);
+
+        transactionHistoryRepository.save(transactionHistory);
+    }
 
     private Class getClassOrThrow(Long classId) {
         return classRepository.findById(classId)
