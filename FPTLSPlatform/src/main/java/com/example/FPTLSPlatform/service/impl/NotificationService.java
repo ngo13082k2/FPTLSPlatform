@@ -4,13 +4,14 @@ package com.example.FPTLSPlatform.service.impl;
 import com.example.FPTLSPlatform.dto.NotificationDTO;
 import com.example.FPTLSPlatform.model.Notification;
 import com.example.FPTLSPlatform.repository.NotificationRepository;
+import com.example.FPTLSPlatform.service.INotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
-public class NotificationService {
+public class NotificationService implements INotificationService {
 
     @Autowired
     private NotificationRepository notificationRepository;

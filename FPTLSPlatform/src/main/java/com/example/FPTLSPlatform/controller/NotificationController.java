@@ -2,6 +2,7 @@ package com.example.FPTLSPlatform.controller;
 
 import com.example.FPTLSPlatform.dto.NotificationDTO;
 import com.example.FPTLSPlatform.model.Notification;
+import com.example.FPTLSPlatform.service.INotificationService;
 import com.example.FPTLSPlatform.service.impl.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +14,7 @@ import java.util.List;
 @RequestMapping("/api/notifications")
 public class NotificationController {
     @Autowired
-    private NotificationService notificationService;
+    private INotificationService notificationService;
     @PostMapping("/create")
     public ResponseEntity<Notification> createNotification(@RequestBody NotificationDTO notificationDto) {
         Notification notification = notificationService.createNotification(notificationDto);
