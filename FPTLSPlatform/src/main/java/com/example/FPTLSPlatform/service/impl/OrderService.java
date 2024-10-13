@@ -1,15 +1,17 @@
 package com.example.FPTLSPlatform.service.impl;
 
+import com.example.FPTLSPlatform.dto.NotificationDTO;
 import com.example.FPTLSPlatform.dto.OrderDTO;
 import com.example.FPTLSPlatform.dto.ResponseDTO;
 import com.example.FPTLSPlatform.exception.InsufficientBalanceException;
 import com.example.FPTLSPlatform.exception.OrderAlreadyExistsException;
 import com.example.FPTLSPlatform.exception.ResourceNotFoundException;
-import com.example.FPTLSPlatform.model.*;
 import com.example.FPTLSPlatform.model.Class;
+import com.example.FPTLSPlatform.model.*;
 import com.example.FPTLSPlatform.model.enums.OrderStatus;
 import com.example.FPTLSPlatform.repository.*;
 import com.example.FPTLSPlatform.service.IEmailService;
+import com.example.FPTLSPlatform.service.INotificationService;
 import com.example.FPTLSPlatform.service.IOrderService;
 import com.example.FPTLSPlatform.service.IWalletService;
 import jakarta.mail.MessagingException;
@@ -23,7 +25,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -42,15 +46,18 @@ public class OrderService implements IOrderService {
 
     private final IEmailService emailService;
 
+    private final INotificationService notificationService;
+
     private final TransactionHistoryRepository transactionHistoryRepository;
 
-    private static final Logger log = LoggerFactory.getLogger(EmailService.class);
+    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
 
     public OrderService(OrderRepository orderRepository,
                         ClassRepository classRepository,
                         OrderDetailRepository orderDetailRepository,
                         UserRepository userRepository,
                         IWalletService walletService, IEmailService emailService,
+                        INotificationService notificationService,
                         TransactionHistoryRepository transactionHistoryRepository) {
         this.orderRepository = orderRepository;
         this.classRepository = classRepository;
@@ -58,6 +65,7 @@ public class OrderService implements IOrderService {
         this.userRepository = userRepository;
         this.walletService = walletService;
         this.emailService = emailService;
+        this.notificationService = notificationService;
         this.transactionHistoryRepository = transactionHistoryRepository;
     }
 
@@ -130,21 +138,21 @@ public class OrderService implements IOrderService {
             OrderDetail orderDetail = orderDetailRepository.findByOrder_OrderId(orderId)
                     .orElseThrow(() -> new ResourceNotFoundException("Order detail not found for order id: " + orderId));
 
-            Class scheduledClass  = orderDetail.getClasses();
+            Class scheduledClass = orderDetail.getClasses();
 
-            if (scheduledClass .getEndDate() == null) {
+            if (scheduledClass.getEndDate() == null) {
                 return new ResponseDTO<>("ERROR", "Class end date is missing.", null);
             }
 
             // Check if the class has already ended
-            if (scheduledClass .getEndDate().isBefore(LocalDateTime.now())) {
+            if (scheduledClass.getEndDate().isBefore(LocalDateTime.now())) {
                 return new ResponseDTO<>("ERROR", "Cannot cancel the order because the class has already ended.", null);
             }
 
             // Check if the order status is PENDING
             if (Objects.equals(order.getStatus(), String.valueOf(OrderStatus.PENDING))) {
                 LocalDateTime now = LocalDateTime.now();
-                LocalDateTime cancelDeadline = scheduledClass .getEndDate().minusDays(2);
+                LocalDateTime cancelDeadline = scheduledClass.getEndDate().minusDays(2);
 
                 // Check if cancellation is within 2 days of class ending
                 if (now.isAfter(cancelDeadline)) {
@@ -158,7 +166,7 @@ public class OrderService implements IOrderService {
                 orderRepository.save(order);
                 Context context = new Context();
                 context.setVariable("username", order.getUser().getUserName());
-                context.setVariable("class", scheduledClass );
+                context.setVariable("class", scheduledClass);
                 emailService.sendEmail(order.getUser().getUserName(), "Cancelled booking successful", "cancel-email", context);
                 return new ResponseDTO<>("SUCCESS", "Order cancelled successfully", null);
             }
@@ -170,11 +178,11 @@ public class OrderService implements IOrderService {
         }
     }
 
-    private void sendActivationEmail(Class scheduledClass ) {
+    private void sendActivationEmail(Class scheduledClass) {
         Context context = new Context();
-        context.setVariable("teacherName", scheduledClass .getTeacher().getTeacherName());
-        context.setVariable("class", scheduledClass );
-        emailService.sendEmail(scheduledClass .getTeacher().getTeacherName(), "Class active", "active-email", context);
+        context.setVariable("teacherName", scheduledClass.getTeacher().getTeacherName());
+        context.setVariable("class", scheduledClass);
+        emailService.sendEmail(scheduledClass.getTeacher().getTeacherName(), "Class active", "active-email", context);
     }
 
     @Scheduled(cron = "0 0 0 * * ?")
@@ -204,6 +212,11 @@ public class OrderService implements IOrderService {
             log.info("Class with ID {} has been activated.", scheduledClass.getClassId());
 
             sendActivationEmail(scheduledClass);
+            notificationService.createNotification(NotificationDTO.builder()
+                    .title("Class" + scheduledClass.getCode() + "has been activated")
+                    .description("Class" + scheduledClass.getCode() + "has been start on" + scheduledClass.getStartDate())
+                    .name("Notification")
+                    .build());
         } else {
             // Hủy lớp học nếu không đủ số lượng sinh viên
             scheduledClass.setStatus(String.valueOf(OrderStatus.CANCELLED));
@@ -213,8 +226,50 @@ public class OrderService implements IOrderService {
 
             // Hoàn tiền cho các học sinh đã đăng ký
             refundStudents(scheduledClass);
+            notificationService.createNotification(NotificationDTO.builder()
+                    .title("Class" + scheduledClass.getCode() + "has been cancelled")
+                    .description("Class" + scheduledClass.getCode() + "has been cancelled due to insufficient students")
+                    .name("Notification")
+                    .build());
         }
     }
+
+    public List<String> notifyUpcomingClassesOnLogin(String username) {
+        List<Class> upcomingClasses = getUpcomingClassesForUser(username);
+        List<String> notifications = new ArrayList<>();
+
+        for (Class scheduledClass : upcomingClasses) {
+            String message = calculateTimeUntilClassStarts(scheduledClass);
+            notifications.add(message);
+        }
+
+        return notifications;
+    }
+
+
+    private String calculateTimeUntilClassStarts(Class scheduledClass) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime startDate = scheduledClass.getStartDate();
+
+        Duration duration = Duration.between(now, startDate);
+
+        long days = duration.toDays();
+        long hours = duration.toHours() % 24;
+        long minutes = duration.toMinutes() % 60;
+
+        return String.format("Class %s starts in %d days, %d hours, and %d minutes.",
+                scheduledClass.getCode(), days, hours, minutes);
+    }
+
+    public List<Class> getUpcomingClassesForUser(String username) {
+        List<OrderDetail> orderDetails = orderDetailRepository.findByOrder_User_UserName(username);
+
+        return orderDetails.stream()
+                .map(OrderDetail::getClasses)
+                .filter(scheduledClass -> scheduledClass.getStartDate().isAfter(LocalDateTime.now())) // Chỉ lấy các lớp học chưa bắt đầu
+                .collect(Collectors.toList());
+    }
+
 
     private void refundStudents(Class cancelledClass) {
         List<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(cancelledClass.getClassId());
@@ -231,6 +286,7 @@ public class OrderService implements IOrderService {
             log.info("Refunded {} to student {} for class {} cancellation.", orderDetail.getPrice(), student.getUserName(), cancelledClass.getClassId());
         }
     }
+
     private void saveTransactionHistory(User user, Long amount) {
         TransactionHistory transactionHistory = new TransactionHistory();
         transactionHistory.setAmount(amount);

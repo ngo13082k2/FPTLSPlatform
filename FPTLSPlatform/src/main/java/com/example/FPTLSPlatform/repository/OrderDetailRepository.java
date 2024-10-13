@@ -12,6 +12,7 @@ import java.util.Optional;
 @Repository
 public interface OrderDetailRepository extends JpaRepository<OrderDetail, Long> {
     int countByClasses_ClassId(Long classId);
+
     @Query("SELECT od FROM OrderDetail od WHERE od.order.orderId = :orderId")
     List<OrderDetail> findOrderDetailsByOrderId(@Param("orderId") Long orderId);
 
@@ -20,4 +21,6 @@ public interface OrderDetailRepository extends JpaRepository<OrderDetail, Long> 
     boolean existsByOrder_User_UserNameAndClasses_ClassId(String username, Long classId);
 
     List<OrderDetail> findByClasses_ClassId(Long classId);
+
+    List<OrderDetail> findByOrder_User_UserName(String username);
 }
