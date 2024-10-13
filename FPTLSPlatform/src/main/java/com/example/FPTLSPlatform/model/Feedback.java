@@ -4,29 +4,36 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
-
-@Builder
 @Getter
 @Setter
-@Entity
-@Table(name = "feedbacks")
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Entity
+@Table(name = "feedback")
 public class Feedback {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "feedback_id")
-    private Long feedbackId;
+    private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "order_id", referencedColumnName = "order_id", nullable = false)
-    private Order orders;
+    @JoinColumn(name = "student_id", nullable = false)
+    private User student;
 
-    @Column(name = "content_feedback", nullable = false)
-    private String contentFeedback;
+    @ManyToOne
+    @JoinColumn(name = "class_id", nullable = false)
+    private Class classEntity;
 
-    @Column(name = "timestamp", nullable = false)
-    private LocalDateTime timestamp;
+    @ManyToOne
+    @JoinColumn(name = "question_id", nullable = false)
+    private FeedbackQuestion feedbackQuestion;
+
+    @Column(nullable = false)
+    private int rating;
+
+    @Column(length = 1000)
+    private String comment;
 
 }
+
