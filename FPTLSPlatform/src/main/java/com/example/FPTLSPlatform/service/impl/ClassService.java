@@ -46,8 +46,9 @@ public class ClassService implements IClassService {
                 classDTO.getCourseCode() == null || classDTO.getStartDate() == null) {
             throw new RuntimeException("All fields must be provided and cannot be null");
         }
-        String meetLink = createGoogleMeetLink(classDTO.getName(), classDTO.getStartDate(), classDTO.getEndDate());
-        classDTO.setLocation(meetLink);
+
+//        String meetLink = createGoogleMeetLink(classDTO.getName(), classDTO.getStartDate(), classDTO.getEndDate());
+//        classDTO.setLocation(meetLink);
         String teacherName = getCurrentUsername();
         Teacher teacher = teacherRepository.findByTeacherName(teacherName)
                 .orElseThrow(() -> new RuntimeException("Teacher not found"));
@@ -158,6 +159,29 @@ public class ClassService implements IClassService {
 
         return mapEntityToDTO(clazz);
     }
+    public List<ClassDTO> getAllClasses() {
+        List<Class> classes = classRepository.findAll();
+        if (classes.isEmpty()) {
+            throw new IllegalStateException("No classes found in the system.");
+        }
+        return classes.stream()
+                .map(this::mapEntityToDTO)
+                .collect(Collectors.toList());
+    }
+    public List<ClassDTO> getClassesByTeacherName(String teacherName) {
+        Teacher teacher = teacherRepository.findByTeacherName(teacherName)
+                .orElseThrow(() -> new IllegalArgumentException("Teacher with name '" + teacherName + "' not found."));
+
+        List<Class> classes = classRepository.findByTeacherTeacherName(teacherName);
+        if (classes.isEmpty()) {
+            throw new IllegalStateException("No classes found for teacher '" + teacherName + "'.");
+        }
+
+        return classes.stream()
+                .map(this::mapEntityToDTO)
+                .collect(Collectors.toList());
+    }
+
 
     private Class mapDTOToEntity(ClassDTO classDTO, Course course, Teacher teacher) {
         return Class.builder()

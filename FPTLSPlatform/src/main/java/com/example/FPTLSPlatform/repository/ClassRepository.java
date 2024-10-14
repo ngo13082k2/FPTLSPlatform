@@ -17,5 +17,6 @@ public interface ClassRepository extends JpaRepository<Class,Long> {
 
     @Query("SELECT c FROM Class c WHERE c.status = :status AND c.startDate <= :twoDaysFromNow")
     Page<Class> findByStatusAndStartDateBefore(@Param("status") String status, @Param("twoDaysFromNow") LocalDateTime twoDaysFromNow, Pageable pageable);
+    List<Class> findByTeacherTeacherName(String teacherName);
 
 }

@@ -16,4 +16,6 @@ public interface IClassService {
     List<ClassDTO> getClassesByCourse(String courseCode);
 
     ClassDTO getClassById(Long classId);
+    List<ClassDTO> getAllClasses();
+    List<ClassDTO> getClassesByTeacherName(String teacherName);
 }

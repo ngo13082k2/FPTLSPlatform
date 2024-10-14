@@ -76,4 +76,24 @@ public class ClassController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
+    @GetMapping
+    public ResponseEntity<?> getAllClasses() {
+        try {
+            List<ClassDTO> classes = classService.getAllClasses();
+            return ResponseEntity.ok(classes);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
+    @GetMapping("/teacher/{teacherName}")
+    public ResponseEntity<?> getClassesByTeacherName(@PathVariable String teacherName) {
+        try {
+            List<ClassDTO> classes = classService.getClassesByTeacherName(teacherName);
+            return ResponseEntity.ok(classes);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
 }
