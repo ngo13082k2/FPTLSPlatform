@@ -23,4 +23,6 @@ public interface OrderDetailRepository extends JpaRepository<OrderDetail, Long> 
     List<OrderDetail> findByClasses_ClassId(Long classId);
 
     List<OrderDetail> findByOrder_User_UserName(String username);
+    List<OrderDetail> findByOrderOrderId(Long orderId);
+
 }
