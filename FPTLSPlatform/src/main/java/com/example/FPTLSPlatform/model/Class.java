@@ -45,7 +45,8 @@ public class Class {
     @ManyToOne
     @JoinColumn(name = "teacher_name", referencedColumnName = "teacher_name", nullable = false)
     private Teacher teacher;
-
+    @Column(name = "create_date")
+    private LocalDateTime createDate;
     @Column(name = "start_date")
     private LocalDateTime startDate;
 

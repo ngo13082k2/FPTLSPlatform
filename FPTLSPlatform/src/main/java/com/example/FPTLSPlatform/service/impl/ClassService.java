@@ -39,7 +39,7 @@ public class ClassService implements IClassService {
         if (classDTO.getName() == null || classDTO.getCode() == null || classDTO.getDescription() == null ||
                 classDTO.getStatus() == null || classDTO.getMaxStudents() == null ||
                 classDTO.getPrice() == null || classDTO.getEndDate() == null ||
-                classDTO.getCourseCode() == null) {
+                classDTO.getCourseCode() == null || classDTO.getStartDate() == null)  {
             throw new RuntimeException("All fields must be provided and cannot be null");
         }
         String meetLink = createGoogleMeetLink(classDTO.getName(), classDTO.getStartDate(), classDTO.getEndDate());
@@ -47,7 +47,7 @@ public class ClassService implements IClassService {
         String teacherName = getCurrentUsername();
         Teacher teacher = teacherRepository.findByTeacherName(teacherName)
                 .orElseThrow(() -> new RuntimeException("Teacher not found"));
-        classDTO.setStartDate(LocalDateTime.now());
+        classDTO.setCreateDate(LocalDateTime.now());
         if (classDTO.getEndDate().isBefore(classDTO.getStartDate())) {
             throw new RuntimeException("End date and time cannot be before start date and time.");
         }
@@ -99,7 +99,7 @@ public class ClassService implements IClassService {
                 .setConferenceDataVersion(1)
                 .execute();
 
-        return createdEvent.getHangoutLink(); // Return Google Meet link
+        return createdEvent.getHangoutLink();
     }
 
     public ClassDTO updateClass(Long classId, ClassDTO classDTO) {
@@ -141,6 +141,7 @@ public class ClassService implements IClassService {
                 .maxStudents(classDTO.getMaxStudents())
                 .price(classDTO.getPrice())
                 .teacher(teacher)
+                .createDate(classDTO.getCreateDate())
                 .startDate(classDTO.getStartDate())
                 .endDate(classDTO.getEndDate())
                 .courses(course)
@@ -156,6 +157,7 @@ public class ClassService implements IClassService {
                 .status(clazz.getStatus())
                 .location(clazz.getLocation())
                 .maxStudents(clazz.getMaxStudents())
+                .createDate(clazz.getCreateDate())
                 .price(clazz.getPrice())
                 .teacherName(clazz.getTeacher().getTeacherName())
                 .fullName(clazz.getTeacher().getFullName())

@@ -18,6 +18,7 @@ public class ClassDTO {
     private String location;
     private Integer maxStudents;
     private Long price;
+    private LocalDateTime createDate;
     private String teacherName;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
