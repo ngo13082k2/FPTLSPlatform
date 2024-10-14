@@ -1,6 +1,7 @@
 package com.example.FPTLSPlatform.controller;
 
 import com.example.FPTLSPlatform.dto.ClassDTO;
+import com.example.FPTLSPlatform.dto.ResponseDTO;
 import com.example.FPTLSPlatform.service.IClassService;
 import com.example.FPTLSPlatform.service.impl.ClassService;
 import org.springframework.http.HttpStatus;
@@ -28,9 +29,7 @@ public class ClassController {
             return ResponseEntity.status(HttpStatus.CREATED).body(createdClass);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        } catch (GeneralSecurityException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
+        } catch (GeneralSecurityException | IOException e) {
             throw new RuntimeException(e);
         }
     }
@@ -44,6 +43,20 @@ public class ClassController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
+
+    @PostMapping("/confirm-class")
+    public ResponseEntity<ResponseDTO<ClassDTO>> confirmClassCompletion(
+            @RequestParam Long classId,
+            @RequestParam String teacherUsername) {
+
+        try {
+            ClassDTO classDTO = classService.confirmClassCompletion(classId, teacherUsername);
+            return ResponseEntity.ok(new ResponseDTO<>("SUCCESS", "Class has been confirmed as completed.", classDTO));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ResponseDTO<>("ERROR", e.getMessage(), null));
+        }
+    }
+
     @GetMapping("/byCourse/{courseCode}")
     public ResponseEntity<?> getClassesByCourse(@PathVariable String courseCode) {
         try {
@@ -53,6 +66,7 @@ public class ClassController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
+
     @GetMapping("/{classId}")
     public ResponseEntity<?> getClassById(@PathVariable Long classId) {
         try {

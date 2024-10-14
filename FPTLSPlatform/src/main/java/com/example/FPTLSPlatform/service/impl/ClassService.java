@@ -1,4 +1,7 @@
 package com.example.FPTLSPlatform.service.impl;
+
+import com.example.FPTLSPlatform.exception.ResourceNotFoundException;
+import com.example.FPTLSPlatform.model.enums.OrderStatus;
 import com.example.FPTLSPlatform.util.OAuth2Util;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.*;
@@ -26,20 +29,21 @@ import java.util.stream.Collectors;
 @Service
 public class ClassService implements IClassService {
 
-        private final ClassRepository classRepository;
-        private final CourseRepository courseRepository;
-        private final TeacherRepository teacherRepository;
-        public ClassService(ClassRepository classRepository, CourseRepository courseRepository, TeacherRepository teacherRepository) {
-            this.classRepository = classRepository;
-            this.courseRepository = courseRepository;
-            this.teacherRepository = teacherRepository;
-        }
+    private final ClassRepository classRepository;
+    private final CourseRepository courseRepository;
+    private final TeacherRepository teacherRepository;
+
+    public ClassService(ClassRepository classRepository, CourseRepository courseRepository, TeacherRepository teacherRepository) {
+        this.classRepository = classRepository;
+        this.courseRepository = courseRepository;
+        this.teacherRepository = teacherRepository;
+    }
 
     public ClassDTO createClass(ClassDTO classDTO) throws GeneralSecurityException, IOException {
         if (classDTO.getName() == null || classDTO.getCode() == null || classDTO.getDescription() == null ||
                 classDTO.getStatus() == null || classDTO.getMaxStudents() == null ||
                 classDTO.getPrice() == null || classDTO.getEndDate() == null ||
-                classDTO.getCourseCode() == null || classDTO.getStartDate() == null)  {
+                classDTO.getCourseCode() == null || classDTO.getStartDate() == null) {
             throw new RuntimeException("All fields must be provided and cannot be null");
         }
         String meetLink = createGoogleMeetLink(classDTO.getName(), classDTO.getStartDate(), classDTO.getEndDate());
@@ -62,6 +66,7 @@ public class ClassService implements IClassService {
         Class savedClass = classRepository.save(newClass);
         return mapEntityToDTO(savedClass);
     }
+
     private String getCurrentUsername() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (principal instanceof UserDetails) {
@@ -70,6 +75,7 @@ public class ClassService implements IClassService {
             return principal.toString();
         }
     }
+
     private String createGoogleMeetLink(String className, LocalDateTime startDateTime, LocalDateTime endDateTime) throws IOException, GeneralSecurityException, GeneralSecurityException {
         Calendar service = OAuth2Util.getCalendarService(); // Sử dụng OAuth2Util để khởi tạo Calendar service
 
@@ -89,7 +95,7 @@ public class ClassService implements IClassService {
 
         ConferenceData conferenceData = new ConferenceData()
                 .setCreateRequest(new CreateConferenceRequest()
-                        .setRequestId(  UUID.randomUUID().toString())
+                        .setRequestId(UUID.randomUUID().toString())
                         .setConferenceSolutionKey(new ConferenceSolutionKey().setType("hangoutsMeet")));
 
         event.setConferenceData(conferenceData);
@@ -100,6 +106,25 @@ public class ClassService implements IClassService {
                 .execute();
 
         return createdEvent.getHangoutLink();
+    }
+
+    @Override
+    public ClassDTO confirmClassCompletion(Long classId, String teacherUsername) throws Exception {
+        Class scheduledClass = classRepository.findById(classId)
+                .orElseThrow(() -> new ResourceNotFoundException("Class not found with id: " + classId));
+
+        if (!scheduledClass.getTeacher().getTeacherName().equals(teacherUsername)) {
+            throw new Exception("You are not the teacher of this class.");
+        }
+
+        if (scheduledClass.getEndDate() == null || scheduledClass.getEndDate().isAfter(LocalDateTime.now())) {
+            throw new Exception("Class cannot be confirmed yet as it has not ended.");
+        }
+
+        scheduledClass.setStatus(String.valueOf(OrderStatus.COMPLETE));
+        classRepository.save(scheduledClass);
+
+        return mapEntityToDTO(scheduledClass);
     }
 
     public ClassDTO updateClass(Long classId, ClassDTO classDTO) {
@@ -114,6 +139,7 @@ public class ClassService implements IClassService {
         Class updatedClass = classRepository.save(existingClass);
         return mapEntityToDTO(updatedClass);
     }
+
     public List<ClassDTO> getClassesByCourse(String courseCode) {
         List<Class> classes = classRepository.findByCoursesCourseCode(courseCode);
 
@@ -125,12 +151,14 @@ public class ClassService implements IClassService {
                 .map(this::mapEntityToDTO)
                 .collect(Collectors.toList());
     }
+
     public ClassDTO getClassById(Long classId) {
         Class clazz = classRepository.findById(classId)
                 .orElseThrow(() -> new RuntimeException("Class with id " + classId + " not found"));
 
         return mapEntityToDTO(clazz);
     }
+
     private Class mapDTOToEntity(ClassDTO classDTO, Course course, Teacher teacher) {
         return Class.builder()
                 .name(classDTO.getName())
