@@ -7,6 +7,6 @@ import java.util.List;
 import java.util.Map;
 
 public interface IFeedbackService {
-    void submitFeedbackForAllCategories(FeedbackSubmissionDTO feedbackSubmission, User student);
+    FeedbackSubmissionDTO submitFeedbackForOrder(Long orderId, FeedbackSubmissionDTO feedbackSubmission);
     List<Map<String, Object>> getClassFeedbackSummary(Long classId);
 }

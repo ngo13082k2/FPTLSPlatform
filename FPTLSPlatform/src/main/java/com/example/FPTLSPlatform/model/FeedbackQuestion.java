@@ -24,7 +24,6 @@ public class FeedbackQuestion {
     @JoinColumn(name = "category_id", nullable = false)
     private FeedbackCategory feedbackCategory;
 
-    @OneToMany(mappedBy = "feedbackQuestion")
-    private Set<Feedback> feedbacks;
+
 
 }

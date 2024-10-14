@@ -3,13 +3,9 @@ package com.example.FPTLSPlatform.service.impl;
 import com.example.FPTLSPlatform.dto.FeedbackCategoryDTO;
 import com.example.FPTLSPlatform.dto.FeedbackQuestionAnswerDTO;
 import com.example.FPTLSPlatform.dto.FeedbackSubmissionDTO;
+import com.example.FPTLSPlatform.model.*;
 import com.example.FPTLSPlatform.model.Class;
-import com.example.FPTLSPlatform.model.Feedback;
-import com.example.FPTLSPlatform.model.FeedbackQuestion;
-import com.example.FPTLSPlatform.model.User;
-import com.example.FPTLSPlatform.repository.ClassRepository;
-import com.example.FPTLSPlatform.repository.FeedbackQuestionRepository;
-import com.example.FPTLSPlatform.repository.FeedbackRepository;
+import com.example.FPTLSPlatform.repository.*;
 import com.example.FPTLSPlatform.service.IFeedbackService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,18 +24,26 @@ public class FeedbackService implements IFeedbackService {
 
     @Autowired
     private FeedbackQuestionRepository feedbackQuestionRepository;
+    @Autowired
+    private OrderDetailRepository orderDetailRepository;
 
     @Autowired
-    private ClassRepository classRepository;
+    private UserRepository userRepository;
 
-    public void submitFeedbackForAllCategories(FeedbackSubmissionDTO feedbackSubmission, User student) {
-        Class classEntity = classRepository.findById(feedbackSubmission.getClassId())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid class ID"));
+    public FeedbackSubmissionDTO submitFeedbackForOrder(Long orderId, FeedbackSubmissionDTO feedbackSubmission) {
+        List<OrderDetail> orderDetails = orderDetailRepository.findByOrderOrderId(orderId);
 
+        Order order = orderDetails.get(0).getOrder();
+        User student = order.getUser();
+
+        // Lặp qua từng feedback và lưu thông tin
         for (FeedbackCategoryDTO categoryDTO : feedbackSubmission.getFeedbackCategories()) {
             for (FeedbackQuestionAnswerDTO feedbackAnswer : categoryDTO.getFeedbackAnswers()) {
                 FeedbackQuestion question = feedbackQuestionRepository.findById(feedbackAnswer.getQuestionId())
                         .orElseThrow(() -> new IllegalArgumentException("Invalid question ID: " + feedbackAnswer.getQuestionId()));
+
+                // Lấy class từ order detail
+                Class classEntity = orderDetails.get(0).getClasses();
 
                 Feedback feedback = Feedback.builder()
                         .student(student)
@@ -52,6 +56,13 @@ public class FeedbackService implements IFeedbackService {
                 feedbackRepository.save(feedback);
             }
         }
+
+        FeedbackSubmissionDTO response = new FeedbackSubmissionDTO();
+        response.setUsername(student.getUserName());
+        response.setClassId(orderDetails.get(0).getClasses().getClassId());
+        response.setFeedbackCategories(feedbackSubmission.getFeedbackCategories());
+
+        return response;
     }
     public List<Map<String, Object>> getClassFeedbackSummary(Long classId) {
         List<Feedback> feedbacks = feedbackRepository.findByClassEntityClassId(classId);

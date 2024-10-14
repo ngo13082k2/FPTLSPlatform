@@ -21,7 +21,5 @@ public class FeedbackCategory {
     @Column(nullable = false)
     private String categoryName;
 
-    @OneToMany(mappedBy = "feedbackCategory")
-    private Set<FeedbackQuestion> feedbackQuestions;
 
 }

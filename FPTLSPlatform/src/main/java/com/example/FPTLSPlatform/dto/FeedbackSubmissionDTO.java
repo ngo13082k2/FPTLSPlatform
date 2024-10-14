@@ -9,4 +9,6 @@ import java.util.List;
 public class FeedbackSubmissionDTO {
     private Long classId;
     private List<FeedbackCategoryDTO> feedbackCategories;
+    private String username;
+
 }

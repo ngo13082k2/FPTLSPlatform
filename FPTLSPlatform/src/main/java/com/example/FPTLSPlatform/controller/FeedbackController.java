@@ -19,10 +19,10 @@ public class FeedbackController {
     @Autowired
     private IFeedbackService feedbackService;
 
-    @PostMapping("/submit")
-    public ResponseEntity<String> submitFeedbackForAllCategories(@RequestBody FeedbackSubmissionDTO feedbackSubmissionDTO, @AuthenticationPrincipal User student) {
-        feedbackService.submitFeedbackForAllCategories(feedbackSubmissionDTO, student);
-        return ResponseEntity.ok("Feedback submitted successfully");
+    @PostMapping("/order/{orderId}/submit")
+    public ResponseEntity<FeedbackSubmissionDTO> submitFeedbackForOrder(@PathVariable Long orderId, @RequestBody FeedbackSubmissionDTO feedbackSubmissionDTO) {
+        FeedbackSubmissionDTO response = feedbackService.submitFeedbackForOrder(orderId, feedbackSubmissionDTO);
+        return ResponseEntity.ok(response);
     }
     @GetMapping("/class/{classId}/summary")
     @PreAuthorize("hasRole('STAFF')")

@@ -1,5 +1,7 @@
 package com.example.FPTLSPlatform.service.impl;
-
+import com.example.FPTLSPlatform.util.OAuth2Util;
+import com.google.api.services.calendar.Calendar;
+import com.google.api.services.calendar.model.*;
 import com.example.FPTLSPlatform.dto.ClassDTO;
 import com.example.FPTLSPlatform.model.Class;
 import com.example.FPTLSPlatform.model.Course;
@@ -12,9 +14,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,14 +35,15 @@ public class ClassService implements IClassService {
             this.teacherRepository = teacherRepository;
         }
 
-    public ClassDTO createClass(ClassDTO classDTO) {
+    public ClassDTO createClass(ClassDTO classDTO) throws GeneralSecurityException, IOException {
         if (classDTO.getName() == null || classDTO.getCode() == null || classDTO.getDescription() == null ||
-                classDTO.getStatus() == null || classDTO.getLocation() == null || classDTO.getMaxStudents() == null ||
+                classDTO.getStatus() == null || classDTO.getMaxStudents() == null ||
                 classDTO.getPrice() == null || classDTO.getEndDate() == null ||
                 classDTO.getCourseCode() == null) {
             throw new RuntimeException("All fields must be provided and cannot be null");
         }
-
+        String meetLink = createGoogleMeetLink(classDTO.getName(), classDTO.getStartDate(), classDTO.getEndDate());
+        classDTO.setLocation(meetLink);
         String teacherName = getCurrentUsername();
         Teacher teacher = teacherRepository.findByTeacherName(teacherName)
                 .orElseThrow(() -> new RuntimeException("Teacher not found"));
@@ -63,6 +70,38 @@ public class ClassService implements IClassService {
             return principal.toString();
         }
     }
+    private String createGoogleMeetLink(String className, LocalDateTime startDateTime, LocalDateTime endDateTime) throws IOException, GeneralSecurityException, GeneralSecurityException {
+        Calendar service = OAuth2Util.getCalendarService(); // Sử dụng OAuth2Util để khởi tạo Calendar service
+
+        Event event = new Event()
+                .setSummary(className)
+                .setDescription("Online class: " + className);
+
+        EventDateTime start = new EventDateTime()
+                .setDateTime(new com.google.api.client.util.DateTime(startDateTime.toInstant(ZoneOffset.UTC).toString()))
+                .setTimeZone("UTC");
+        event.setStart(start);
+
+        EventDateTime end = new EventDateTime()
+                .setDateTime(new com.google.api.client.util.DateTime(endDateTime.toInstant(ZoneOffset.UTC).toString()))
+                .setTimeZone("UTC");
+        event.setEnd(end);
+
+        ConferenceData conferenceData = new ConferenceData()
+                .setCreateRequest(new CreateConferenceRequest()
+                        .setRequestId(  UUID.randomUUID().toString())
+                        .setConferenceSolutionKey(new ConferenceSolutionKey().setType("hangoutsMeet")));
+
+        event.setConferenceData(conferenceData);
+
+        // Insert event into Google Calendar and generate Google Meet link
+        Event createdEvent = service.events().insert("primary", event)
+                .setConferenceDataVersion(1)
+                .execute();
+
+        return createdEvent.getHangoutLink(); // Return Google Meet link
+    }
+
     public ClassDTO updateClass(Long classId, ClassDTO classDTO) {
         Class existingClass = classRepository.findById(classId)
                 .orElseThrow(() -> new RuntimeException("Class with id " + classId + " not found"));
