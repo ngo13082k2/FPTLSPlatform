@@ -16,6 +16,7 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -31,7 +32,7 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/login", "/applications/**", "/auth/register-student", "/auth/register-teacher","/forgotpassword/**","api/**").permitAll() // Publicly accessible endpoints
+                        .requestMatchers("/auth/login", "/applications/**", "/auth/register-student", "/auth/register-teacher", "/forgotpassword/**", "api/**").permitAll() // Publicly accessible endpoints
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
                         .requestMatchers("/staff/**", "/courses/**").hasAuthority("STAFF")
                         .requestMatchers("/teacher/**").hasAuthority("TEACHER")
@@ -41,7 +42,12 @@ public class SecurityConfig {
                         .requestMatchers("/classes/byCourse/{courseCode}").hasAuthority("STUDENT")
                         .requestMatchers("/classes/{classId}").hasAuthority("STUDENT")
                         .requestMatchers("/classes/**").hasAuthority("TEACHER")
-
+                        .requestMatchers("classes/confirm-classes/").hasAuthority("TEACHER")
+                        .requestMatchers("orders/**").hasAuthority("STUDENT")
+                        .requestMatchers("feedback/order/{orderId}/submit").hasAuthority("STUDENT")
+                        .requestMatchers("feedback/class/{classId}/summary").hasAuthority("STAFF")
+                        .requestMatchers("/api/feedback-question").hasAuthority("STAFF")
+                        .requestMatchers("/api/feedback-category").hasAuthority("STAFF")
 
                         .anyRequest().authenticated()
                 )

@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/feedback")
+@RequestMapping("/feedback")
 public class FeedbackController {
 
     @Autowired
@@ -24,6 +24,7 @@ public class FeedbackController {
         FeedbackSubmissionDTO response = feedbackService.submitFeedbackForOrder(orderId, feedbackSubmissionDTO);
         return ResponseEntity.ok(response);
     }
+
     @GetMapping("/class/{classId}/summary")
     @PreAuthorize("hasRole('STAFF')")
     public ResponseEntity<List<Map<String, Object>>> getClassFeedbackSummary(@PathVariable Long classId) {
