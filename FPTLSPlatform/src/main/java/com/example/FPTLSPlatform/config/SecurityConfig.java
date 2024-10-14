@@ -38,7 +38,7 @@ public class SecurityConfig {
                         .requestMatchers("/student/**").hasAuthority("STUDENT")
                         .requestMatchers("/courses/**", "/applications/staff").hasAuthority("STAFF")
                         .requestMatchers("/categories/**").hasAuthority("STAFF")
-                        .requestMatchers("/classes/byCourse/**").hasAuthority("STUDENT")
+                        .requestMatchers("/classes/byCourse/{courseCode}").hasAuthority("STUDENT")
                         .requestMatchers("/classes/{classId}").hasAuthority("STUDENT")
                         .requestMatchers("/classes/**").hasAuthority("TEACHER")
 
