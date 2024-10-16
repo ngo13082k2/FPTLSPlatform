@@ -2,10 +2,14 @@ package com.example.FPTLSPlatform.controller;
 
 import com.example.FPTLSPlatform.dto.ClassDTO;
 import com.example.FPTLSPlatform.dto.ResponseDTO;
+import com.example.FPTLSPlatform.dto.StudentDTO;
 import com.example.FPTLSPlatform.service.IClassService;
 import com.example.FPTLSPlatform.service.impl.ClassService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -32,6 +36,16 @@ public class ClassController {
         } catch (GeneralSecurityException | IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @GetMapping("/{classId}/students")
+    @PreAuthorize("hasAnyAuthority('STAFF', 'STUDENT', 'TEACHER')")
+    public ResponseEntity<Page<StudentDTO>> getAllStudentsInClass(
+            @PathVariable Long classId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Page<StudentDTO> students = classService.getAllStudentsInClass(classId, PageRequest.of(page, size));
+        return ResponseEntity.ok(students);
     }
 
     @PutMapping("/{classId}")
@@ -76,6 +90,7 @@ public class ClassController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
+
     @GetMapping
     public ResponseEntity<?> getAllClasses() {
         try {
@@ -85,6 +100,7 @@ public class ClassController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
+
     @GetMapping("/teacher/{teacherName}")
     public ResponseEntity<?> getClassesByTeacherName(@PathVariable String teacherName) {
         try {

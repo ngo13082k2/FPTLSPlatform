@@ -69,6 +69,12 @@ public class OrderService implements IOrderService {
         this.transactionHistoryRepository = transactionHistoryRepository;
     }
 
+    public Page<OrderDTO> getAllOrders(Pageable pageable) {
+        Page<Order> orders = orderRepository.findAll(pageable);
+        return orders.map(order -> new OrderDTO(order.getOrderId(), order.getUser().getUserName(), order.getCreateAt(), order.getTotalPrice(), order.getStatus()));
+    }
+
+
     @Override
     public OrderDTO createOrder(Long classId, String username) throws Exception {
         Class scheduledClass = getClassOrThrow(classId);
@@ -110,17 +116,16 @@ public class OrderService implements IOrderService {
     }
 
     @Override
-    public List<OrderDTO> getOrdersByUser(String username) {
-        List<Order> orders = orderRepository.findByUserName(username);
-        return orders.stream()
+    public Page<OrderDTO> getOrdersByUser(String username, Pageable pageable) {
+        Page<Order> orders = orderRepository.findByUserName(username, pageable);
+        return orders
                 .map(order -> OrderDTO.builder()
                         .orderId(order.getOrderId())
                         .username(order.getUser().getUserName())
                         .createAt(order.getCreateAt())
                         .totalPrice(order.getTotalPrice())
                         .status(order.getStatus())
-                        .build())
-                .collect(Collectors.toList());
+                        .build());
     }
 
 
@@ -272,7 +277,7 @@ public class OrderService implements IOrderService {
 
 
     private void refundStudents(Class cancelledClass) {
-        List<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(cancelledClass.getClassId());
+        Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(cancelledClass.getClassId(), Pageable.unpaged());
 
         for (OrderDetail orderDetail : orderDetails) {
             Order order = orderDetail.getOrder();

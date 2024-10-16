@@ -1,6 +1,8 @@
 package com.example.FPTLSPlatform.repository;
 
 import com.example.FPTLSPlatform.model.OrderDetail;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,9 +22,10 @@ public interface OrderDetailRepository extends JpaRepository<OrderDetail, Long> 
 
     boolean existsByOrder_User_UserNameAndClasses_ClassId(String username, Long classId);
 
-    List<OrderDetail> findByClasses_ClassId(Long classId);
+    Page<OrderDetail> findByClasses_ClassId(Long classId, Pageable pageable);
 
     List<OrderDetail> findByOrder_User_UserName(String username);
+
     List<OrderDetail> findByOrderOrderId(Long orderId);
 
 }

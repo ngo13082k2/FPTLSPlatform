@@ -1,18 +1,21 @@
 package com.example.FPTLSPlatform.service.impl;
 
+import com.example.FPTLSPlatform.dto.StudentDTO;
 import com.example.FPTLSPlatform.exception.ResourceNotFoundException;
+import com.example.FPTLSPlatform.model.*;
+import com.example.FPTLSPlatform.model.Class;
 import com.example.FPTLSPlatform.model.enums.OrderStatus;
+import com.example.FPTLSPlatform.repository.OrderDetailRepository;
 import com.example.FPTLSPlatform.util.OAuth2Util;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.*;
 import com.example.FPTLSPlatform.dto.ClassDTO;
-import com.example.FPTLSPlatform.model.Class;
-import com.example.FPTLSPlatform.model.Course;
-import com.example.FPTLSPlatform.model.Teacher;
 import com.example.FPTLSPlatform.repository.ClassRepository;
 import com.example.FPTLSPlatform.repository.CourseRepository;
 import com.example.FPTLSPlatform.repository.TeacherRepository;
 import com.example.FPTLSPlatform.service.IClassService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -32,11 +35,13 @@ public class ClassService implements IClassService {
     private final ClassRepository classRepository;
     private final CourseRepository courseRepository;
     private final TeacherRepository teacherRepository;
+    private final OrderDetailRepository orderDetailRepository;
 
-    public ClassService(ClassRepository classRepository, CourseRepository courseRepository, TeacherRepository teacherRepository) {
+    public ClassService(ClassRepository classRepository, CourseRepository courseRepository, TeacherRepository teacherRepository, OrderDetailRepository orderDetailRepository) {
         this.classRepository = classRepository;
         this.courseRepository = courseRepository;
         this.teacherRepository = teacherRepository;
+        this.orderDetailRepository = orderDetailRepository;
     }
 
     public ClassDTO createClass(ClassDTO classDTO) throws GeneralSecurityException, IOException {
@@ -159,6 +164,7 @@ public class ClassService implements IClassService {
 
         return mapEntityToDTO(clazz);
     }
+
     public List<ClassDTO> getAllClasses() {
         List<Class> classes = classRepository.findAll();
         if (classes.isEmpty()) {
@@ -168,6 +174,7 @@ public class ClassService implements IClassService {
                 .map(this::mapEntityToDTO)
                 .collect(Collectors.toList());
     }
+
     public List<ClassDTO> getClassesByTeacherName(String teacherName) {
         Teacher teacher = teacherRepository.findByTeacherName(teacherName)
                 .orElseThrow(() -> new IllegalArgumentException("Teacher with name '" + teacherName + "' not found."));
@@ -182,6 +189,13 @@ public class ClassService implements IClassService {
                 .collect(Collectors.toList());
     }
 
+    public Page<StudentDTO> getAllStudentsInClass(Long classId, Pageable pageable) {
+        Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(classId, pageable);
+        return orderDetails.map(orderDetail -> {
+            User student = orderDetail.getOrder().getUser();
+            return new StudentDTO(student.getUserName(), student.getPhoneNumber(), student.getEmail(), student.getEmail(), student.getStatus(), student.getAddress());
+        });
+    }
 
     private Class mapDTOToEntity(ClassDTO classDTO, Course course, Teacher teacher) {
         return Class.builder()

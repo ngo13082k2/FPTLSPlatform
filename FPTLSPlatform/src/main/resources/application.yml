@@ -45,7 +45,7 @@ vnpay:
 #  jpa:
 #    hibernate:
 #      ddl-auto: update
-#    show-sql: true
+#    show-sql: false
 #    properties:
 #      hibernate:
 #        format_sql: true
@@ -55,7 +55,7 @@ vnpay:
 #    host: smtp.gmail.com
 #    port: 587
 #    username: phudxse160591@fpt.edu.vn
-#    password: xoxg dfcq cubi gbgw
+#    password: uavf leif scst jrxt
 #    properties:
 #      mail:
 #        smtp:
@@ -83,6 +83,6 @@ vnpay:
 #  phoneNumber: +18147475403
 #vnpay:
 #  tmn_code: WF0GYR4R
-#  hash_secret: NX15BK4HGP1K8CE3GJY8KPR4165S6N0A
+#  hash_secret: KYU6SQGZREITDT5DZP44P2ZE28FJG3J0
 #  api_url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
-#  return_url: http://localhost:8080/vnpay_return
+#  return_url: http://localhost:5173/wallet

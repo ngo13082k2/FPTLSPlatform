@@ -43,10 +43,12 @@ public class SecurityConfig {
                         .requestMatchers("/classes/{classId}").hasAuthority("STUDENT")
                         .requestMatchers("/classes").hasAuthority("STUDENT")
                         .requestMatchers("/classes/teacher/{teacherName}").hasAuthority("STUDENT")
+                        .requestMatchers("/classes/{classId}/students").hasAnyAuthority("STAFF", "STUDENT", "TEACHER")
 
                         .requestMatchers("/classes/**").hasAuthority("TEACHER")
                         .requestMatchers("classes/confirm-classes/").hasAuthority("TEACHER")
-                        .requestMatchers("orders/**").hasAuthority("STUDENT")
+
+                        .requestMatchers("orders/**").hasAnyAuthority("STAFF", "STUDENT")
                         .requestMatchers("feedback/order/{orderId}/submit").hasAuthority("STUDENT")
                         .requestMatchers("feedback/class/{classId}/summary").hasAuthority("STAFF")
                         .requestMatchers("/api/feedback-question").hasAuthority("STAFF")
