@@ -1,6 +1,9 @@
 package com.example.FPTLSPlatform.service;
 
 import com.example.FPTLSPlatform.dto.ClassDTO;
+import com.example.FPTLSPlatform.dto.StudentDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -16,6 +19,10 @@ public interface IClassService {
     List<ClassDTO> getClassesByCourse(String courseCode);
 
     ClassDTO getClassById(Long classId);
+
     List<ClassDTO> getAllClasses();
+
     List<ClassDTO> getClassesByTeacherName(String teacherName);
+
+    Page<StudentDTO> getAllStudentsInClass(Long classId, Pageable pageable);
 }

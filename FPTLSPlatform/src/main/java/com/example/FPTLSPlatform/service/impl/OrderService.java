@@ -1,5 +1,6 @@
 package com.example.FPTLSPlatform.service.impl;
 
+import com.example.FPTLSPlatform.dto.ClassDTO;
 import com.example.FPTLSPlatform.dto.NotificationDTO;
 import com.example.FPTLSPlatform.dto.OrderDTO;
 import com.example.FPTLSPlatform.dto.ResponseDTO;
@@ -69,6 +70,12 @@ public class OrderService implements IOrderService {
         this.transactionHistoryRepository = transactionHistoryRepository;
     }
 
+    public Page<OrderDTO> getAllOrders(Pageable pageable) {
+        Page<Order> orders = orderRepository.findAll(pageable);
+        return orders.map(order -> new OrderDTO(order.getOrderId(), order.getUser().getUserName(), order.getCreateAt(), order.getTotalPrice(), order.getStatus()));
+    }
+
+
     @Override
     public OrderDTO createOrder(Long classId, String username) throws Exception {
         Class scheduledClass = getClassOrThrow(classId);
@@ -110,19 +117,26 @@ public class OrderService implements IOrderService {
     }
 
     @Override
-    public List<OrderDTO> getOrdersByUser(String username) {
-        List<Order> orders = orderRepository.findByUserName(username);
-        return orders.stream()
+    public Page<OrderDTO> getOrdersByUser(String username, Pageable pageable) {
+        Page<Order> orders = orderRepository.findByUserName(username, pageable);
+        return orders
                 .map(order -> OrderDTO.builder()
                         .orderId(order.getOrderId())
                         .username(order.getUser().getUserName())
                         .createAt(order.getCreateAt())
                         .totalPrice(order.getTotalPrice())
                         .status(order.getStatus())
-                        .build())
-                .collect(Collectors.toList());
+                        .build());
     }
 
+    public Page<ClassDTO> getClassesOrderedByUser(String username, Pageable pageable) {
+        Page<OrderDetail> orderDetails = orderDetailRepository.findByOrder_User_UserName(username, pageable);
+
+        return orderDetails.map(orderDetail -> {
+            Class scheduledClass = orderDetail.getClasses();
+            return mapEntityToDTO(scheduledClass);
+        });
+    }
 
     @Transactional
     public ResponseDTO<String> cancelOrder(Long orderId) {
@@ -262,7 +276,7 @@ public class OrderService implements IOrderService {
     }
 
     public List<Class> getUpcomingClassesForUser(String username) {
-        List<OrderDetail> orderDetails = orderDetailRepository.findByOrder_User_UserName(username);
+        Page<OrderDetail> orderDetails = orderDetailRepository.findByOrder_User_UserName(username, Pageable.unpaged());
 
         return orderDetails.stream()
                 .map(OrderDetail::getClasses)
@@ -272,7 +286,7 @@ public class OrderService implements IOrderService {
 
 
     private void refundStudents(Class cancelledClass) {
-        List<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(cancelledClass.getClassId());
+        Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(cancelledClass.getClassId(), Pageable.unpaged());
 
         for (OrderDetail orderDetail : orderDetails) {
             Order order = orderDetail.getOrder();
@@ -332,4 +346,22 @@ public class OrderService implements IOrderService {
         orderDetailRepository.save(orderDetail);
     }
 
+    private ClassDTO mapEntityToDTO(Class clazz) {
+        return ClassDTO.builder()
+                .classId(clazz.getClassId())
+                .name(clazz.getName())
+                .code(clazz.getCode())
+                .description(clazz.getDescription())
+                .status(clazz.getStatus())
+                .location(clazz.getLocation())
+                .maxStudents(clazz.getMaxStudents())
+                .createDate(clazz.getCreateDate())
+                .price(clazz.getPrice())
+                .teacherName(clazz.getTeacher().getTeacherName())
+                .fullName(clazz.getTeacher().getFullName())
+                .startDate(clazz.getStartDate())
+                .endDate(clazz.getEndDate())
+                .courseCode(clazz.getCourses().getCourseCode())
+                .build();
+    }
 }

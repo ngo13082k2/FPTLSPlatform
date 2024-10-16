@@ -1,6 +1,8 @@
 package com.example.FPTLSPlatform.repository;
 
 import com.example.FPTLSPlatform.model.OrderDetail;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,15 +16,16 @@ public interface OrderDetailRepository extends JpaRepository<OrderDetail, Long> 
     int countByClasses_ClassId(Long classId);
 
     @Query("SELECT od FROM OrderDetail od WHERE od.order.orderId = :orderId")
-    List<OrderDetail> findOrderDetailsByOrderId(@Param("orderId") Long orderId);
+    Page<OrderDetail> findOrderDetailsByOrderId(@Param("orderId") Long orderId, Pageable pageable);
 
     Optional<OrderDetail> findByOrder_OrderId(Long orderId);
 
     boolean existsByOrder_User_UserNameAndClasses_ClassId(String username, Long classId);
 
-    List<OrderDetail> findByClasses_ClassId(Long classId);
+    Page<OrderDetail> findByClasses_ClassId(Long classId, Pageable pageable);
 
-    List<OrderDetail> findByOrder_User_UserName(String username);
-    List<OrderDetail> findByOrderOrderId(Long orderId);
+    Page<OrderDetail> findByOrder_User_UserName(String username, Pageable pageable);
+
+    Page<OrderDetail> findByOrderOrderId(Long orderId, Pageable pageable);
 
 }

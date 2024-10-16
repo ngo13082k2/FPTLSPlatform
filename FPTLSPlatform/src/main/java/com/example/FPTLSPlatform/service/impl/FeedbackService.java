@@ -8,6 +8,8 @@ import com.example.FPTLSPlatform.model.Class;
 import com.example.FPTLSPlatform.repository.*;
 import com.example.FPTLSPlatform.service.IFeedbackService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -31,9 +33,9 @@ public class FeedbackService implements IFeedbackService {
     private UserRepository userRepository;
 
     public FeedbackSubmissionDTO submitFeedbackForOrder(Long orderId, FeedbackSubmissionDTO feedbackSubmission) {
-        List<OrderDetail> orderDetails = orderDetailRepository.findByOrderOrderId(orderId);
+        Page<OrderDetail> orderDetails = orderDetailRepository.findByOrderOrderId(orderId, Pageable.unpaged());
 
-        Order order = orderDetails.get(0).getOrder();
+        Order order = orderDetails.getContent().get(0).getOrder();
         User student = order.getUser();
 
         // Lặp qua từng feedback và lưu thông tin
@@ -43,7 +45,7 @@ public class FeedbackService implements IFeedbackService {
                         .orElseThrow(() -> new IllegalArgumentException("Invalid question ID: " + feedbackAnswer.getQuestionId()));
 
                 // Lấy class từ order detail
-                Class classEntity = orderDetails.get(0).getClasses();
+                Class classEntity = orderDetails.getContent().get(0).getClasses();
 
                 Feedback feedback = Feedback.builder()
                         .student(student)
@@ -59,11 +61,12 @@ public class FeedbackService implements IFeedbackService {
 
         FeedbackSubmissionDTO response = new FeedbackSubmissionDTO();
         response.setUsername(student.getUserName());
-        response.setClassId(orderDetails.get(0).getClasses().getClassId());
+        response.setClassId(orderDetails.getContent().get(0).getClasses().getClassId());
         response.setFeedbackCategories(feedbackSubmission.getFeedbackCategories());
 
         return response;
     }
+
     public List<Map<String, Object>> getClassFeedbackSummary(Long classId) {
         List<Feedback> feedbacks = feedbackRepository.findByClassEntityClassId(classId);
         // Map để nhóm feedback theo questionId và tính toán kết quả

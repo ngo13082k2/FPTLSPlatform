@@ -7,6 +7,8 @@ import com.example.FPTLSPlatform.model.OrderDetail;
 import com.example.FPTLSPlatform.repository.OrderDetailRepository;
 import com.example.FPTLSPlatform.service.IOrderDetailService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,13 +21,14 @@ public class OrderDetailService implements IOrderDetailService {
     private OrderDetailRepository orderDetailRepository;
 
     @Override
-    public List<OrderDetailDTO> getOrderDetailsByOrderId(Long orderId) {
-        List<OrderDetail> orderDetails = orderDetailRepository.findOrderDetailsByOrderId(orderId);
-        return orderDetails.stream().map(orderDetail -> OrderDetailDTO.builder()
+    public Page<OrderDetailDTO> getOrderDetailsByOrderId(Long orderId, Pageable pageable) {
+        Page<OrderDetail> orderDetails = orderDetailRepository.findOrderDetailsByOrderId(orderId, pageable);
+        return orderDetails.map(orderDetail -> OrderDetailDTO.builder()
                 .orderDetailId(orderDetail.getOrderDetailId())
                 .orderId(orderDetail.getOrder().getOrderId())
                 .classId(orderDetail.getClasses().getClassId())
                 .price(orderDetail.getPrice())
-                .build()).collect(Collectors.toList());
+                .build());
     }
+
 }
