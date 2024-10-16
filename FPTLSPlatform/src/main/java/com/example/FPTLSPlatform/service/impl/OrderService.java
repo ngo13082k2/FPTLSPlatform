@@ -1,5 +1,6 @@
 package com.example.FPTLSPlatform.service.impl;
 
+import com.example.FPTLSPlatform.dto.ClassDTO;
 import com.example.FPTLSPlatform.dto.NotificationDTO;
 import com.example.FPTLSPlatform.dto.OrderDTO;
 import com.example.FPTLSPlatform.dto.ResponseDTO;
@@ -128,6 +129,14 @@ public class OrderService implements IOrderService {
                         .build());
     }
 
+    public Page<ClassDTO> getClassesOrderedByUser(String username, Pageable pageable) {
+        Page<OrderDetail> orderDetails = orderDetailRepository.findByOrder_User_UserName(username, pageable);
+
+        return orderDetails.map(orderDetail -> {
+            Class scheduledClass = orderDetail.getClasses();
+            return mapEntityToDTO(scheduledClass);
+        });
+    }
 
     @Transactional
     public ResponseDTO<String> cancelOrder(Long orderId) {
@@ -267,7 +276,7 @@ public class OrderService implements IOrderService {
     }
 
     public List<Class> getUpcomingClassesForUser(String username) {
-        List<OrderDetail> orderDetails = orderDetailRepository.findByOrder_User_UserName(username);
+        Page<OrderDetail> orderDetails = orderDetailRepository.findByOrder_User_UserName(username, Pageable.unpaged());
 
         return orderDetails.stream()
                 .map(OrderDetail::getClasses)
@@ -337,4 +346,22 @@ public class OrderService implements IOrderService {
         orderDetailRepository.save(orderDetail);
     }
 
+    private ClassDTO mapEntityToDTO(Class clazz) {
+        return ClassDTO.builder()
+                .classId(clazz.getClassId())
+                .name(clazz.getName())
+                .code(clazz.getCode())
+                .description(clazz.getDescription())
+                .status(clazz.getStatus())
+                .location(clazz.getLocation())
+                .maxStudents(clazz.getMaxStudents())
+                .createDate(clazz.getCreateDate())
+                .price(clazz.getPrice())
+                .teacherName(clazz.getTeacher().getTeacherName())
+                .fullName(clazz.getTeacher().getFullName())
+                .startDate(clazz.getStartDate())
+                .endDate(clazz.getEndDate())
+                .courseCode(clazz.getCourses().getCourseCode())
+                .build();
+    }
 }

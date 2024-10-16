@@ -16,7 +16,7 @@ public interface OrderDetailRepository extends JpaRepository<OrderDetail, Long> 
     int countByClasses_ClassId(Long classId);
 
     @Query("SELECT od FROM OrderDetail od WHERE od.order.orderId = :orderId")
-    List<OrderDetail> findOrderDetailsByOrderId(@Param("orderId") Long orderId);
+    Page<OrderDetail> findOrderDetailsByOrderId(@Param("orderId") Long orderId, Pageable pageable);
 
     Optional<OrderDetail> findByOrder_OrderId(Long orderId);
 
@@ -24,8 +24,8 @@ public interface OrderDetailRepository extends JpaRepository<OrderDetail, Long> 
 
     Page<OrderDetail> findByClasses_ClassId(Long classId, Pageable pageable);
 
-    List<OrderDetail> findByOrder_User_UserName(String username);
+    Page<OrderDetail> findByOrder_User_UserName(String username, Pageable pageable);
 
-    List<OrderDetail> findByOrderOrderId(Long orderId);
+    Page<OrderDetail> findByOrderOrderId(Long orderId, Pageable pageable);
 
 }

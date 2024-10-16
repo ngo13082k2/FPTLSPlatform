@@ -1,11 +1,13 @@
 package com.example.FPTLSPlatform.controller;
 
+import com.example.FPTLSPlatform.dto.ClassDTO;
 import com.example.FPTLSPlatform.dto.OrderDTO;
 import com.example.FPTLSPlatform.dto.ResponseDTO;
 import com.example.FPTLSPlatform.exception.ResourceNotFoundException;
 import com.example.FPTLSPlatform.service.IOrderService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -38,7 +40,7 @@ public class OrderController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Page<OrderDTO> orders = orderService.getAllOrders(PageRequest.of(page, size));
-        ResponseDTO<Page<OrderDTO>> response = new ResponseDTO<>("SUCCESS", "Get All successfully", orders);
+        ResponseDTO<Page<OrderDTO>> response = new ResponseDTO<>("SUCCESS", "Orders retrieves successfully", orders);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
@@ -65,7 +67,7 @@ public class OrderController {
     ) throws Exception {
         String username = getCurrentUsername();
         Page<OrderDTO> orders = orderService.getOrdersByUser(username, PageRequest.of(page, size));
-        ResponseDTO<Page<OrderDTO>> response = new ResponseDTO<>("SUCCESS", "Orders retrieved successfully", orders);
+        ResponseDTO<Page<OrderDTO>> response = new ResponseDTO<>("SUCCESS", "Users retrieved successfully", orders);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -77,6 +79,17 @@ public class OrderController {
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
 
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/user/{username}/classes")
+    public ResponseEntity<ResponseDTO<Page<ClassDTO>>> getOrderedClasses(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        String username = getCurrentUsername();
+        Pageable pageable = PageRequest.of(page, size);
+        Page<ClassDTO> classDTOS = orderService.getClassesOrderedByUser(username, pageable);
+        ResponseDTO<Page<ClassDTO>> response = new ResponseDTO<>("SUCCESS", "Classes retrieved successfully", classDTOS);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }
