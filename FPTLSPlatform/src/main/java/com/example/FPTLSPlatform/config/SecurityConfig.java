@@ -2,9 +2,9 @@ package com.example.FPTLSPlatform.config;
 
 
 import com.example.FPTLSPlatform.filter.JwtRequestFilter;
-import com.twilio.http.HttpMethod;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -41,9 +41,7 @@ public class SecurityConfig {
                         .requestMatchers("/categories/**").hasAuthority("STAFF")
                         .requestMatchers("/classes/byCourse/{courseCode}").hasAuthority("STUDENT")
                         .requestMatchers("/classes/{classId}").hasAuthority("STUDENT")
-                        .requestMatchers("/classes").hasAuthority("STUDENT")
-                        .requestMatchers("/classes/teacher/{teacherName}").hasAuthority("STUDENT")
-
+                        .requestMatchers(HttpMethod.GET, "/classes").hasAuthority("STUDENT")
                         .requestMatchers("/classes/**").hasAuthority("TEACHER")
                         .requestMatchers("classes/confirm-classes/").hasAuthority("TEACHER")
                         .requestMatchers("orders/**").hasAuthority("STUDENT")
