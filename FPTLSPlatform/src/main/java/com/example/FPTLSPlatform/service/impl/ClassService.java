@@ -193,7 +193,7 @@ public class ClassService implements IClassService {
         Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(classId, pageable);
         return orderDetails.map(orderDetail -> {
             User student = orderDetail.getOrder().getUser();
-            return new StudentDTO(student.getUserName(), student.getPhoneNumber(), student.getEmail(), student.getEmail(), student.getStatus(), student.getAddress());
+            return new StudentDTO(student.getUserName(), student.getPhoneNumber(), student.getEmail(), student.getEmail(), student.getAddress());
         });
     }
 
@@ -215,6 +215,21 @@ public class ClassService implements IClassService {
     }
 
     private ClassDTO mapEntityToDTO(Class clazz) {
+        Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(clazz.getClassId(), Pageable.unpaged());
+        List<StudentDTO> studentDTOList = orderDetails.getContent().stream()
+                .map(orderDetail -> {
+                    User user = orderDetail.getOrder().getUser();
+                    return StudentDTO.builder()
+                            .userName(user.getUserName())
+                            .fullName(user.getFullName())
+                            .email(user.getEmail())
+                            .phoneNumber(user.getPhoneNumber())
+                            .address(user.getAddress())
+                            .build();
+                })
+                .distinct()
+                .toList();
+
         return ClassDTO.builder()
                 .classId(clazz.getClassId())
                 .name(clazz.getName())
@@ -230,6 +245,7 @@ public class ClassService implements IClassService {
                 .startDate(clazz.getStartDate())
                 .endDate(clazz.getEndDate())
                 .courseCode(clazz.getCourses().getCourseCode())
+                .students(studentDTOList)
                 .build();
     }
 }

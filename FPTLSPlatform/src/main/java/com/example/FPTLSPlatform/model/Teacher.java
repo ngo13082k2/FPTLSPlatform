@@ -6,9 +6,10 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+
 @Builder
 @Entity
-@Table(name = "teachers ")
+@Table(name = "teachers")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -24,17 +25,22 @@ public class Teacher {
 
     @Column(name = "major")
     private String major;
+    
     @Column(name = "phone_number")
     private String phoneNumber;
+
     @Column(name = "address")
     private String address;
-    @Column(name ="email")
+
+    @Column(name = "email")
     private String email;
+
     @Column(name = "created_date")
     private LocalDateTime createdDate;
 
     @Column(name = "modified_date")
     private LocalDateTime modifiedDate;
+
     @Column(name = "fullname", nullable = false)
     private String fullName;
 
