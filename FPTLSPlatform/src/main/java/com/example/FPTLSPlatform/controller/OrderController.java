@@ -82,7 +82,7 @@ public class OrderController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @GetMapping("/user/{username}/classes")
+    @GetMapping("/classes")
     public ResponseEntity<ResponseDTO<Page<ClassDTO>>> getOrderedClasses(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
