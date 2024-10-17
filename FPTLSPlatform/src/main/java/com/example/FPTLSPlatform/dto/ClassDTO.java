@@ -3,6 +3,7 @@ package com.example.FPTLSPlatform.dto;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -24,4 +25,5 @@ public class ClassDTO {
     private LocalDateTime endDate;
     private String courseCode;
     private String fullName;
+    private List<StudentDTO> students;
 }

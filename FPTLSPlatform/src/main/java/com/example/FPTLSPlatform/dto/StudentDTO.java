@@ -26,9 +26,6 @@ public class StudentDTO {
     @Column(name = "full_name", nullable = false)
     private String fullName;
 
-    @Column(name = "status", nullable = false)
-    private String status;
-
     @Column(name = "address")
     private String address;
 }
