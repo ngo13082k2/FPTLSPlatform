@@ -47,20 +47,21 @@ public class ClassService implements IClassService {
     public ClassDTO createClass(ClassDTO classDTO) throws GeneralSecurityException, IOException {
         if (classDTO.getName() == null || classDTO.getCode() == null || classDTO.getDescription() == null ||
                 classDTO.getStatus() == null || classDTO.getMaxStudents() == null ||
-                classDTO.getPrice() == null || classDTO.getEndDate() == null ||
+                classDTO.getPrice() == null  ||
                 classDTO.getCourseCode() == null || classDTO.getStartDate() == null) {
             throw new RuntimeException("All fields must be provided and cannot be null");
         }
-
+        LocalDateTime startDate = classDTO.getStartDate();
+        classDTO.setEndDate(startDate.plusHours(3));
 //        String meetLink = createGoogleMeetLink(classDTO.getName(), classDTO.getStartDate(), classDTO.getEndDate());
 //        classDTO.setLocation(meetLink);
         String teacherName = getCurrentUsername();
         Teacher teacher = teacherRepository.findByTeacherName(teacherName)
                 .orElseThrow(() -> new RuntimeException("Teacher not found"));
         classDTO.setCreateDate(LocalDateTime.now());
-        if (classDTO.getEndDate().isBefore(classDTO.getStartDate())) {
-            throw new RuntimeException("End date and time cannot be before start date and time.");
-        }
+//        if (classDTO.getEndDate().isBefore(classDTO.getStartDate())) {
+//            throw new RuntimeException("End date and time cannot be before start date and time.");
+//        }
         Optional<Course> course = courseRepository.findById(classDTO.getCourseCode());
         if (course.isEmpty()) {
             throw new RuntimeException("Course with code " + classDTO.getCourseCode() + " not found");
