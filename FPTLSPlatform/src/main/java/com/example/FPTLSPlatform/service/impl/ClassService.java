@@ -155,7 +155,11 @@ public class ClassService implements IClassService {
             imageUrl = cloudinaryService.uploadImage(image);
             existingClass.setImage(imageUrl);
         }
-
+        if (classDTO.getSlotId() != null) {
+            Slot slot = slotRepository.findById(classDTO.getSlotId())
+                    .orElseThrow(() -> new RuntimeException("Slot with id " + classDTO.getSlotId() + " not found"));
+            existingClass.setSlot(slot);
+        }
         Class updatedClass = classRepository.save(existingClass);
         return mapEntityToDTO(updatedClass);
     }
