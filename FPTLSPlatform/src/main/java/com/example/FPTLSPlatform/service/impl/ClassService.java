@@ -36,6 +36,7 @@ public class ClassService implements IClassService {
     private final OrderDetailRepository orderDetailRepository;
     private final CloudinaryService cloudinaryService;
     private final SlotRepository slotRepository;
+
     public ClassService(ClassRepository classRepository, CourseRepository courseRepository, TeacherRepository teacherRepository, OrderDetailRepository orderDetailRepository, CloudinaryService cloudinaryService, SlotRepository slotRepository) {
         this.classRepository = classRepository;
         this.courseRepository = courseRepository;
@@ -44,10 +45,11 @@ public class ClassService implements IClassService {
         this.cloudinaryService = cloudinaryService;
         this.slotRepository = slotRepository;
     }
+
     public ClassDTO createClass(ClassDTO classDTO, MultipartFile image) throws GeneralSecurityException, IOException {
         if (classDTO.getName() == null || classDTO.getCode() == null || classDTO.getDescription() == null ||
                 classDTO.getStatus() == null || classDTO.getMaxStudents() == null ||
-                classDTO.getPrice() == null || classDTO.getCourseCode() == null || classDTO.getStartDate() == null) {
+                classDTO.getPrice() == null || classDTO.getCourseCode() == null) {
             throw new RuntimeException("All fields must be provided and cannot be null");
         }
 
@@ -208,6 +210,7 @@ public class ClassService implements IClassService {
             return new StudentDTO(student.getUserName(), student.getPhoneNumber(), student.getEmail(), student.getEmail(), student.getAddress());
         });
     }
+
     public List<ClassDTO> getAllClassesByCurrentTeacher() {
         String teacherName = getCurrentUsername();
 
@@ -222,7 +225,7 @@ public class ClassService implements IClassService {
     }
 
 
-    private Class mapDTOToEntity(ClassDTO classDTO, Course course, Teacher teacher,Slot slot) {
+    private Class mapDTOToEntity(ClassDTO classDTO, Course course, Teacher teacher, Slot slot) {
         return Class.builder()
                 .name(classDTO.getName())
                 .code(classDTO.getCode())
