@@ -5,12 +5,14 @@ import com.example.FPTLSPlatform.dto.ResponseDTO;
 import com.example.FPTLSPlatform.dto.StudentDTO;
 import com.example.FPTLSPlatform.service.IClassService;
 import com.example.FPTLSPlatform.service.impl.ClassService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -21,20 +23,22 @@ import java.util.List;
 public class ClassController {
 
     private final IClassService classService;
-
-    public ClassController(ClassService classService) {
+    private final ObjectMapper objectMapper;
+    public ClassController(ClassService classService, ObjectMapper objectMapper) {
         this.classService = classService;
+        this.objectMapper = objectMapper;
     }
 
     @PostMapping("")
-    public ResponseEntity<?> createClass(@RequestBody ClassDTO classDTO) {
+    public ResponseEntity<?> createClass(@RequestPart("classDTO") String classDTOJson,
+                                         @RequestParam(value = "image", required = false) MultipartFile image) {
         try {
-            ClassDTO createdClass = classService.createClass(classDTO);
+            ClassDTO classDTO = objectMapper.readValue(classDTOJson, ClassDTO.class);
+
+            ClassDTO createdClass = classService.createClass(classDTO, image);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdClass);
-        } catch (RuntimeException e) {
+        } catch (RuntimeException | GeneralSecurityException | IOException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        } catch (GeneralSecurityException | IOException e) {
-            throw new RuntimeException(e);
         }
     }
 
@@ -49,14 +53,17 @@ public class ClassController {
     }
 
     @PutMapping("/{classId}")
-    public ResponseEntity<?> updateClass(@PathVariable Long classId, @RequestBody ClassDTO classDTO) {
+    public ResponseEntity<?> updateClass(@PathVariable Long classId,
+                                         @RequestBody ClassDTO classDTO,
+                                         @RequestParam(value = "image", required = false) MultipartFile image) {
         try {
-            ClassDTO updatedClass = classService.updateClass(classId, classDTO);
+            ClassDTO updatedClass = classService.updateClass(classId, classDTO, image);
             return ResponseEntity.status(HttpStatus.OK).body(updatedClass);
-        } catch (RuntimeException e) {
+        } catch (RuntimeException | IOException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
+
 
     @PostMapping("/confirm-class")
     public ResponseEntity<ResponseDTO<ClassDTO>> confirmClassCompletion(

@@ -41,7 +41,8 @@ public class Class {
 
     @Column(name = "price", nullable = false)
     private Long price;
-
+    @Column(name = "image")
+    private String image;
     @ManyToOne
     @JoinColumn(name = "teacher_name", referencedColumnName = "teacher_name", nullable = false)
     private Teacher teacher;

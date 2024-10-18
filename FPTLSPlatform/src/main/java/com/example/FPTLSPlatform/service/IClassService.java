@@ -4,15 +4,16 @@ import com.example.FPTLSPlatform.dto.ClassDTO;
 import com.example.FPTLSPlatform.dto.StudentDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.List;
 
 public interface IClassService {
-    ClassDTO createClass(ClassDTO classDTO) throws GeneralSecurityException, IOException;
+    ClassDTO createClass(ClassDTO classDTO, MultipartFile image) throws GeneralSecurityException, IOException;
 
-    ClassDTO updateClass(Long classId, ClassDTO classDTO);
+    ClassDTO updateClass(Long classId, ClassDTO classDTO, MultipartFile image) throws IOException;
 
     ClassDTO confirmClassCompletion(Long classId, String teacherUsername) throws Exception;
 

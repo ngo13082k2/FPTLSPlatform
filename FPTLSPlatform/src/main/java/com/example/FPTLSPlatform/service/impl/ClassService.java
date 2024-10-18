@@ -19,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -36,32 +37,29 @@ public class ClassService implements IClassService {
     private final CourseRepository courseRepository;
     private final TeacherRepository teacherRepository;
     private final OrderDetailRepository orderDetailRepository;
-
-    public ClassService(ClassRepository classRepository, CourseRepository courseRepository, TeacherRepository teacherRepository, OrderDetailRepository orderDetailRepository) {
+    private final CloudinaryService cloudinaryService;
+    public ClassService(ClassRepository classRepository, CourseRepository courseRepository, TeacherRepository teacherRepository, OrderDetailRepository orderDetailRepository, CloudinaryService cloudinaryService) {
         this.classRepository = classRepository;
         this.courseRepository = courseRepository;
         this.teacherRepository = teacherRepository;
         this.orderDetailRepository = orderDetailRepository;
+        this.cloudinaryService = cloudinaryService;
     }
-
-    public ClassDTO createClass(ClassDTO classDTO) throws GeneralSecurityException, IOException {
+    public ClassDTO createClass(ClassDTO classDTO, MultipartFile image) throws GeneralSecurityException, IOException {
         if (classDTO.getName() == null || classDTO.getCode() == null || classDTO.getDescription() == null ||
                 classDTO.getStatus() == null || classDTO.getMaxStudents() == null ||
-                classDTO.getPrice() == null  ||
-                classDTO.getCourseCode() == null || classDTO.getStartDate() == null) {
+                classDTO.getPrice() == null || classDTO.getCourseCode() == null || classDTO.getStartDate() == null) {
             throw new RuntimeException("All fields must be provided and cannot be null");
         }
+
         LocalDateTime startDate = classDTO.getStartDate();
         classDTO.setEndDate(startDate.plusHours(3));
-//        String meetLink = createGoogleMeetLink(classDTO.getName(), classDTO.getStartDate(), classDTO.getEndDate());
-//        classDTO.setLocation(meetLink);
+
         String teacherName = getCurrentUsername();
         Teacher teacher = teacherRepository.findByTeacherName(teacherName)
                 .orElseThrow(() -> new RuntimeException("Teacher not found"));
         classDTO.setCreateDate(LocalDateTime.now());
-//        if (classDTO.getEndDate().isBefore(classDTO.getStartDate())) {
-//            throw new RuntimeException("End date and time cannot be before start date and time.");
-//        }
+
         Optional<Course> course = courseRepository.findById(classDTO.getCourseCode());
         if (course.isEmpty()) {
             throw new RuntimeException("Course with code " + classDTO.getCourseCode() + " not found");
@@ -69,10 +67,17 @@ public class ClassService implements IClassService {
 
         classDTO.setTeacherName(teacherName);
 
+        String imageUrl = null;
+        if (image != null && !image.isEmpty()) {
+            imageUrl = cloudinaryService.uploadImage(image);
+            classDTO.setImageUrl(imageUrl);
+        }
+
         Class newClass = mapDTOToEntity(classDTO, course.get(), teacher);
         Class savedClass = classRepository.save(newClass);
         return mapEntityToDTO(savedClass);
     }
+
 
     private String getCurrentUsername() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -134,14 +139,20 @@ public class ClassService implements IClassService {
         return mapEntityToDTO(scheduledClass);
     }
 
-    public ClassDTO updateClass(Long classId, ClassDTO classDTO) {
+    public ClassDTO updateClass(Long classId, ClassDTO classDTO, MultipartFile image) throws IOException {
         Class existingClass = classRepository.findById(classId)
                 .orElseThrow(() -> new RuntimeException("Class with id " + classId + " not found"));
-        if (classDTO.getEndDate() != null && classDTO.getEndDate().isBefore(existingClass.getStartDate())) {
-            throw new RuntimeException("End date and time cannot be before start date and time.");
-        }
+
+        if (classDTO.getName() != null) existingClass.setName(classDTO.getName());
         if (classDTO.getDescription() != null) existingClass.setDescription(classDTO.getDescription());
         if (classDTO.getMaxStudents() != null) existingClass.setMaxStudents(classDTO.getMaxStudents());
+        if (classDTO.getLocation() != null) existingClass.setLocation(classDTO.getLocation());
+
+        String imageUrl = null;
+        if (image != null && !image.isEmpty()) {
+            imageUrl = cloudinaryService.uploadImage(image);
+            existingClass.setImage(imageUrl);
+        }
 
         Class updatedClass = classRepository.save(existingClass);
         return mapEntityToDTO(updatedClass);
@@ -211,6 +222,7 @@ public class ClassService implements IClassService {
                 .createDate(classDTO.getCreateDate())
                 .startDate(classDTO.getStartDate())
                 .endDate(classDTO.getEndDate())
+                .image(classDTO.getImageUrl())
                 .courses(course)
                 .build();
     }
@@ -246,6 +258,7 @@ public class ClassService implements IClassService {
                 .startDate(clazz.getStartDate())
                 .endDate(clazz.getEndDate())
                 .courseCode(clazz.getCourses().getCourseCode())
+                .imageUrl(clazz.getImage())
                 .students(studentDTOList)
                 .build();
     }

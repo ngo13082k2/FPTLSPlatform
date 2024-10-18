@@ -26,4 +26,5 @@ public class ClassDTO {
     private String courseCode;
     private String fullName;
     private List<StudentDTO> students;
+    private String imageUrl;
 }
