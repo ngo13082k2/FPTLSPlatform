@@ -61,6 +61,15 @@ public class SecurityConfig {
                         .requestMatchers("feedback/class/{classId}/summary").hasAuthority("STAFF")
                         .requestMatchers("/api/feedback-question").hasAuthority("STAFF")
                         .requestMatchers("/api/feedback-category").hasAuthority("STAFF")
+                        .requestMatchers(HttpMethod.POST,"/slots").hasAuthority("STAFF")
+                        .requestMatchers(HttpMethod.PUT,"/slots/{slotId}").hasAuthority("STAFF")
+                        .requestMatchers(HttpMethod.DELETE,"/slots/{slotId}").hasAuthority("STAFF")
+                        .requestMatchers(HttpMethod.GET,"/slots").hasAnyAuthority("STAFF", "STUDENT", "TEACHER")
+                        .requestMatchers(HttpMethod.GET,"/slots/{slotId}").hasAnyAuthority("STAFF", "STUDENT", "TEACHER")
+
+
+
+
 
                         .anyRequest().authenticated()
                 )

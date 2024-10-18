@@ -5,14 +5,11 @@ import com.example.FPTLSPlatform.exception.ResourceNotFoundException;
 import com.example.FPTLSPlatform.model.*;
 import com.example.FPTLSPlatform.model.Class;
 import com.example.FPTLSPlatform.model.enums.OrderStatus;
-import com.example.FPTLSPlatform.repository.OrderDetailRepository;
+import com.example.FPTLSPlatform.repository.*;
 import com.example.FPTLSPlatform.util.OAuth2Util;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.*;
 import com.example.FPTLSPlatform.dto.ClassDTO;
-import com.example.FPTLSPlatform.repository.ClassRepository;
-import com.example.FPTLSPlatform.repository.CourseRepository;
-import com.example.FPTLSPlatform.repository.TeacherRepository;
 import com.example.FPTLSPlatform.service.IClassService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,12 +35,14 @@ public class ClassService implements IClassService {
     private final TeacherRepository teacherRepository;
     private final OrderDetailRepository orderDetailRepository;
     private final CloudinaryService cloudinaryService;
-    public ClassService(ClassRepository classRepository, CourseRepository courseRepository, TeacherRepository teacherRepository, OrderDetailRepository orderDetailRepository, CloudinaryService cloudinaryService) {
+    private final SlotRepository slotRepository;
+    public ClassService(ClassRepository classRepository, CourseRepository courseRepository, TeacherRepository teacherRepository, OrderDetailRepository orderDetailRepository, CloudinaryService cloudinaryService, SlotRepository slotRepository) {
         this.classRepository = classRepository;
         this.courseRepository = courseRepository;
         this.teacherRepository = teacherRepository;
         this.orderDetailRepository = orderDetailRepository;
         this.cloudinaryService = cloudinaryService;
+        this.slotRepository = slotRepository;
     }
     public ClassDTO createClass(ClassDTO classDTO, MultipartFile image) throws GeneralSecurityException, IOException {
         if (classDTO.getName() == null || classDTO.getCode() == null || classDTO.getDescription() == null ||
@@ -59,13 +58,14 @@ public class ClassService implements IClassService {
         Teacher teacher = teacherRepository.findByTeacherName(teacherName)
                 .orElseThrow(() -> new RuntimeException("Teacher not found"));
         classDTO.setCreateDate(LocalDateTime.now());
+        classDTO.setTeacherName(teacherName);
 
         Optional<Course> course = courseRepository.findById(classDTO.getCourseCode());
         if (course.isEmpty()) {
             throw new RuntimeException("Course with code " + classDTO.getCourseCode() + " not found");
         }
-
-        classDTO.setTeacherName(teacherName);
+        Slot slot = slotRepository.findById(classDTO.getSlotId())
+                .orElseThrow((() -> new RuntimeException("Teacher not found")));
 
         String imageUrl = null;
         if (image != null && !image.isEmpty()) {
@@ -73,7 +73,7 @@ public class ClassService implements IClassService {
             classDTO.setImageUrl(imageUrl);
         }
 
-        Class newClass = mapDTOToEntity(classDTO, course.get(), teacher);
+        Class newClass = mapDTOToEntity(classDTO, course.get(), teacher, slot);
         Class savedClass = classRepository.save(newClass);
         return mapEntityToDTO(savedClass);
     }
@@ -222,7 +222,7 @@ public class ClassService implements IClassService {
     }
 
 
-    private Class mapDTOToEntity(ClassDTO classDTO, Course course, Teacher teacher) {
+    private Class mapDTOToEntity(ClassDTO classDTO, Course course, Teacher teacher,Slot slot) {
         return Class.builder()
                 .name(classDTO.getName())
                 .code(classDTO.getCode())
@@ -237,6 +237,7 @@ public class ClassService implements IClassService {
                 .endDate(classDTO.getEndDate())
                 .image(classDTO.getImageUrl())
                 .courses(course)
+                .slot(slot)
                 .build();
     }
 
@@ -273,6 +274,7 @@ public class ClassService implements IClassService {
                 .courseCode(clazz.getCourses().getCourseCode())
                 .imageUrl(clazz.getImage())
                 .students(studentDTOList)
+                .slotId(clazz.getSlot().getSlotId())
                 .build();
     }
 }

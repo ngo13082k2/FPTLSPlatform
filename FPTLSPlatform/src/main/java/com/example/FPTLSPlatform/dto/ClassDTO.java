@@ -27,4 +27,5 @@ public class ClassDTO {
     private String fullName;
     private List<StudentDTO> students;
     private String imageUrl;
+    private Long slotId;
 }

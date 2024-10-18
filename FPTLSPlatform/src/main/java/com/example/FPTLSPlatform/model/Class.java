@@ -57,4 +57,7 @@ public class Class {
     @ManyToOne
     @JoinColumn(name = "course_code", referencedColumnName = "course_code", nullable = false)
     private Course courses;
+    @ManyToOne
+    @JoinColumn(name = "slot_id")
+    private Slot slot;
 }
