@@ -54,9 +54,11 @@ public class ClassController {
 
     @PutMapping("/{classId}")
     public ResponseEntity<?> updateClass(@PathVariable Long classId,
-                                         @RequestBody ClassDTO classDTO,
+                                         @RequestPart("classDTO") String classDTOJson,
                                          @RequestParam(value = "image", required = false) MultipartFile image) {
         try {
+            ClassDTO classDTO = objectMapper.readValue(classDTOJson, ClassDTO.class);
+
             ClassDTO updatedClass = classService.updateClass(classId, classDTO, image);
             return ResponseEntity.status(HttpStatus.OK).body(updatedClass);
         } catch (RuntimeException | IOException e) {
