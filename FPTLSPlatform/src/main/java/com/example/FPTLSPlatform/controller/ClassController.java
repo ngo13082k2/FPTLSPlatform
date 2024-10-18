@@ -119,4 +119,14 @@ public class ClassController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
+    @GetMapping("/my-classes")
+    public ResponseEntity<?> getAllClassesByCurrentTeacher() {
+        try {
+            List<ClassDTO> classList = classService.getAllClassesByCurrentTeacher();
+            return ResponseEntity.status(HttpStatus.OK).body(classList);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
 }

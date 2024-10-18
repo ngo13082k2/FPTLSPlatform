@@ -208,6 +208,19 @@ public class ClassService implements IClassService {
             return new StudentDTO(student.getUserName(), student.getPhoneNumber(), student.getEmail(), student.getEmail(), student.getAddress());
         });
     }
+    public List<ClassDTO> getAllClassesByCurrentTeacher() {
+        String teacherName = getCurrentUsername();
+
+        Teacher teacher = teacherRepository.findByTeacherName(teacherName)
+                .orElseThrow(() -> new RuntimeException("Teacher not found"));
+
+        List<Class> classes = classRepository.findByTeacher(teacher);
+
+        return classes.stream()
+                .map(this::mapEntityToDTO)
+                .collect(Collectors.toList());
+    }
+
 
     private Class mapDTOToEntity(ClassDTO classDTO, Course course, Teacher teacher) {
         return Class.builder()

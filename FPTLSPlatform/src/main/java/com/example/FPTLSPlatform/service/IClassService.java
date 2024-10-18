@@ -26,4 +26,5 @@ public interface IClassService {
     List<ClassDTO> getClassesByTeacherName(String teacherName);
 
     Page<StudentDTO> getAllStudentsInClass(Long classId, Pageable pageable);
+    List<ClassDTO> getAllClassesByCurrentTeacher();
 }
