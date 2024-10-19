@@ -28,8 +28,8 @@ public class SlotService implements ISlotService {
                 .orElseThrow(() -> new ResourceNotFoundException("Slot not found with ID: " + slotId));
 
         existingSlot.setPeriod(updatedSlotDTO.getPeriod());
-        existingSlot.setStart(updatedSlotDTO.getStart());
-        existingSlot.setEnd(updatedSlotDTO.getEnd());
+        existingSlot.setStartTime(updatedSlotDTO.getStart());
+        existingSlot.setEndTime(updatedSlotDTO.getEnd());
 
         Slot savedSlot = slotRepository.save(existingSlot);
         return mapEntityToDTO(savedSlot);
@@ -58,8 +58,8 @@ public class SlotService implements ISlotService {
         return Slot.builder()
                 .slotId(slotDTO.getSlotId())
                 .period(slotDTO.getPeriod())
-                .start(slotDTO.getStart())
-                .end(slotDTO.getEnd())
+                .startTime(slotDTO.getStart())
+                .endTime(slotDTO.getEnd())
                 .build();
     }
 
@@ -67,8 +67,8 @@ public class SlotService implements ISlotService {
         return SlotDTO.builder()
                 .slotId(slot.getSlotId())
                 .period(slot.getPeriod())
-                .start(slot.getStart())
-                .end(slot.getEnd())
+                .start(slot.getStartTime())
+                .end(slot.getEndTime())
                 .build();
     }
 }
