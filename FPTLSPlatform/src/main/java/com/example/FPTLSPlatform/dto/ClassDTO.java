@@ -28,4 +28,6 @@ public class ClassDTO {
     private List<StudentDTO> students;
     private String imageUrl;
     private Long slotId;
+    private String dayofWeek;
+
 }

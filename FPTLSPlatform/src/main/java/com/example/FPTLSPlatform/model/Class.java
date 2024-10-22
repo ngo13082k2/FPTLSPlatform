@@ -53,7 +53,8 @@ public class Class {
 
     @Column(name = "end_date")
     private LocalDateTime endDate;
-
+    @Column(name = "day_of_week")
+    private String dayofWeek;
     @ManyToOne
     @JoinColumn(name = "course_code", referencedColumnName = "course_code", nullable = false)
     private Course courses;

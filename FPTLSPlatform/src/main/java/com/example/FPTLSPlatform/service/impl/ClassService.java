@@ -245,6 +245,7 @@ public class ClassService implements IClassService {
                 .image(classDTO.getImageUrl())
                 .courses(course)
                 .slot(slot)
+                .dayofWeek(classDTO.getDayofWeek())
                 .build();
     }
 
@@ -282,6 +283,7 @@ public class ClassService implements IClassService {
                 .imageUrl(clazz.getImage())
                 .students(studentDTOList)
                 .slotId(clazz.getSlot().getSlotId())
+                .dayofWeek(clazz.getDayofWeek())
                 .build();
     }
 }
