@@ -43,38 +43,37 @@ public class FeedbackService implements IFeedbackService {
         Order order = orderDetails.getContent().get(0).getOrder();
         User student = order.getUser();
 
-        if (order.getStatus().equals(OrderStatus.COMPLETE.toString())) {
-            String commonComment = feedbackSubmission.getComment();
-            for (FeedbackQuestionAnswerDTO feedbackAnswer : feedbackSubmission.getFeedbackAnswers()) {
-                FeedbackQuestion question = feedbackQuestionRepository.findById(feedbackAnswer.getQuestionId())
-                        .orElseThrow(() -> new IllegalArgumentException("Invalid question ID: " + feedbackAnswer.getQuestionId()));
-
-                Class classEntity = orderDetails.getContent().get(0).getClasses();
-
-
-                Feedback feedback = Feedback.builder()
-                        .student(student)
-                        .classEntity(classEntity)
-                        .feedbackQuestion(question)
-                        .rating(feedbackAnswer.getRating())
-                        .comment(commonComment)
-                        .build();
-
-                feedbackRepository.save(feedback);
-            }
-
-            FeedbackSubmissionDTO response = new FeedbackSubmissionDTO();
-            response.setUsername(student.getUserName());
-            response.setClassId(orderDetails.getContent().get(0).getClasses().getClassId());
-            response.setComment(commonComment);
-            response.setFeedbackAnswers(feedbackSubmission.getFeedbackAnswers());
-
-            return response;
-        } else {
-            throw new IllegalArgumentException("Invalid order ID: " + orderId);
+        if (!order.getStatus().equals(OrderStatus.COMPLETE.toString())) {
+            throw new IllegalArgumentException("Order must be complete to submit feedback for order ID: " + orderId);
         }
 
+        String commonComment = feedbackSubmission.getComment();
+        for (FeedbackQuestionAnswerDTO feedbackAnswer : feedbackSubmission.getFeedbackAnswers()) {
+            FeedbackQuestion question = feedbackQuestionRepository.findById(feedbackAnswer.getQuestionId())
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid question ID: " + feedbackAnswer.getQuestionId()));
+
+            Class classEntity = orderDetails.getContent().get(0).getClasses();
+
+            Feedback feedback = Feedback.builder()
+                    .student(student)
+                    .classEntity(classEntity)
+                    .feedbackQuestion(question)
+                    .rating(feedbackAnswer.getRating())
+                    .comment(commonComment)
+                    .build();
+
+            feedbackRepository.save(feedback);
+        }
+
+        FeedbackSubmissionDTO response = new FeedbackSubmissionDTO();
+        response.setUsername(student.getUserName());
+        response.setClassId(orderDetails.getContent().get(0).getClasses().getClassId());
+        response.setComment(commonComment);
+        response.setFeedbackAnswers(feedbackSubmission.getFeedbackAnswers());
+
+        return response;
     }
+
 
     public List<Map<String, Object>> getClassFeedbackSummary(Long classId) {
         List<Feedback> feedbacks = feedbackRepository.findByClassEntityClassId(classId);
