@@ -26,6 +26,21 @@ public class Application {
     @Column(name = "description")
     private String description;
 
+    @Column(name = "major")
+    private String major;
+
+    @Column(name = "experience")
+    private String experience;
+
+    @Column(name = "cv")
+    private String cv;
+
+    @Column(name = "extra_skills")
+    private String extraSkills;
+
+    @Column(name = "certificate")
+    private String certificate;
+
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "teacher_name", referencedColumnName = "teacher_name")
     private Teacher teacher;

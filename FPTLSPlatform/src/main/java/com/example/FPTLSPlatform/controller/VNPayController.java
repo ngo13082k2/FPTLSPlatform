@@ -6,8 +6,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Map;
-@RequestMapping("/payment")
 
+@RequestMapping("/payment")
 @RestController
 public class VNPayController {
 

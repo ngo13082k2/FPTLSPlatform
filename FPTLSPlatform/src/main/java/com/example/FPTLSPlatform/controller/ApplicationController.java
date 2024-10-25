@@ -16,7 +16,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-import org.thymeleaf.context.Context;
 
 @RestController
 @RequestMapping("/applications")
@@ -72,6 +71,7 @@ public class ApplicationController {
             return principal.toString();
         }
     }
+
     @GetMapping("/staff")
     public ResponseEntity<Page<ApplicationDTO>> getApplicationsByStaff(
             @RequestParam(defaultValue = "0") int page,
@@ -111,11 +111,11 @@ public class ApplicationController {
 
     @PostMapping("/admin/applications/assign")
     public ResponseEntity<String> assignApplicationsToStaff() {
-      try{
-          applicationService.assignApplicationsToAllStaff();
-          return ResponseEntity.ok("Applications assigned successfully to staff.");
-      } catch (ResourceNotFoundException e){
-          return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-      }
+        try {
+            applicationService.assignApplicationsToAllStaff();
+            return ResponseEntity.ok("Applications assigned successfully to staff.");
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
     }
 }
