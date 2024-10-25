@@ -41,6 +41,8 @@ public class Application {
     @Column(name = "certificate")
     private String certificate;
 
+    private String rejectionReason;
+
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "teacher_name", referencedColumnName = "teacher_name")
     private Teacher teacher;

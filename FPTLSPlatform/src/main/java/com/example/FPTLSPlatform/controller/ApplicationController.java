@@ -28,7 +28,21 @@ public class ApplicationController {
     @PostMapping("/approve_application")
     public ResponseEntity<?> approveApplication(@RequestParam Long id) {
         try {
-            ApplicationDTO applicationDTO = applicationService.updateApplication(id);
+            ApplicationDTO applicationDTO = applicationService.approveApplication(id);
+            return ResponseEntity.ok(applicationDTO);
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (ApplicationAlreadyApprovedException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred." + e.getMessage());
+        }
+    }
+
+    @PostMapping("/reject_application")
+    public ResponseEntity<?> rejectApplication(@RequestParam Long id, @RequestBody String rejectionReason) {
+        try {
+            ApplicationDTO applicationDTO = applicationService.rejectApplication(id, rejectionReason);
             return ResponseEntity.ok(applicationDTO);
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());

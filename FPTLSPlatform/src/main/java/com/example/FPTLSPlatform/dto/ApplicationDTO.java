@@ -28,4 +28,6 @@ public class ApplicationDTO {
     private String description;
 
     private String teacherName;
+
+    private String rejectionReason;
 }

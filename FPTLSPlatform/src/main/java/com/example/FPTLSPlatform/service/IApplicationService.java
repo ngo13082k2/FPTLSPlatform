@@ -10,7 +10,7 @@ import org.springframework.data.domain.Pageable;
 public interface IApplicationService {
     ApplicationDTO createApplication(ApplicationDTO applicationDTO, HttpSession session);
 
-    ApplicationDTO updateApplication(Long id) throws MessagingException;
+    ApplicationDTO approveApplication(Long id) throws MessagingException;
 
     Page<ApplicationDTO> getAllApplications(Pageable pageable);
 
@@ -21,4 +21,6 @@ public interface IApplicationService {
     Page<ApplicationDTO> getPendingApplications(Pageable pageable);
 
     void assignApplicationsToAllStaff();
+
+    ApplicationDTO rejectApplication(Long id, String rejectionReason);
 }

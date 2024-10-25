@@ -70,7 +70,7 @@ public class ApplicationService implements IApplicationService {
     }
 
     @Override
-    public ApplicationDTO updateApplication(Long id) {
+    public ApplicationDTO approveApplication(Long id) {
         Optional<Application> optionalApplication = applicationRepository.findById(id);
         Context context = new Context();
         if (optionalApplication.isPresent()) {
@@ -212,6 +212,47 @@ public class ApplicationService implements IApplicationService {
 
             index++;
         }
+    }
+
+    @Override
+    public ApplicationDTO rejectApplication(Long id, String rejectionReason) {
+        Context context = new Context();
+        Application application = applicationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Application not found with ID: " + id));
+
+        if (application.getStatus().equals("APPROVED")) {
+            throw new ApplicationAlreadyApprovedException("Application already approved, cannot reject.");
+        }
+
+        if (application.getStatus().equalsIgnoreCase("REJECTED")) {
+            throw new IllegalStateException("Application has already been rejected.");
+        }
+
+        application.setStatus("REJECTED");
+        application.setRejectionReason(rejectionReason);
+        applicationRepository.save(application);
+
+        Optional<Teacher> optionalTeacher = teacherRepository.findByTeacherName(application.getTeacher().getTeacherName());
+        if (optionalTeacher.isPresent()) {
+            Teacher teacher = optionalTeacher.get();
+            teacher.setStatus("INACTIVE");
+            teacherRepository.save(teacher);
+        }
+
+        context.setVariable("applicationTitle", application.getTitle());
+        context.setVariable("teacherName", application.getTeacher().getTeacherName());
+        context.setVariable("rejectionReason", rejectionReason);
+        emailService.sendEmail(application.getTeacher().getTeacherName(), "Application Rejected", "reject-email", context);
+
+        return ApplicationDTO.builder()
+                .applicationId(application.getApplicationId())
+                .title(application.getTitle())
+                .description(application.getDescription())
+                .status(application.getStatus())
+                .rejectionReason(rejectionReason)
+                .teacherName(application.getTeacher().getTeacherName())
+                .build();
+        
     }
 
 }

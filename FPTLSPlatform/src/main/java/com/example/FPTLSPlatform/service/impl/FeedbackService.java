@@ -5,6 +5,7 @@ import com.example.FPTLSPlatform.dto.FeedbackQuestionAnswerDTO;
 import com.example.FPTLSPlatform.dto.FeedbackSubmissionDTO;
 import com.example.FPTLSPlatform.model.*;
 import com.example.FPTLSPlatform.model.Class;
+import com.example.FPTLSPlatform.model.enums.OrderStatus;
 import com.example.FPTLSPlatform.repository.*;
 import com.example.FPTLSPlatform.service.IFeedbackService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,31 +43,37 @@ public class FeedbackService implements IFeedbackService {
         Order order = orderDetails.getContent().get(0).getOrder();
         User student = order.getUser();
 
-        String commonComment = feedbackSubmission.getComment();
-        for (FeedbackQuestionAnswerDTO feedbackAnswer : feedbackSubmission.getFeedbackAnswers()) {
-            FeedbackQuestion question = feedbackQuestionRepository.findById(feedbackAnswer.getQuestionId())
-                    .orElseThrow(() -> new IllegalArgumentException("Invalid question ID: " + feedbackAnswer.getQuestionId()));
+        if (order.getStatus().equals(OrderStatus.COMPLETE.toString())) {
+            String commonComment = feedbackSubmission.getComment();
+            for (FeedbackQuestionAnswerDTO feedbackAnswer : feedbackSubmission.getFeedbackAnswers()) {
+                FeedbackQuestion question = feedbackQuestionRepository.findById(feedbackAnswer.getQuestionId())
+                        .orElseThrow(() -> new IllegalArgumentException("Invalid question ID: " + feedbackAnswer.getQuestionId()));
 
-            Class classEntity = orderDetails.getContent().get(0).getClasses();
+                Class classEntity = orderDetails.getContent().get(0).getClasses();
 
-            Feedback feedback = Feedback.builder()
-                    .student(student)
-                    .classEntity(classEntity)
-                    .feedbackQuestion(question)
-                    .rating(feedbackAnswer.getRating())
-                    .comment(commonComment)
-                    .build();
 
-            feedbackRepository.save(feedback);
+                Feedback feedback = Feedback.builder()
+                        .student(student)
+                        .classEntity(classEntity)
+                        .feedbackQuestion(question)
+                        .rating(feedbackAnswer.getRating())
+                        .comment(commonComment)
+                        .build();
+
+                feedbackRepository.save(feedback);
+            }
+
+            FeedbackSubmissionDTO response = new FeedbackSubmissionDTO();
+            response.setUsername(student.getUserName());
+            response.setClassId(orderDetails.getContent().get(0).getClasses().getClassId());
+            response.setComment(commonComment);
+            response.setFeedbackAnswers(feedbackSubmission.getFeedbackAnswers());
+
+            return response;
+        } else {
+            throw new IllegalArgumentException("Invalid order ID: " + orderId);
         }
 
-        FeedbackSubmissionDTO response = new FeedbackSubmissionDTO();
-        response.setUsername(student.getUserName());
-        response.setClassId(orderDetails.getContent().get(0).getClasses().getClassId());
-        response.setComment(commonComment);
-        response.setFeedbackAnswers(feedbackSubmission.getFeedbackAnswers());
-
-        return response;
     }
 
     public List<Map<String, Object>> getClassFeedbackSummary(Long classId) {

@@ -11,6 +11,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,6 +26,7 @@ public class ClassController {
 
     private final IClassService classService;
     private final ObjectMapper objectMapper;
+
     public ClassController(ClassService classService, ObjectMapper objectMapper) {
         this.classService = classService;
         this.objectMapper = objectMapper;
@@ -69,11 +72,10 @@ public class ClassController {
 
     @PostMapping("/confirm-class")
     public ResponseEntity<ResponseDTO<ClassDTO>> confirmClassCompletion(
-            @RequestParam Long classId,
-            @RequestParam String teacherUsername) {
-
+            @RequestParam Long classId) {
         try {
-            ClassDTO classDTO = classService.confirmClassCompletion(classId, teacherUsername);
+
+            ClassDTO classDTO = classService.confirmClassCompletion(classId, getCurrentUsername());
             return ResponseEntity.ok(new ResponseDTO<>("SUCCESS", "Class has been confirmed as completed.", classDTO));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ResponseDTO<>("ERROR", e.getMessage(), null));
@@ -121,6 +123,7 @@ public class ClassController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
+
     @GetMapping("/my-classes")
     public ResponseEntity<?> getAllClassesByCurrentTeacher() {
         try {
@@ -131,4 +134,12 @@ public class ClassController {
         }
     }
 
+    private String getCurrentUsername() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof UserDetails) {
+            return ((UserDetails) principal).getUsername();
+        } else {
+            return principal.toString();
+        }
+    }
 }

@@ -136,6 +136,12 @@ public class ClassService implements IClassService {
         }
 
         scheduledClass.setStatus(String.valueOf(OrderStatus.COMPLETE));
+        Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(classId, Pageable.unpaged());
+        for (OrderDetail orderDetail : orderDetails) {
+            Order order = orderDetail.getOrder();
+            order.setStatus(OrderStatus.COMPLETE.toString());
+            orderDetailRepository.save(orderDetail);
+        }
         classRepository.save(scheduledClass);
 
         return mapEntityToDTO(scheduledClass);
@@ -149,7 +155,7 @@ public class ClassService implements IClassService {
         if (classDTO.getDescription() != null) existingClass.setDescription(classDTO.getDescription());
         if (classDTO.getMaxStudents() != null) existingClass.setMaxStudents(classDTO.getMaxStudents());
         if (classDTO.getLocation() != null) existingClass.setLocation(classDTO.getLocation());
-        if(classDTO.getDayofWeek() != null) existingClass.setDayofWeek(classDTO.getDayofWeek());
+        if (classDTO.getDayofWeek() != null) existingClass.setDayofWeek(classDTO.getDayofWeek());
 
         String imageUrl = null;
         if (image != null && !image.isEmpty()) {
