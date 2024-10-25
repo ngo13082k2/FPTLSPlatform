@@ -149,6 +149,7 @@ public class ClassService implements IClassService {
         if (classDTO.getDescription() != null) existingClass.setDescription(classDTO.getDescription());
         if (classDTO.getMaxStudents() != null) existingClass.setMaxStudents(classDTO.getMaxStudents());
         if (classDTO.getLocation() != null) existingClass.setLocation(classDTO.getLocation());
+        if(classDTO.getDayofWeek() != null) existingClass.setDayofWeek(classDTO.getDayofWeek());
 
         String imageUrl = null;
         if (image != null && !image.isEmpty()) {
