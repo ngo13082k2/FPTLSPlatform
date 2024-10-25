@@ -28,6 +28,7 @@ public class ApplicationService implements IApplicationService {
     private final IEmailService emailService;
     private final TeacherRepository teacherRepository;
     private final UserRepository userRepository;
+
     public ApplicationService(ApplicationRepository applicationRepository,
                               IEmailService emailService,
                               TeacherRepository teacherRepository,
@@ -40,27 +41,32 @@ public class ApplicationService implements IApplicationService {
 
     @Override
     public ApplicationDTO createApplication(ApplicationDTO applicationDTO, HttpSession session) {
-            Teacher teacher = (Teacher) session.getAttribute("teacher");
+        Teacher teacher = (Teacher) session.getAttribute("teacher");
 
-            if (teacher == null) {
-                throw new ResourceNotFoundException("Teacher not found");
-            }
+        if (teacher == null) {
+            throw new ResourceNotFoundException("Teacher not found");
+        }
 
-            if (applicationDTO.getStatus().equalsIgnoreCase("APPROVED")) {
-                throw new ApplicationAlreadyApprovedException("Application has already been approved and cannot be modified.");
-            }
+        if (applicationDTO.getStatus().equalsIgnoreCase("APPROVED")) {
+            throw new ApplicationAlreadyApprovedException("Application has already been approved and cannot be modified.");
+        }
 
-                Application application = Application.builder()
-                        .title(applicationDTO.getTitle())
-                        .description(applicationDTO.getDescription())
-                        .teacher(teacherRepository.getTeacherByTeacherName(teacher.getTeacherName()))
-                        .status("PENDING")
-                        .build();
+        Application application = Application.builder()
+                .title(applicationDTO.getTitle())
+                .description(applicationDTO.getDescription())
+                .teacher(teacherRepository.getTeacherByTeacherName(teacher.getTeacherName()))
+                .status("PENDING")
+                .cv(applicationDTO.getCv())
+                .certificate(applicationDTO.getCertificate())
+                .major(applicationDTO.getMajor())
+                .experience(applicationDTO.getExperience())
+                .extraSkills(applicationDTO.getExtraSkills())
+                .build();
 
-                applicationRepository.save(application);
-                applicationDTO.setTeacherName(teacher.getTeacherName());
-                session.invalidate();
-                return applicationDTO;
+        applicationRepository.save(application);
+        applicationDTO.setTeacherName(teacher.getTeacherName());
+        session.invalidate();
+        return applicationDTO;
     }
 
     @Override
@@ -87,13 +93,18 @@ public class ApplicationService implements IApplicationService {
                 applicationRepository.save(application);
 
 
-                    context.setVariable("applicationTitle", application.getTitle());
-                    context.setVariable("teacherName", application.getTeacher().getTeacherName());
-                    emailService.sendEmail(application.getTeacher().getTeacherName(), "Application Approved", "approval-email", context);
+                context.setVariable("applicationTitle", application.getTitle());
+                context.setVariable("teacherName", application.getTeacher().getTeacherName());
+                emailService.sendEmail(application.getTeacher().getTeacherName(), "Application Approved", "approval-email", context);
                 return ApplicationDTO.builder()
                         .applicationId(application.getApplicationId())
                         .title(application.getTitle())
                         .status(application.getStatus())
+                        .cv(application.getCv())
+                        .certificate(application.getCertificate())
+                        .major(application.getMajor())
+                        .experience(application.getExperience())
+                        .extraSkills(application.getExtraSkills())
                         .description(application.getDescription())
                         .teacherName(application.getTeacher().getTeacherName())
                         .build();
@@ -114,6 +125,11 @@ public class ApplicationService implements IApplicationService {
                 .title(app.getTitle())
                 .description(app.getDescription())
                 .status(app.getStatus())
+                .cv(app.getCv())
+                .certificate(app.getCertificate())
+                .major(app.getMajor())
+                .experience(app.getExperience())
+                .extraSkills(app.getExtraSkills())
                 .teacherName(app.getTeacher().getTeacherName())
                 .build());
     }
@@ -128,6 +144,11 @@ public class ApplicationService implements IApplicationService {
                 .title(app.getTitle())
                 .description(app.getDescription())
                 .status(app.getStatus())
+                .cv(app.getCv())
+                .certificate(app.getCertificate())
+                .major(app.getMajor())
+                .experience(app.getExperience())
+                .extraSkills(app.getExtraSkills())
                 .teacherName(app.getTeacher().getTeacherName())
                 .build());
     }
@@ -157,6 +178,11 @@ public class ApplicationService implements IApplicationService {
                 .title(app.getTitle())
                 .description(app.getDescription())
                 .status(app.getStatus())
+                .cv(app.getCv())
+                .certificate(app.getCertificate())
+                .major(app.getMajor())
+                .experience(app.getExperience())
+                .extraSkills(app.getExtraSkills())
                 .teacherName(app.getTeacher().getTeacherName())
                 .build());
     }

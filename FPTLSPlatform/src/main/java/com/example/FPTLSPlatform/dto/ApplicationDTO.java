@@ -1,5 +1,6 @@
 package com.example.FPTLSPlatform.dto;
 
+import jakarta.persistence.Column;
 import lombok.*;
 
 @Getter
@@ -13,6 +14,16 @@ public class ApplicationDTO {
     private String status;
 
     private String title;
+
+    private String major;
+
+    private String experience;
+
+    private String cv;
+
+    private String extraSkills;
+
+    private String certificate;
 
     private String description;
 
