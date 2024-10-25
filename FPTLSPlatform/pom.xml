@@ -184,6 +184,12 @@
 			<artifactId>google-http-client-jackson2</artifactId>
 			<version>1.41.5</version>
 		</dependency>
+		<dependency>
+			<groupId>com.sun.mail</groupId>
+			<artifactId>javax.mail</artifactId>
+			<version>1.6.2</version>
+		</dependency>
+
 	</dependencies>
 	<repositories>
 		<repository>

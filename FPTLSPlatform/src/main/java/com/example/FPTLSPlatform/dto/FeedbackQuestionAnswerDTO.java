@@ -8,5 +8,5 @@ import lombok.Setter;
 public class FeedbackQuestionAnswerDTO {
     private Long questionId;
     private int rating;
-    private String comment;
+
 }

@@ -205,6 +205,8 @@ public class VNPayService implements IVNPayService {
                 transactionHistory.setAmount(amount);
                 transactionHistory.setTransactionDate(LocalDateTime.now());
                 transactionHistory.setUser(user);
+                transactionHistory.setTransactionBalance(user.getWallet().getBalance());
+
 
                 transactionHistoryRepository.save(transactionHistory);
             } else {

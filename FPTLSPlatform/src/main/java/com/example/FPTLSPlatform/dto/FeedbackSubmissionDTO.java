@@ -10,5 +10,6 @@ public class FeedbackSubmissionDTO {
     private Long classId;
     private List<FeedbackCategoryDTO> feedbackCategories;
     private String username;
+    private String comments;
 
 }

@@ -1,5 +1,6 @@
 package com.example.FPTLSPlatform.controller;
 
+import com.example.FPTLSPlatform.dto.TransactionHistoryDTO;
 import com.example.FPTLSPlatform.model.TransactionHistory;
 import com.example.FPTLSPlatform.model.Wallet;
 import com.example.FPTLSPlatform.service.IWalletService;
@@ -35,7 +36,7 @@ public class WalletController {
     @GetMapping("/history")
     public ResponseEntity<?> getTransactionHistory() {
         try {
-            List<TransactionHistory> history = walletService.getTransactionHistory();
+            List<TransactionHistoryDTO> history = walletService.getTransactionHistory();
             return ResponseEntity.ok(history);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Lỗi: " + e.getMessage());

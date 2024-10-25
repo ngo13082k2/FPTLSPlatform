@@ -52,7 +52,7 @@ public class FeedbackService implements IFeedbackService {
                         .classEntity(classEntity)
                         .feedbackQuestion(question)
                         .rating(feedbackAnswer.getRating())
-                        .comment(feedbackAnswer.getComment())
+                        .comment(feedbackSubmission.getComments())
                         .build();
 
                 feedbackRepository.save(feedback);

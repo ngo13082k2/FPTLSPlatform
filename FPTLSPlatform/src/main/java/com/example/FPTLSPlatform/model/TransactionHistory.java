@@ -1,5 +1,6 @@
 package com.example.FPTLSPlatform.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -22,8 +23,10 @@ public class TransactionHistory {
 
     @Column(name = "transaction_date", nullable = false)
     private LocalDateTime transactionDate;
-
+    @Column(name = "transaction_balance", nullable = false )
+    private double transactionBalance;
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnore
     private User user;
 }

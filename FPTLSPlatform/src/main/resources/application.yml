@@ -16,14 +16,15 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: phudxse160591@fpt.edu.vn
-    password: xoxg dfcq cubi gbgw
+    username: ngoltnse160571@fpt.edu.vn
+    password: yqry wyey qhei kat
     properties:
       mail:
         smtp:
           auth: true
           starttls:
             enable: true
+            required: true
 twilio:
   accountSid: AC39f68922dc6590cdcc2567ebf84ca070
   authToken: 95a66e71fe959e451cd9c7c190daeeb9
@@ -32,7 +33,8 @@ vnpay:
   tmn_code: WF0GYR4R
   hash_secret: KYU6SQGZREITDT5DZP44P2ZE28FJG3J0
   api_url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
-  return_url: http://localhost:5173/wallet
+#  return_url: http://localhost:5173/wallet
+  return_url: http://localhost:8080/payment/return
 
 
 
