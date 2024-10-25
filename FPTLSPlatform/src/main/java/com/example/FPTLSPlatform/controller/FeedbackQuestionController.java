@@ -4,11 +4,9 @@ import com.example.FPTLSPlatform.model.FeedbackQuestion;
 import com.example.FPTLSPlatform.service.IFeedbackQuestionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -24,5 +22,10 @@ public class FeedbackQuestionController {
         Long categoryId = ((Number) request.get("categoryId")).longValue();
         FeedbackQuestion question = feedbackQuestionService.createFeedbackQuestion(questionText, categoryId);
         return ResponseEntity.ok(question);
+    }
+    @GetMapping
+    public ResponseEntity<List<FeedbackQuestion>> getAllQuestions() {
+        List<FeedbackQuestion> questions = feedbackQuestionService.getAllFeedbackQuestions();
+        return ResponseEntity.ok(questions);
     }
 }

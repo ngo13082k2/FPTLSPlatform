@@ -8,6 +8,8 @@ import com.example.FPTLSPlatform.service.IFeedbackQuestionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class FeedbackQuestionService implements IFeedbackQuestionService {
     @Autowired
@@ -26,5 +28,8 @@ public class FeedbackQuestionService implements IFeedbackQuestionService {
                 .build();
 
         return feedbackQuestionRepository.save(question);
+    }
+    public List<FeedbackQuestion> getAllFeedbackQuestions() {
+        return feedbackQuestionRepository.findAll();
     }
 }

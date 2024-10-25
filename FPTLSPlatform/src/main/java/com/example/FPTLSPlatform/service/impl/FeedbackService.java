@@ -35,34 +35,36 @@ public class FeedbackService implements IFeedbackService {
     public FeedbackSubmissionDTO submitFeedbackForOrder(Long orderId, FeedbackSubmissionDTO feedbackSubmission) {
         Page<OrderDetail> orderDetails = orderDetailRepository.findByOrderOrderId(orderId, Pageable.unpaged());
 
+        if (orderDetails.isEmpty()) {
+            throw new IllegalArgumentException("Invalid order ID: " + orderId);
+        }
+
         Order order = orderDetails.getContent().get(0).getOrder();
         User student = order.getUser();
 
-        // Lặp qua từng feedback và lưu thông tin
-        for (FeedbackCategoryDTO categoryDTO : feedbackSubmission.getFeedbackCategories()) {
-            for (FeedbackQuestionAnswerDTO feedbackAnswer : categoryDTO.getFeedbackAnswers()) {
-                FeedbackQuestion question = feedbackQuestionRepository.findById(feedbackAnswer.getQuestionId())
-                        .orElseThrow(() -> new IllegalArgumentException("Invalid question ID: " + feedbackAnswer.getQuestionId()));
+        String commonComment = feedbackSubmission.getComment();
+        for (FeedbackQuestionAnswerDTO feedbackAnswer : feedbackSubmission.getFeedbackAnswers()) {
+            FeedbackQuestion question = feedbackQuestionRepository.findById(feedbackAnswer.getQuestionId())
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid question ID: " + feedbackAnswer.getQuestionId()));
 
-                // Lấy class từ order detail
-                Class classEntity = orderDetails.getContent().get(0).getClasses();
+            Class classEntity = orderDetails.getContent().get(0).getClasses();
 
-                Feedback feedback = Feedback.builder()
-                        .student(student)
-                        .classEntity(classEntity)
-                        .feedbackQuestion(question)
-                        .rating(feedbackAnswer.getRating())
-                        .comment(feedbackSubmission.getComments())
-                        .build();
+            Feedback feedback = Feedback.builder()
+                    .student(student)
+                    .classEntity(classEntity)
+                    .feedbackQuestion(question)
+                    .rating(feedbackAnswer.getRating())
+                    .comment(commonComment)
+                    .build();
 
-                feedbackRepository.save(feedback);
-            }
+            feedbackRepository.save(feedback);
         }
 
         FeedbackSubmissionDTO response = new FeedbackSubmissionDTO();
         response.setUsername(student.getUserName());
         response.setClassId(orderDetails.getContent().get(0).getClasses().getClassId());
-        response.setFeedbackCategories(feedbackSubmission.getFeedbackCategories());
+        response.setComment(commonComment);
+        response.setFeedbackAnswers(feedbackSubmission.getFeedbackAnswers());
 
         return response;
     }

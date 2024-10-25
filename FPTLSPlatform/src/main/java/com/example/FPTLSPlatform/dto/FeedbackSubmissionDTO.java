@@ -7,9 +7,9 @@ import java.util.List;
 @Getter
 @Setter
 public class FeedbackSubmissionDTO {
-    private Long classId;
-    private List<FeedbackCategoryDTO> feedbackCategories;
     private String username;
-    private String comments;
+    private Long classId;
+    private String comment;
+    private List<FeedbackQuestionAnswerDTO> feedbackAnswers;
 
 }
