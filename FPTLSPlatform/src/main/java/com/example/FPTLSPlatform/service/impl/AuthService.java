@@ -12,8 +12,11 @@ import com.example.FPTLSPlatform.request.AuthenticationRequest;
 import com.example.FPTLSPlatform.request.RegisterRequest;
 import com.example.FPTLSPlatform.response.AuthenticationResponse;
 import com.example.FPTLSPlatform.response.UserResponse;
+import com.example.FPTLSPlatform.service.IEmailService;
 import com.example.FPTLSPlatform.util.JwtUtil;
+import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -38,9 +41,13 @@ public class AuthService {
     private final CustomUserDetailsService userDetailsService;
     private final TeacherRepository teacherRepository;
     private final WalletRepository walletRepository;
+    private final OTPGmailService otpGmailService;
+    private final IEmailService emailService;
+    @Autowired
+    private HttpSession session;
     public AuthService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, JwtUtil jwtUtil,
-                       CustomUserDetailsService userDetailsService, TeacherRepository teacherRepository, WalletRepository walletRepository) {
+                       CustomUserDetailsService userDetailsService, TeacherRepository teacherRepository, WalletRepository walletRepository, OTPGmailService otpGmailService, IEmailService emailService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
@@ -49,31 +56,77 @@ public class AuthService {
         this.userDetailsService = userDetailsService;
         this.teacherRepository = teacherRepository;
         this.walletRepository = walletRepository;
+        this.otpGmailService = otpGmailService;
+        this.emailService = emailService;
     }
 
-    public UserResponse register(RegisterRequest request, Role role) {
-        Wallet wallet = new Wallet();
-        wallet.setBalance(0.0);
+    public UserResponse register(RegisterRequest request) throws MessagingException {
+        Optional<User> existingUserByEmail = userRepository.findByEmail(request.getEmail());
+        Optional<User> existingUserByPhone = userRepository.findByPhoneNumber(request.getPhoneNumber());
 
-        walletRepository.save(wallet);
+        if ((existingUserByEmail.isPresent() && "ACTIVE".equals(existingUserByEmail.get().getStatus())) ||
+                (existingUserByPhone.isPresent() && "ACTIVE".equals(existingUserByPhone.get().getStatus()))) {
+            throw new IllegalArgumentException("Email hoặc số điện thoại đã tồn tại với trạng thái ACTIVE.");
+        }
 
-        User user = new User();
-        user.setUserName(request.getUsername());
-        user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setFullName(request.getFullName());
-        user.setPhoneNumber(request.getPhoneNumber());
-        user.setCreatedDate(request.getCreatedDate());
-        user.setCreatedDate(LocalDateTime.now());
+        User user = existingUserByEmail.orElseGet(() -> existingUserByPhone.orElse(null));
+        if (user != null && "PENDING".equals(user.getStatus())) {
+            user.setUserName(request.getUsername());
+            user.setEmail(request.getEmail());
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+            user.setFullName(request.getFullName());
+            user.setPhoneNumber(request.getPhoneNumber());
+            user.setCreatedDate(LocalDateTime.now());
+        } else {
+            Wallet wallet = new Wallet();
+            wallet.setBalance(0.0);
+            walletRepository.save(wallet);
 
-        user.setWallet(wallet);
-
-        if (role == Role.STUDENT) {
-            user.setStatus("ACTIVE");
-            user.setRole(Role.STUDENT);
+            user = User.builder()
+                    .userName(request.getUsername())
+                    .email(request.getEmail())
+                    .password(passwordEncoder.encode(request.getPassword()))
+                    .fullName(request.getFullName())
+                    .phoneNumber(request.getPhoneNumber())
+                    .createdDate(LocalDateTime.now())
+                    .status("PENDING")
+                    .wallet(wallet)
+                    .role(Role.STUDENT)
+                    .build();
         }
 
         userRepository.save(user);
+
+        int otp = otpGmailService.generateOTP(request.getEmail());
+        emailService.sendOTP(request.getEmail(), otp);
+
+        session.setAttribute("email", request.getEmail());
+
+        return new UserResponse(user.getUserName(), user.getEmail(), user.getFullName(), user.getStatus(), user.getPhoneNumber(), user.getRole());
+    }
+
+
+    public UserResponse confirmOTP(int otp) {
+        String email = (String) session.getAttribute("email");
+
+        if (email == null) {
+            throw new IllegalArgumentException("Không có email trong session");
+        }
+
+        Integer storedOtp = otpGmailService.getOTP(email);
+
+        if (storedOtp == null || storedOtp != otp) {
+            throw new IllegalArgumentException("OTP không hợp lệ hoặc đã hết hạn");
+        }
+
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người dùng"));
+        user.setStatus("ACTIVE");
+        userRepository.save(user);
+
+        session.removeAttribute("email");
+        session.invalidate();
+
+        otpGmailService.clearOTP(email);
 
         return new UserResponse(user.getUserName(), user.getEmail(), user.getFullName(), user.getStatus(), user.getPhoneNumber(), user.getRole());
     }
@@ -117,22 +170,33 @@ public class AuthService {
 
         if (optionalUser.isPresent()) {
             User user = optionalUser.get();
+
             if (user.getRole() == Role.TEACHER && "PENDING".equals(user.getStatus())) {
                 throw new RuntimeException("Your account has not been approved as a teacher");
             }
+
+            if (user.getRole() == Role.STUDENT && "PENDING".equals(user.getStatus())) {
+                throw new RuntimeException("Your account has not been approved as a student");
+            }
+
             String jwt = jwtUtil.generateToken(userDetails.getUsername(), extractRoles(userDetails));
-            return new AuthenticationResponse(user.getUserName(), user.getEmail(), user.getFullName(), user.getStatus(), jwt,user.getRole());
+            return new AuthenticationResponse(user.getUserName(), user.getEmail(), user.getFullName(), user.getStatus(), jwt, user.getRole());
+
         } else if (optionalTeacher.isPresent()) {
             Teacher teacher = optionalTeacher.get();
+
             if ("PENDING".equals(teacher.getStatus())) {
                 throw new RuntimeException("Your account has not been approved as a teacher");
             }
+
             String jwt = jwtUtil.generateToken(userDetails.getUsername(), extractRoles(userDetails));
-            return new AuthenticationResponse(teacher.getTeacherName(), null, teacher.getFullName(), teacher.getStatus(), jwt,teacher.getRole());
+            return new AuthenticationResponse(teacher.getTeacherName(), null, teacher.getFullName(), teacher.getStatus(), jwt, teacher.getRole());
+
         } else {
             throw new RuntimeException("User not found");
         }
     }
+
 
     public UserResponse viewCurrentUser(String token) {
         String username = jwtUtil.extractUsername(token.substring(7));

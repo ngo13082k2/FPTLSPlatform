@@ -7,11 +7,15 @@ import com.example.FPTLSPlatform.response.AuthenticationResponse;
 import com.example.FPTLSPlatform.response.UserResponse;
 import com.example.FPTLSPlatform.service.impl.AuthService;
 import com.example.FPTLSPlatform.service.impl.EmailService;
+import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
@@ -24,11 +28,26 @@ public class AuthController {
     }
 
     @PostMapping("/register-student")
-    public ResponseEntity<String> registerStudent(@RequestBody RegisterRequest request) {
-        authService.register(request, Role.STUDENT);
-        return ResponseEntity.ok("Student registered successfully");
+    public ResponseEntity<UserResponse> registerStudent(@RequestBody RegisterRequest request, HttpSession session) throws MessagingException {
+        UserResponse userResponse = authService.register(request);
+
+        session.setAttribute("email", request.getEmail());
+
+        return ResponseEntity.ok(userResponse);
     }
-//    @PostMapping("/register-teacher")
+    @PostMapping("/confirm-otp")
+    public ResponseEntity<Map<String, Object>> confirmOTP(@RequestParam int otp, HttpSession session) {
+        UserResponse userResponse = authService.confirmOTP(otp);
+
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Đăng ký thành công");
+        response.put("user", userResponse);
+
+        return ResponseEntity.status(201).body(response);
+    }
+
+    //    @PostMapping("/register-teacher")
 //    public ResponseEntity<String> registerTeacher(@RequestBody RegisterRequest request) {
 //        authService.register(request, Role.TEACHER);
 //        return ResponseEntity.ok("Teacher registered successfully. Status: Pending");
