@@ -205,6 +205,35 @@ public class OrderService implements IOrderService {
 
     @Scheduled(cron = "0 0 * * * *")
     @Transactional
+    public void updateClassesToOngoing() {
+        LocalDateTime now = LocalDateTime.now();
+
+        List<Class> classesToStart = classRepository.findByStartDateBeforeAndStatus(now.toLocalDate(), ClassStatus.APPROVED);
+
+        for (Class scheduledClass : classesToStart) {
+            LocalDateTime startTime = scheduledClass.getStartDate().atTime(scheduledClass.getSlot().getStartTime());
+
+            if (now.isBefore(startTime)) {
+                Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(scheduledClass.getClassId(), Pageable.unpaged());
+                for (OrderDetail orderDetail : orderDetails) {
+                    Order order = orderDetail.getOrder();
+                    if (order.getStatus().equals(OrderStatus.ACTIVE)) {
+                        order.setStatus(OrderStatus.ONGOING);
+                        orderRepository.save(order);
+                    }
+                }
+
+                scheduledClass.setStatus(ClassStatus.ONGOING);
+                classRepository.save(scheduledClass);
+                log.info("Class with ID {} has started and is now ONGOING.", scheduledClass.getClassId());
+
+            }
+        }
+    }
+
+
+    @Scheduled(cron = "0 0 * * * *")
+    @Transactional
     public void checkAndCompleteOrders() {
         LocalDateTime now = LocalDateTime.now();
 
@@ -217,7 +246,7 @@ public class OrderService implements IOrderService {
                 Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(scheduledClass.getClassId(), Pageable.unpaged());
                 for (OrderDetail orderDetail : orderDetails) {
                     Order order = orderDetail.getOrder();
-                    if (!order.getStatus().equals(OrderStatus.COMPLETED)) {
+                    if (order.getStatus().equals(OrderStatus.ONGOING)) {
                         order.setStatus(OrderStatus.COMPLETED);
                         orderRepository.save(order);
                     }
@@ -225,6 +254,8 @@ public class OrderService implements IOrderService {
 
                 scheduledClass.setStatus(ClassStatus.COMPLETED);
                 classRepository.save(scheduledClass);
+                log.info("Class with ID {} has started and is now COMPLETED.", scheduledClass.getClassId());
+
             }
         }
     }
