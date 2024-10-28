@@ -53,13 +53,18 @@ public class FeedbackService implements IFeedbackService {
                     .orElseThrow(() -> new IllegalArgumentException("Invalid question ID: " + feedbackAnswer.getQuestionId()));
 
             Class classEntity = orderDetails.getContent().get(0).getClasses();
+            boolean feedbackExists = feedbackRepository.existsByStudentAndClassEntityAndFeedbackQuestionAndIsFeedbackTrue(student, classEntity, question);
+            if (feedbackExists) {
+                throw new IllegalArgumentException("You have already provided feedback for question ID: " + feedbackAnswer.getQuestionId());
 
+            }
             Feedback feedback = Feedback.builder()
                     .student(student)
                     .classEntity(classEntity)
                     .feedbackQuestion(question)
                     .rating(feedbackAnswer.getRating())
                     .comment(commonComment)
+                    .isFeedback(true)
                     .build();
 
             feedbackRepository.save(feedback);

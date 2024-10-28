@@ -34,6 +34,8 @@ public class Feedback {
 
     @Column(length = 1000)
     private String comment;
+    @Column(name = "is_feedback", nullable = false)
+    private Boolean isFeedback;
 
 }
 

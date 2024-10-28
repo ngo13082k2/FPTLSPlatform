@@ -138,6 +138,9 @@ public class AuthService {
         if (teacherRepository.existsByPhoneNumber(request.getPhoneNumber())) {
             throw new RuntimeException("Phone number already exists");
         }
+        Wallet wallet = new Wallet();
+        wallet.setBalance(0.0);
+        walletRepository.save(wallet);
 
         Teacher teacher = Teacher.builder()
                 .teacherName(request.getUsername())
@@ -147,6 +150,7 @@ public class AuthService {
                 .fullName(request.getFullName())
                 .createdDate(LocalDateTime.now())
                 .role(Role.TEACHER)
+                .wallet(wallet)
                 .status("PENDING")
                 .build();
 
