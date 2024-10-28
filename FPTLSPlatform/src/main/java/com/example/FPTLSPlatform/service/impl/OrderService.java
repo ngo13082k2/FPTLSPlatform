@@ -208,12 +208,12 @@ public class OrderService implements IOrderService {
     public void updateClassesToOngoing() {
         LocalDateTime now = LocalDateTime.now();
 
-        List<Class> classesToStart = classRepository.findByStartDateBeforeAndStatus(now.toLocalDate(), ClassStatus.APPROVED);
+        List<Class> classesToStart = classRepository.findByStartDateBeforeAndStatus(now.toLocalDate(), ClassStatus.ACTIVE);
 
         for (Class scheduledClass : classesToStart) {
             LocalDateTime startTime = scheduledClass.getStartDate().atTime(scheduledClass.getSlot().getStartTime());
 
-            if (now.isBefore(startTime)) {
+            if (now.isAfter(startTime)) {
                 Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(scheduledClass.getClassId(), Pageable.unpaged());
                 for (OrderDetail orderDetail : orderDetails) {
                     Order order = orderDetail.getOrder();
@@ -265,7 +265,7 @@ public class OrderService implements IOrderService {
         int minimumRequiredStudents = (int) (scheduledClass.getMaxStudents() * 0.8);
 
         if (registeredStudents >= minimumRequiredStudents) {
-            scheduledClass.setStatus(ClassStatus.APPROVED);
+            scheduledClass.setStatus(ClassStatus.ACTIVE);
             classRepository.save(scheduledClass);
             log.info("Class with ID {} has been activated.", scheduledClass.getClassId());
 

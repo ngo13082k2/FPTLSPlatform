@@ -2,7 +2,7 @@ package com.example.FPTLSPlatform.model.enums;
 
 public enum ClassStatus {
     PENDING,
-    APPROVED,
+    ACTIVE,
     ONGOING,
     COMPLETED,
     CANCELED
