@@ -24,12 +24,9 @@ public class ClassDTO {
     private LocalDateTime createDate;
     private String teacherName;
     private LocalDate startDate;
-    private LocalDate endDate;
     private String courseCode;
     private String fullName;
     private List<StudentDTO> students;
     private String imageUrl;
-    private Long slotId;
-    private String dayOfWeek;
 
 }

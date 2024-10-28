@@ -13,7 +13,6 @@ import lombok.NoArgsConstructor;
 @Builder
 public class StudentDTO {
 
-    @Id
     @Column(name = "user_name", nullable = false, unique = true)
     private String userName;
 

@@ -2,11 +2,11 @@ package com.example.FPTLSPlatform.service.impl;
 
 import com.example.FPTLSPlatform.config.VNPayConfig;
 import com.example.FPTLSPlatform.exception.ResourceNotFoundException;
+import com.example.FPTLSPlatform.model.SystemTransactionHistory;
+import com.example.FPTLSPlatform.model.SystemWallet;
 import com.example.FPTLSPlatform.model.TransactionHistory;
 import com.example.FPTLSPlatform.model.User;
-import com.example.FPTLSPlatform.repository.TransactionHistoryRepository;
-import com.example.FPTLSPlatform.repository.UserRepository;
-import com.example.FPTLSPlatform.repository.WalletRepository;
+import com.example.FPTLSPlatform.repository.*;
 import com.example.FPTLSPlatform.service.IVNPayService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,10 +39,14 @@ public class VNPayService implements IVNPayService {
     private final UserRepository userRepository;
     private final WalletRepository walletRepository;
     private final TransactionHistoryRepository transactionHistoryRepository;
-    public VNPayService(UserRepository userRepository, WalletRepository walletRepository, TransactionHistoryRepository transactionHistoryRepository) {
+    private final SystemWalletRepository systemWalletRepository;
+    private final SystemTransactionHistoryRepository systemTransactionHistoryRepository;
+    public VNPayService(UserRepository userRepository, WalletRepository walletRepository, TransactionHistoryRepository transactionHistoryRepository, SystemWalletRepository systemWalletRepository, SystemTransactionHistoryRepository systemTransactionHistoryRepository) {
         this.userRepository = userRepository;
         this.walletRepository = walletRepository;
         this.transactionHistoryRepository = transactionHistoryRepository;
+        this.systemWalletRepository = systemWalletRepository;
+        this.systemTransactionHistoryRepository = systemTransactionHistoryRepository;
     }
 
     public String generatePaymentUrl(Long amount, HttpServletRequest request) {
@@ -209,6 +213,18 @@ public class VNPayService implements IVNPayService {
 
 
                 transactionHistoryRepository.save(transactionHistory);
+                SystemWallet systemWallet = systemWalletRepository.findById(1L)
+                        .orElse(new SystemWallet(1L, 0.0));
+                systemWallet.addAmount((double) amount);
+                systemWalletRepository.save(systemWallet);
+
+                SystemTransactionHistory systemTransactionHistory = new SystemTransactionHistory();
+                systemTransactionHistory.setTransactionAmount((double) amount);
+                systemTransactionHistory.setTransactionDate(LocalDateTime.now());
+                systemTransactionHistory.setUsername(username);
+                systemTransactionHistory.setBalanceAfterTransaction(systemWallet.getTotalAmount());
+                systemTransactionHistoryRepository.save(systemTransactionHistory);
+                System.out.println("Cập nhật ví hệ thống với số tiền: " + amount);
             } else {
                 throw new ResourceNotFoundException("Người dùng không có ví.");
             }
