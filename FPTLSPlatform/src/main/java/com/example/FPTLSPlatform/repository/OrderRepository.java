@@ -1,6 +1,7 @@
 package com.example.FPTLSPlatform.repository;
 
 import com.example.FPTLSPlatform.model.Order;
+import com.example.FPTLSPlatform.model.OrderDetail;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

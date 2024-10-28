@@ -26,12 +26,11 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 
-import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Service
 public class OrderService implements IOrderService {
@@ -154,23 +153,13 @@ public class OrderService implements IOrderService {
 
             Class scheduledClass = orderDetail.getClasses();
 
-            if (scheduledClass.getEndDate() == null) {
-                return new ResponseDTO<>("ERROR", "Class end date is missing.", null);
-            }
 
-            // Check if the class has already ended
-            if (scheduledClass.getEndDate().isBefore(LocalDateTime.now())) {
-                return new ResponseDTO<>("ERROR", "Cannot cancel the order because the class has already ended.", null);
-            }
-
-            // Check if the order status is PENDING
             if (Objects.equals(order.getStatus(), String.valueOf(OrderStatus.PENDING))) {
-                LocalDateTime now = LocalDateTime.now();
-                LocalDateTime cancelDeadline = scheduledClass.getEndDate().minusDays(2);
+                LocalDate now = LocalDate.now();
+                LocalDate cancelDeadline = scheduledClass.getStartDate().minusDays(2);
 
-                // Check if cancellation is within 2 days of class ending
                 if (now.isAfter(cancelDeadline)) {
-                    return new ResponseDTO<>("ERROR", "Cannot cancel the order within 2 days before the class ends.", null);
+                    return new ResponseDTO<>("ERROR", "Cannot cancel the order within 2 days before the class starts.", null);
                 }
 
                 // Refund and update order status
@@ -215,13 +204,39 @@ public class OrderService implements IOrderService {
         }
     }
 
+    @Scheduled(cron = "0 0 /1 * * *")
+    @Transactional
+    public void checkAndCompleteOrders() {
+        LocalDateTime now = LocalDateTime.now();
+
+        List<Class> classesToComplete = classRepository.findByStartDateBeforeAndStatus(now.toLocalDate(), "ACTIVE");
+
+        for (Class scheduledClass : classesToComplete) {
+            LocalDateTime endTime = scheduledClass.getStartDate().atTime(scheduledClass.getSlot().getEndTime());
+
+            if (now.isAfter(endTime)) {
+                Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(scheduledClass.getClassId(), Pageable.unpaged());
+                for (OrderDetail orderDetail : orderDetails) {
+                    Order order = orderDetail.getOrder();
+                    if (!order.getStatus().equals(OrderStatus.COMPLETED.toString())) {
+                        order.setStatus(OrderStatus.COMPLETED.toString());
+                        orderRepository.save(order);
+                    }
+                }
+
+                scheduledClass.setStatus("COMPLETED");
+                classRepository.save(scheduledClass);
+            }
+        }
+    }
+
     private void activateClassIfEligible(Class scheduledClass) throws MessagingException {
         int registeredStudents = orderDetailRepository.countByClasses_ClassId(scheduledClass.getClassId());
         int minimumRequiredStudents = (int) (scheduledClass.getMaxStudents() * 0.8);
 
         if (registeredStudents >= minimumRequiredStudents) {
             // Kích hoạt lớp học nếu đủ số lượng sinh viên
-            scheduledClass.setStatus(String.valueOf(OrderStatus.ACTIVE));
+            scheduledClass.setStatus(String.valueOf(OrderStatus.ACTIVED));
             classRepository.save(scheduledClass);
             log.info("Class with ID {} has been activated.", scheduledClass.getClassId());
 
@@ -246,42 +261,6 @@ public class OrderService implements IOrderService {
                     .name("Notification")
                     .build());
         }
-    }
-
-    public List<String> notifyUpcomingClassesOnLogin(String username) {
-        List<Class> upcomingClasses = getUpcomingClassesForUser(username);
-        List<String> notifications = new ArrayList<>();
-
-        for (Class scheduledClass : upcomingClasses) {
-            String message = calculateTimeUntilClassStarts(scheduledClass);
-            notifications.add(message);
-        }
-
-        return notifications;
-    }
-
-
-    private String calculateTimeUntilClassStarts(Class scheduledClass) {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime startDate = scheduledClass.getStartDate();
-
-        Duration duration = Duration.between(now, startDate);
-
-        long days = duration.toDays();
-        long hours = duration.toHours() % 24;
-        long minutes = duration.toMinutes() % 60;
-
-        return String.format("Class %s starts in %d days, %d hours, and %d minutes.",
-                scheduledClass.getCode(), days, hours, minutes);
-    }
-
-    public List<Class> getUpcomingClassesForUser(String username) {
-        Page<OrderDetail> orderDetails = orderDetailRepository.findByOrder_User_UserName(username, Pageable.unpaged());
-
-        return orderDetails.stream()
-                .map(OrderDetail::getClasses)
-                .filter(scheduledClass -> scheduledClass.getStartDate().isAfter(LocalDateTime.now())) // Chỉ lấy các lớp học chưa bắt đầu
-                .collect(Collectors.toList());
     }
 
 
@@ -358,11 +337,11 @@ public class OrderService implements IOrderService {
                 .createDate(clazz.getCreateDate())
                 .slotId(clazz.getSlot().getSlotId())
                 .price(clazz.getPrice())
-                .dayofWeek(clazz.getDayofWeek())
+                .dayOfWeek(clazz.getDayOfWeek())
                 .teacherName(clazz.getTeacher().getTeacherName())
                 .fullName(clazz.getTeacher().getFullName())
                 .startDate(clazz.getStartDate())
-                .endDate(clazz.getEndDate())
+//                .endDate(clazz.getEndDate())
                 .courseCode(clazz.getCourses().getCourseCode())
                 .build();
     }

@@ -20,7 +20,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
@@ -52,9 +54,6 @@ public class ClassService implements IClassService {
                 classDTO.getPrice() == null || classDTO.getCourseCode() == null) {
             throw new RuntimeException("All fields must be provided and cannot be null");
         }
-
-        LocalDateTime startDate = classDTO.getStartDate();
-        classDTO.setEndDate(startDate.plusHours(3));
 
         String teacherName = getCurrentUsername();
         Teacher teacher = teacherRepository.findByTeacherName(teacherName)
@@ -131,7 +130,7 @@ public class ClassService implements IClassService {
             throw new Exception("You are not the teacher of this class.");
         }
 
-        if (scheduledClass.getEndDate() == null || scheduledClass.getEndDate().isAfter(LocalDateTime.now())) {
+        if (scheduledClass.getSlot().getEndTime() == null || scheduledClass.getSlot().getEndTime().isAfter(LocalTime.now())) {
             throw new Exception("Class cannot be confirmed yet as it has not ended.");
         }
 
@@ -155,7 +154,7 @@ public class ClassService implements IClassService {
         if (classDTO.getDescription() != null) existingClass.setDescription(classDTO.getDescription());
         if (classDTO.getMaxStudents() != null) existingClass.setMaxStudents(classDTO.getMaxStudents());
         if (classDTO.getLocation() != null) existingClass.setLocation(classDTO.getLocation());
-        if (classDTO.getDayofWeek() != null) existingClass.setDayofWeek(classDTO.getDayofWeek());
+        if (classDTO.getDayOfWeek() != null) existingClass.setDayOfWeek(classDTO.getDayOfWeek());
 
         String imageUrl = null;
         if (image != null && !image.isEmpty()) {
@@ -248,11 +247,11 @@ public class ClassService implements IClassService {
                 .teacher(teacher)
                 .createDate(classDTO.getCreateDate())
                 .startDate(classDTO.getStartDate())
-                .endDate(classDTO.getEndDate())
+//                .endDate(classDTO.getEndDate())
                 .image(classDTO.getImageUrl())
                 .courses(course)
                 .slot(slot)
-                .dayofWeek(classDTO.getDayofWeek())
+                .dayOfWeek(classDTO.getDayOfWeek())
                 .build();
     }
 
@@ -285,12 +284,12 @@ public class ClassService implements IClassService {
                 .teacherName(clazz.getTeacher().getTeacherName())
                 .fullName(clazz.getTeacher().getFullName())
                 .startDate(clazz.getStartDate())
-                .endDate(clazz.getEndDate())
+//                .endDate(clazz.getEndDate())
                 .courseCode(clazz.getCourses().getCourseCode())
                 .imageUrl(clazz.getImage())
                 .students(studentDTOList)
                 .slotId(clazz.getSlot().getSlotId())
-                .dayofWeek(clazz.getDayofWeek())
+                .dayOfWeek(clazz.getDayOfWeek())
                 .build();
     }
 }
