@@ -7,24 +7,30 @@
             font-family: Arial, sans-serif;
             line-height: 1.6;
         }
+
         h3 {
             color: #4CAF50;
         }
+
         table {
             width: 100%;
             border-collapse: collapse;
         }
+
         th, td {
             padding: 8px 12px;
             border: 1px solid #ddd;
         }
+
         th {
             background-color: #f4f4f4;
             font-weight: bold;
         }
+
         td {
             text-align: left;
         }
+
         p {
             margin: 20px 0;
         }
@@ -47,8 +53,8 @@
         <td th:text="${class.getStartDate()}">Start time</td>
     </tr>
     <tr>
-        <th>End Time:</th>
-        <td th:text="${class.getEndDate()}">End time</td>
+        <th>Slot:</th>
+        <td th:text="${class.getSlot().getPeriod()}">Slot</td>
     </tr>
 </table>
 <p>Thank you for choosing our platform!</p>

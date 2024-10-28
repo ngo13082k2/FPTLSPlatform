@@ -1,5 +1,7 @@
 package com.example.FPTLSPlatform.dto;
 
+import com.example.FPTLSPlatform.model.enums.ClassStatus;
+import com.example.FPTLSPlatform.model.enums.OrderStatus;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
@@ -26,5 +28,5 @@ public class OrderDTO {
     private Long totalPrice;
 
     @NotBlank(message = "Status is required")
-    private String status;
+    private OrderStatus status;
 }

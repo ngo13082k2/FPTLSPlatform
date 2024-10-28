@@ -1,9 +1,12 @@
 package com.example.FPTLSPlatform.service.impl;
 
+import com.example.FPTLSPlatform.dto.ClassDTO;
 import com.example.FPTLSPlatform.dto.OrderDetailDTO;
+import com.example.FPTLSPlatform.dto.StudentDTO;
 import com.example.FPTLSPlatform.model.Class;
 import com.example.FPTLSPlatform.model.Order;
 import com.example.FPTLSPlatform.model.OrderDetail;
+import com.example.FPTLSPlatform.model.User;
 import com.example.FPTLSPlatform.repository.OrderDetailRepository;
 import com.example.FPTLSPlatform.service.IOrderDetailService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,14 +22,18 @@ public class OrderDetailService implements IOrderDetailService {
 
     @Autowired
     private OrderDetailRepository orderDetailRepository;
+    @Autowired
+    private ClassService classService;
 
     @Override
     public Page<OrderDetailDTO> getOrderDetailsByOrderId(Long orderId, Pageable pageable) {
         Page<OrderDetail> orderDetails = orderDetailRepository.findOrderDetailsByOrderId(orderId, pageable);
+
+
         return orderDetails.map(orderDetail -> OrderDetailDTO.builder()
                 .orderDetailId(orderDetail.getOrderDetailId())
                 .orderId(orderDetail.getOrder().getOrderId())
-                .classId(orderDetail.getClasses().getClassId())
+                .classDTO(classService.mapEntityToDTO(orderDetail.getClasses()))
                 .price(orderDetail.getPrice())
                 .build());
     }

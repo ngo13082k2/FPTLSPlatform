@@ -1,14 +1,12 @@
 package com.example.FPTLSPlatform.service.impl;
 
-import com.example.FPTLSPlatform.dto.ClassDTO;
-import com.example.FPTLSPlatform.dto.NotificationDTO;
-import com.example.FPTLSPlatform.dto.OrderDTO;
-import com.example.FPTLSPlatform.dto.ResponseDTO;
+import com.example.FPTLSPlatform.dto.*;
 import com.example.FPTLSPlatform.exception.InsufficientBalanceException;
 import com.example.FPTLSPlatform.exception.OrderAlreadyExistsException;
 import com.example.FPTLSPlatform.exception.ResourceNotFoundException;
 import com.example.FPTLSPlatform.model.Class;
 import com.example.FPTLSPlatform.model.*;
+import com.example.FPTLSPlatform.model.enums.ClassStatus;
 import com.example.FPTLSPlatform.model.enums.OrderStatus;
 import com.example.FPTLSPlatform.repository.*;
 import com.example.FPTLSPlatform.service.IEmailService;
@@ -28,7 +26,6 @@ import org.thymeleaf.context.Context;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -90,7 +87,7 @@ public class OrderService implements IOrderService {
         Order order = new Order();
         order.setUser(user);
         order.setCreateAt(LocalDateTime.now());
-        order.setStatus(String.valueOf(OrderStatus.PENDING));
+        order.setStatus(OrderStatus.PENDING);
         order.setTotalPrice(scheduledClass.getPrice());
         order = orderRepository.save(order);
 
@@ -128,13 +125,15 @@ public class OrderService implements IOrderService {
                         .build());
     }
 
-    public Page<ClassDTO> getClassesOrderedByUser(String username, Pageable pageable) {
+    public Page<OrderDetailDTO> getClassesOrderedByUser(String username, Pageable pageable) {
         Page<OrderDetail> orderDetails = orderDetailRepository.findByOrder_User_UserName(username, pageable);
 
-        return orderDetails.map(orderDetail -> {
-            Class scheduledClass = orderDetail.getClasses();
-            return mapEntityToDTO(scheduledClass);
-        });
+        return orderDetails.map(orderDetail -> OrderDetailDTO.builder()
+                .orderDetailId(orderDetail.getOrderDetailId())
+                .orderId(orderDetail.getOrder().getOrderId())
+                .classDTO(mapEntityToDTO(orderDetail.getClasses()))
+                .price(orderDetail.getPrice())
+                .build());
     }
 
     @Transactional
@@ -144,7 +143,7 @@ public class OrderService implements IOrderService {
                     .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
 
             // Check if the order is already cancelled
-            if (Objects.equals(order.getStatus(), String.valueOf(OrderStatus.CANCELLED))) {
+            if (Objects.equals(order.getStatus(), OrderStatus.CANCELLED)) {
                 return new ResponseDTO<>("ERROR", "Cannot cancel the order because the order has already been cancelled.", null);
             }
 
@@ -154,7 +153,7 @@ public class OrderService implements IOrderService {
             Class scheduledClass = orderDetail.getClasses();
 
 
-            if (Objects.equals(order.getStatus(), String.valueOf(OrderStatus.PENDING))) {
+            if (Objects.equals(order.getStatus(), OrderStatus.PENDING)) {
                 LocalDate now = LocalDate.now();
                 LocalDate cancelDeadline = scheduledClass.getStartDate().minusDays(2);
 
@@ -165,7 +164,7 @@ public class OrderService implements IOrderService {
                 // Refund and update order status
                 walletService.refundToWallet(order.getTotalPrice());
                 saveTransactionHistory(order.getUser(), orderDetail.getPrice());
-                order.setStatus(String.valueOf(OrderStatus.CANCELLED));
+                order.setStatus(OrderStatus.CANCELLED);
                 orderRepository.save(order);
                 Context context = new Context();
                 context.setVariable("username", order.getUser().getUserName());
@@ -193,7 +192,7 @@ public class OrderService implements IOrderService {
     public void checkAndActivateClasses() {
         LocalDateTime twoDaysFromNow = LocalDateTime.now().plusDays(2);
         Pageable pageable = PageRequest.of(0, 50);
-        Page<Class> classesPage = classRepository.findByStatusAndStartDateBefore(String.valueOf(OrderStatus.PENDING), twoDaysFromNow, pageable);
+        Page<Class> classesPage = classRepository.findByStatusAndStartDateBefore(ClassStatus.PENDING, twoDaysFromNow, pageable);
 
         for (Class scheduledClass : classesPage) {
             try {
@@ -204,12 +203,12 @@ public class OrderService implements IOrderService {
         }
     }
 
-    @Scheduled(cron = "0 0 /1 * * *")
+    @Scheduled(cron = "0 0 * * * *")
     @Transactional
     public void checkAndCompleteOrders() {
         LocalDateTime now = LocalDateTime.now();
 
-        List<Class> classesToComplete = classRepository.findByStartDateBeforeAndStatus(now.toLocalDate(), "ACTIVE");
+        List<Class> classesToComplete = classRepository.findByStartDateBeforeAndStatus(now.toLocalDate(), ClassStatus.ONGOING);
 
         for (Class scheduledClass : classesToComplete) {
             LocalDateTime endTime = scheduledClass.getStartDate().atTime(scheduledClass.getSlot().getEndTime());
@@ -218,13 +217,13 @@ public class OrderService implements IOrderService {
                 Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(scheduledClass.getClassId(), Pageable.unpaged());
                 for (OrderDetail orderDetail : orderDetails) {
                     Order order = orderDetail.getOrder();
-                    if (!order.getStatus().equals(OrderStatus.COMPLETED.toString())) {
-                        order.setStatus(OrderStatus.COMPLETED.toString());
+                    if (!order.getStatus().equals(OrderStatus.COMPLETED)) {
+                        order.setStatus(OrderStatus.COMPLETED);
                         orderRepository.save(order);
                     }
                 }
 
-                scheduledClass.setStatus("COMPLETED");
+                scheduledClass.setStatus(ClassStatus.COMPLETED);
                 classRepository.save(scheduledClass);
             }
         }
@@ -235,8 +234,7 @@ public class OrderService implements IOrderService {
         int minimumRequiredStudents = (int) (scheduledClass.getMaxStudents() * 0.8);
 
         if (registeredStudents >= minimumRequiredStudents) {
-            // Kích hoạt lớp học nếu đủ số lượng sinh viên
-            scheduledClass.setStatus(String.valueOf(OrderStatus.ACTIVED));
+            scheduledClass.setStatus(ClassStatus.APPROVED);
             classRepository.save(scheduledClass);
             log.info("Class with ID {} has been activated.", scheduledClass.getClassId());
 
@@ -247,13 +245,11 @@ public class OrderService implements IOrderService {
                     .name("Notification")
                     .build());
         } else {
-            // Hủy lớp học nếu không đủ số lượng sinh viên
-            scheduledClass.setStatus(String.valueOf(OrderStatus.CANCELLED));
+            scheduledClass.setStatus(ClassStatus.CANCELED);
             classRepository.save(scheduledClass);
             log.info("Class with ID {} has been cancelled due to insufficient students. Only {} registered, minimum required is {}.",
                     scheduledClass.getClassId(), registeredStudents, minimumRequiredStudents);
 
-            // Hoàn tiền cho các học sinh đã đăng ký
             refundStudents(scheduledClass);
             notificationService.createNotification(NotificationDTO.builder()
                     .title("Class" + scheduledClass.getCode() + "has been cancelled")

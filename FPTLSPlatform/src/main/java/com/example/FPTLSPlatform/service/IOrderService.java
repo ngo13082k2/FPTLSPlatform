@@ -2,6 +2,7 @@ package com.example.FPTLSPlatform.service;
 
 import com.example.FPTLSPlatform.dto.ClassDTO;
 import com.example.FPTLSPlatform.dto.OrderDTO;
+import com.example.FPTLSPlatform.dto.OrderDetailDTO;
 import com.example.FPTLSPlatform.dto.ResponseDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,5 +16,5 @@ public interface IOrderService {
 
     Page<OrderDTO> getAllOrders(Pageable pageable);
 
-    Page<ClassDTO> getClassesOrderedByUser(String username, Pageable pageable);
+    Page<OrderDetailDTO> getClassesOrderedByUser(String username, Pageable pageable);
 }

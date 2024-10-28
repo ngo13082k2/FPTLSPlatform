@@ -1,5 +1,6 @@
 package com.example.FPTLSPlatform.dto;
 
+import com.example.FPTLSPlatform.model.enums.ClassStatus;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -16,7 +17,7 @@ public class ClassDTO {
     private String name;
     private String code;
     private String description;
-    private String status;
+    private ClassStatus status;
     private String location;
     private Integer maxStudents;
     private Long price;

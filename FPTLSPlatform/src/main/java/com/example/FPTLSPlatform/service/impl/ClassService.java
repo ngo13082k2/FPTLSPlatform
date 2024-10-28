@@ -4,6 +4,7 @@ import com.example.FPTLSPlatform.dto.StudentDTO;
 import com.example.FPTLSPlatform.exception.ResourceNotFoundException;
 import com.example.FPTLSPlatform.model.*;
 import com.example.FPTLSPlatform.model.Class;
+import com.example.FPTLSPlatform.model.enums.ClassStatus;
 import com.example.FPTLSPlatform.model.enums.OrderStatus;
 import com.example.FPTLSPlatform.repository.*;
 import com.example.FPTLSPlatform.util.OAuth2Util;
@@ -134,11 +135,11 @@ public class ClassService implements IClassService {
             throw new Exception("Class cannot be confirmed yet as it has not ended.");
         }
 
-        scheduledClass.setStatus(String.valueOf(OrderStatus.COMPLETE));
+        scheduledClass.setStatus(ClassStatus.COMPLETED);
         Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(classId, Pageable.unpaged());
         for (OrderDetail orderDetail : orderDetails) {
             Order order = orderDetail.getOrder();
-            order.setStatus(OrderStatus.COMPLETE.toString());
+            order.setStatus(OrderStatus.COMPLETED);
             orderDetailRepository.save(orderDetail);
         }
         classRepository.save(scheduledClass);
@@ -255,7 +256,7 @@ public class ClassService implements IClassService {
                 .build();
     }
 
-    private ClassDTO mapEntityToDTO(Class clazz) {
+    ClassDTO mapEntityToDTO(Class clazz) {
         Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(clazz.getClassId(), Pageable.unpaged());
         List<StudentDTO> studentDTOList = orderDetails.getContent().stream()
                 .map(orderDetail -> {

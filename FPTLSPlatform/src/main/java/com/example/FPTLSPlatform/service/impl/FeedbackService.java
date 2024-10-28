@@ -43,7 +43,7 @@ public class FeedbackService implements IFeedbackService {
         Order order = orderDetails.getContent().get(0).getOrder();
         User student = order.getUser();
 
-        if (!order.getStatus().equals(OrderStatus.COMPLETE.toString())) {
+        if (!order.getStatus().equals(OrderStatus.COMPLETED)) {
             throw new IllegalArgumentException("Order must be complete to submit feedback for order ID: " + orderId);
         }
 

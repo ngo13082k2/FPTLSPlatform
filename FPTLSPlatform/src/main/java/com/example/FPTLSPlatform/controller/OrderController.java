@@ -2,6 +2,7 @@ package com.example.FPTLSPlatform.controller;
 
 import com.example.FPTLSPlatform.dto.ClassDTO;
 import com.example.FPTLSPlatform.dto.OrderDTO;
+import com.example.FPTLSPlatform.dto.OrderDetailDTO;
 import com.example.FPTLSPlatform.dto.ResponseDTO;
 import com.example.FPTLSPlatform.exception.ResourceNotFoundException;
 import com.example.FPTLSPlatform.service.IOrderService;
@@ -81,13 +82,13 @@ public class OrderController {
     }
 
     @GetMapping("/classes")
-    public ResponseEntity<ResponseDTO<Page<ClassDTO>>> getOrderedClasses(
+    public ResponseEntity<ResponseDTO<Page<OrderDetailDTO>>> getOrderedClasses(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         String username = getCurrentUsername();
         Pageable pageable = PageRequest.of(page, size);
-        Page<ClassDTO> classDTOS = orderService.getClassesOrderedByUser(username, pageable);
-        ResponseDTO<Page<ClassDTO>> response = new ResponseDTO<>("SUCCESS", "Classes retrieved successfully", classDTOS);
+        Page<OrderDetailDTO> classDTOS = orderService.getClassesOrderedByUser(username, pageable);
+        ResponseDTO<Page<OrderDetailDTO>> response = new ResponseDTO<>("SUCCESS", "Classes retrieved successfully", classDTOS);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

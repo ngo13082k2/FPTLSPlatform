@@ -1,58 +1,18 @@
-#spring:
-#  datasource:
-#    url: jdbc:mysql://localhost:3306/fptlsplatform
-#    username: root
-#    password: 12345
-#    driver-class-name: com.mysql.cj.jdbc.Driver
-#  jpa:
-#    hibernate:
-#      ddl-auto: update
-#    show-sql: true
-#    properties:
-#      hibernate:
-#        format_sql: true
-#        database: mysql
-#        database-platform: org.hibernate.dialect.MySQL8Dialect
-#  mail:
-#    host: smtp.gmail.com
-#    port: 587
-#    username: ngoltnse160571@fpt.edu.vn
-#    password: yqry wyey qhei kat
-#    properties:
-#      mail:
-#        smtp:
-#          auth: true
-#          starttls:
-#            enable: true
-#            required: true
-#twilio:
-#  accountSid: AC39f68922dc6590cdcc2567ebf84ca070
-#  authToken: 95a66e71fe959e451cd9c7c190daeeb9
-#  phoneNumber: +18147475403
-#vnpay:
-#  tmn_code: WF0GYR4R
-#  hash_secret: KYU6SQGZREITDT5DZP44P2ZE28FJG3J0
-#  api_url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
-##  return_url: http://localhost:5173/wallet
-#  return_url: http://localhost:8080/payment/return
-
-
-
 spring:
   datasource:
-    url: jdbc:sqlserver://localhost:1433;databaseName=FPTLS_Platform;encrypt=true;trustServerCertificate=true
-    username: sa
+    url: jdbc:mysql://localhost:3306/fptlsplatform
+    username: root
     password: 12345
-    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: false
+    show-sql: true
     properties:
       hibernate:
         format_sql: true
-        database: sql_server
-        database-platform: org.hibernate.dialect.SQLServerDialect
+        database: mysql
+        database-platform: org.hibernate.dialect.MySQL8Dialect
   mail:
     host: smtp.gmail.com
     port: 587
@@ -64,21 +24,7 @@ spring:
           auth: true
           starttls:
             enable: true
-springdoc:
-  api-docs:
-    path: /v3/api-docs
-  swagger-ui:
-    enabled: true
-    path: /swagger-ui.html
-    operationsSorter: method
-    tagsSorter: name
-    display-request-duration: true
-  show-actuator: true
-  model-and-view-allowed: true
-logging:
-  level:
-    org.springframework.ws.config.annotation.DelegatingWsConfiguration: ERROR
-
+            required: true
 twilio:
   accountSid: AC39f68922dc6590cdcc2567ebf84ca070
   authToken: 95a66e71fe959e451cd9c7c190daeeb9
@@ -87,4 +33,58 @@ vnpay:
   tmn_code: WF0GYR4R
   hash_secret: KYU6SQGZREITDT5DZP44P2ZE28FJG3J0
   api_url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+  #  return_url: http://localhost:5173/wallet
   return_url: http://localhost:8080/payment/return
+
+#
+#
+#spring:
+#  datasource:
+#    url: jdbc:sqlserver://localhost:1433;databaseName=FPTLS_Platform;encrypt=true;trustServerCertificate=true
+#    username: sa
+#    password: 12345
+#    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+#  jpa:
+#    hibernate:
+#      ddl-auto: update
+#    show-sql: false
+#    properties:
+#      hibernate:
+#        format_sql: true
+#        database: sql_server
+#        database-platform: org.hibernate.dialect.SQLServerDialect
+#  mail:
+#    host: smtp.gmail.com
+#    port: 587
+#    username: ngoltnse160571@fpt.edu.vn
+#    password: ptfc ckht ighh ttlc
+#    properties:
+#      mail:
+#        smtp:
+#          auth: true
+#          starttls:
+#            enable: true
+#springdoc:
+#  api-docs:
+#    path: /v3/api-docs
+#  swagger-ui:
+#    enabled: true
+#    path: /swagger-ui.html
+#    operationsSorter: method
+#    tagsSorter: name
+#    display-request-duration: true
+#  show-actuator: true
+#  model-and-view-allowed: true
+#logging:
+#  level:
+#    org.springframework.ws.config.annotation.DelegatingWsConfiguration: ERROR
+#
+#twilio:
+#  accountSid: AC39f68922dc6590cdcc2567ebf84ca070
+#  authToken: 95a66e71fe959e451cd9c7c190daeeb9
+#  phoneNumber: +18147475403
+#vnpay:
+#  tmn_code: WF0GYR4R
+#  hash_secret: KYU6SQGZREITDT5DZP44P2ZE28FJG3J0
+#  api_url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+#  return_url: http://localhost:8080/payment/return

@@ -1,5 +1,6 @@
 package com.example.FPTLSPlatform.model;
 
+import com.example.FPTLSPlatform.model.enums.OrderStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -31,6 +32,7 @@ public class Order {
     @Column(name = "total_price", nullable = false)
     private Long totalPrice;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    private String status;
+    private OrderStatus status;
 }

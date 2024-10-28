@@ -1,5 +1,6 @@
 package com.example.FPTLSPlatform.model;
 
+import com.example.FPTLSPlatform.model.enums.ClassStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -29,8 +30,9 @@ public class Class {
     @Column(name = "description")
     private String description;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status")
-    private String status;
+    private ClassStatus status;
 
     @Column(name = "location")
     private String location;
