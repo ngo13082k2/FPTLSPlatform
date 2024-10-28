@@ -34,5 +34,5 @@ public class Schedule {
 
     @ManyToOne
     @JoinColumn(name = "class_id", referencedColumnName = "class_id", nullable = false)
-    private Class aClass;
+    private Class classes;
 }

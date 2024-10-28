@@ -203,62 +203,62 @@ public class OrderService implements IOrderService {
         }
     }
 
-    @Scheduled(cron = "0 0 * * * *")
-    @Transactional
-    public void updateClassesToOngoing() {
-        LocalDateTime now = LocalDateTime.now();
-
-        List<Class> classesToStart = classRepository.findByStartDateBeforeAndStatus(now.toLocalDate(), ClassStatus.ACTIVE);
-
-        for (Class scheduledClass : classesToStart) {
-            LocalDateTime startTime = scheduledClass.getStartDate().atTime(scheduledClass.getSlot().getStartTime());
-
-            if (now.isAfter(startTime)) {
-                Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(scheduledClass.getClassId(), Pageable.unpaged());
-                for (OrderDetail orderDetail : orderDetails) {
-                    Order order = orderDetail.getOrder();
-                    if (order.getStatus().equals(OrderStatus.ACTIVE)) {
-                        order.setStatus(OrderStatus.ONGOING);
-                        orderRepository.save(order);
-                    }
-                }
-
-                scheduledClass.setStatus(ClassStatus.ONGOING);
-                classRepository.save(scheduledClass);
-                log.info("Class with ID {} has started and is now ONGOING.", scheduledClass.getClassId());
-
-            }
-        }
-    }
-
-
-    @Scheduled(cron = "0 0 * * * *")
-    @Transactional
-    public void checkAndCompleteOrders() {
-        LocalDateTime now = LocalDateTime.now();
-
-        List<Class> classesToComplete = classRepository.findByStartDateBeforeAndStatus(now.toLocalDate(), ClassStatus.ONGOING);
-
-        for (Class scheduledClass : classesToComplete) {
-            LocalDateTime endTime = scheduledClass.getStartDate().atTime(scheduledClass.getSlot().getEndTime());
-
-            if (now.isAfter(endTime)) {
-                Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(scheduledClass.getClassId(), Pageable.unpaged());
-                for (OrderDetail orderDetail : orderDetails) {
-                    Order order = orderDetail.getOrder();
-                    if (order.getStatus().equals(OrderStatus.ONGOING)) {
-                        order.setStatus(OrderStatus.COMPLETED);
-                        orderRepository.save(order);
-                    }
-                }
-
-                scheduledClass.setStatus(ClassStatus.COMPLETED);
-                classRepository.save(scheduledClass);
-                log.info("Class with ID {} has started and is now COMPLETED.", scheduledClass.getClassId());
-
-            }
-        }
-    }
+//    @Scheduled(cron = "0 0 * * * *")
+//    @Transactional
+//    public void updateClassesToOngoing() {
+//        LocalDateTime now = LocalDateTime.now();
+//
+//        List<Class> classesToStart = classRepository.findByStartDateBeforeAndStatus(now.toLocalDate(), ClassStatus.ACTIVE);
+//
+//        for (Class scheduledClass : classesToStart) {
+//            LocalDateTime startTime = scheduledClass.getStartDate().atTime(scheduledClass.getSlot().getStartTime());
+//
+//            if (now.isAfter(startTime)) {
+//                Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(scheduledClass.getClassId(), Pageable.unpaged());
+//                for (OrderDetail orderDetail : orderDetails) {
+//                    Order order = orderDetail.getOrder();
+//                    if (order.getStatus().equals(OrderStatus.ACTIVE)) {
+//                        order.setStatus(OrderStatus.ONGOING);
+//                        orderRepository.save(order);
+//                    }
+//                }
+//
+//                scheduledClass.setStatus(ClassStatus.ONGOING);
+//                classRepository.save(scheduledClass);
+//                log.info("Class with ID {} has started and is now ONGOING.", scheduledClass.getClassId());
+//
+//            }
+//        }
+//    }
+//
+//
+//    @Scheduled(cron = "0 0 * * * *")
+//    @Transactional
+//    public void checkAndCompleteOrders() {
+//        LocalDateTime now = LocalDateTime.now();
+//
+//        List<Class> classesToComplete = classRepository.findByStartDateBeforeAndStatus(now.toLocalDate(), ClassStatus.ONGOING);
+//
+//        for (Class scheduledClass : classesToComplete) {
+//            LocalDateTime endTime = scheduledClass.getStartDate().atTime(scheduledClass.getSlot().getEndTime());
+//
+//            if (now.isAfter(endTime)) {
+//                Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(scheduledClass.getClassId(), Pageable.unpaged());
+//                for (OrderDetail orderDetail : orderDetails) {
+//                    Order order = orderDetail.getOrder();
+//                    if (order.getStatus().equals(OrderStatus.ONGOING)) {
+//                        order.setStatus(OrderStatus.COMPLETED);
+//                        orderRepository.save(order);
+//                    }
+//                }
+//
+//                scheduledClass.setStatus(ClassStatus.COMPLETED);
+//                classRepository.save(scheduledClass);
+//                log.info("Class with ID {} has started and is now COMPLETED.", scheduledClass.getClassId());
+//
+//            }
+//        }
+//    }
 
     private void activateClassIfEligible(Class scheduledClass) throws MessagingException {
         int registeredStudents = orderDetailRepository.countByClasses_ClassId(scheduledClass.getClassId());
@@ -362,9 +362,7 @@ public class OrderService implements IOrderService {
                 .location(clazz.getLocation())
                 .maxStudents(clazz.getMaxStudents())
                 .createDate(clazz.getCreateDate())
-                .slotId(clazz.getSlot().getSlotId())
                 .price(clazz.getPrice())
-                .dayOfWeek(clazz.getDayOfWeek())
                 .teacherName(clazz.getTeacher().getTeacherName())
                 .fullName(clazz.getTeacher().getFullName())
                 .startDate(clazz.getStartDate())

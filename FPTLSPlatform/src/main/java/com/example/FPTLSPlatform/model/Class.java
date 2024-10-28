@@ -55,6 +55,6 @@ public class Class {
     @ManyToOne
     @JoinColumn(name = "course_code", referencedColumnName = "course_code", nullable = false)
     private Course courses;
-    @OneToMany(mappedBy = "aClass", cascade = CascadeType.ALL)
-    private Set<Schedule> schedules;
+//    @OneToMany(mappedBy = "aClass", cascade = CascadeType.ALL)
+//    private Set<Schedule> schedules;
 }

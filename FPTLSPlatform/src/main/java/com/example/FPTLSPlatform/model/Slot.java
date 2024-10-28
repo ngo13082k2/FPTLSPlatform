@@ -15,6 +15,7 @@ import java.time.LocalTime;
 public class Slot {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "slot_id")
     private Long slotId;
 
     private String period;
