@@ -51,9 +51,15 @@ public class ClassService implements IClassService {
 
     public ClassDTO createClass(ClassDTO classDTO, MultipartFile image) throws GeneralSecurityException, IOException {
         if (classDTO.getName() == null || classDTO.getCode() == null || classDTO.getDescription() == null ||
-                classDTO.getMaxStudents() == null ||
-                classDTO.getPrice() == null || classDTO.getCourseCode() == null) {
+                classDTO.getMaxStudents() == null || classDTO.getPrice() == null || classDTO.getCourseCode() == null) {
             throw new RuntimeException("All fields must be provided and cannot be null");
+        }
+
+        if (classDTO.getSlotId() != null && classDTO.getDayOfWeek() != null) {
+            boolean isSlotAndDayOfWeekTaken = classRepository.existsBySlot_SlotIdAndDayOfWeek(classDTO.getSlotId(), classDTO.getDayOfWeek());
+            if (isSlotAndDayOfWeekTaken) {
+                throw new RuntimeException("The slot and day of week combination is already taken for another class.");
+            }
         }
 
         String teacherName = getCurrentUsername();
@@ -78,6 +84,7 @@ public class ClassService implements IClassService {
         Class savedClass = classRepository.save(newClass);
         return mapEntityToDTO(savedClass);
     }
+
 
 
     private String getCurrentUsername() {
@@ -228,6 +235,12 @@ public class ClassService implements IClassService {
 
 
     private Class mapDTOToEntity(ClassDTO classDTO, Course course, Teacher teacher) {
+        Slot slot = null;
+        if (classDTO.getSlotId() != null) {
+            slot = slotRepository.findById(classDTO.getSlotId())
+                    .orElseThrow(() -> new RuntimeException("Slot not found with ID: " + classDTO.getSlotId()));
+        }
+
         return Class.builder()
                 .name(classDTO.getName())
                 .code(classDTO.getCode())
@@ -239,10 +252,14 @@ public class ClassService implements IClassService {
                 .teacher(teacher)
                 .createDate(classDTO.getCreateDate())
                 .startDate(classDTO.getStartDate())
+                .endDate(classDTO.getEndDate())
+                .dayOfWeek(classDTO.getDayOfWeek())
+                .slot(slot)
                 .image(classDTO.getImageUrl())
                 .courses(course)
                 .build();
     }
+
 
     ClassDTO mapEntityToDTO(Class clazz) {
         Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(clazz.getClassId(), Pageable.unpaged());
@@ -273,9 +290,13 @@ public class ClassService implements IClassService {
                 .teacherName(clazz.getTeacher().getTeacherName())
                 .fullName(clazz.getTeacher().getFullName())
                 .startDate(clazz.getStartDate())
+                .endDate(clazz.getEndDate())
                 .courseCode(clazz.getCourses().getCourseCode())
                 .imageUrl(clazz.getImage())
+                .slotId(clazz.getSlot() != null ? clazz.getSlot().getSlotId() : null)
+                .dayOfWeek(clazz.getDayOfWeek())
                 .students(studentDTOList)
                 .build();
     }
+
 }

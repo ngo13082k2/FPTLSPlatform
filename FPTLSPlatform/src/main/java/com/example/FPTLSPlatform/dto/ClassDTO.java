@@ -1,7 +1,9 @@
 package com.example.FPTLSPlatform.dto;
 
+import com.example.FPTLSPlatform.model.Slot;
 import com.example.FPTLSPlatform.model.enums.ClassStatus;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.persistence.Column;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -45,4 +47,9 @@ public class ClassDTO {
 
     private String imageUrl;
 
+    private Long slotId;
+
+    private LocalDate endDate;
+
+    private String dayOfWeek;
 }
