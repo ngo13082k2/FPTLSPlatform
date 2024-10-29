@@ -1,5 +1,6 @@
 package com.example.FPTLSPlatform.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -21,5 +22,7 @@ public class Wallet {
     @Column(name = "balance", nullable = false)
     private Double balance;
     @OneToOne(mappedBy = "wallet", cascade = CascadeType.ALL)
+    @JsonIgnore
+
     private User user;
 }

@@ -227,6 +227,7 @@ public class ApplicationUserService implements IApplicationUserService {
     }
 
 
+
     private ApplicationUser mapOtherDtoToEntity(OtherApplicationDTO dto, ApplicationType applicationType, Object userOrTeacher) {
         ApplicationUser.ApplicationUserBuilder builder = ApplicationUser.builder()
                 .name(dto.getStudentName())

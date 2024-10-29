@@ -12,4 +12,5 @@ public interface IApplicationUserService {
     List<ApplicationUser> getApplicationsByType(Long applicationTypeId);
     String processWithdrawalPayment(Long applicationUserId);
     String completeWithdrawalRequest(Long applicationUserId);
+
 }

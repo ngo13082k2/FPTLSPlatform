@@ -1,6 +1,7 @@
 package com.example.FPTLSPlatform.model;
 
 import com.example.FPTLSPlatform.model.enums.Role;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -46,6 +47,8 @@ public class User {
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "wallet_id", referencedColumnName = "wallet_id")
+    @JsonManagedReference
+
     private Wallet wallet;
 
     @Enumerated(EnumType.STRING)

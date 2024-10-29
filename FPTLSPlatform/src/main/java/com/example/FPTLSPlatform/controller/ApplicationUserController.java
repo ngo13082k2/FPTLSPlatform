@@ -33,6 +33,7 @@ public class ApplicationUserController {
         List<ApplicationUser> applications = applicationUserService.getApplicationsByType(applicationTypeId);
         return ResponseEntity.ok(applications);
     }
+
 //    @PostMapping("/process-withdrawal/{applicationUserId}")
 //    public ResponseEntity<String> processWithdrawalPayment(@PathVariable Long applicationUserId) {
 //        String response = applicationUserService.processWithdrawalPayment(applicationUserId);
