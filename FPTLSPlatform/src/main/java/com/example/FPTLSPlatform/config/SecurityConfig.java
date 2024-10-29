@@ -66,7 +66,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE,"/slots/{slotId}").hasAuthority("STAFF")
                         .requestMatchers(HttpMethod.GET,"/slots").hasAnyAuthority("STAFF", "STUDENT", "TEACHER")
                         .requestMatchers(HttpMethod.GET,"/slots/{slotId}").hasAnyAuthority("STAFF", "STUDENT", "TEACHER")
-                        .requestMatchers("/admin").hasAuthority("ADMIN")
+                        .requestMatchers("/admin/**").hasAuthority("ADMIN")
+
 
 
 

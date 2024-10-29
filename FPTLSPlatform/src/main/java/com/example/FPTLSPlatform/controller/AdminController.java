@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/admin")
@@ -27,4 +28,9 @@ public class AdminController {
     public List<SystemTransactionHistory> getSystemWalletTransactionHistory() {
         return systemWalletService.getSystemWalletTransactionHistory();
     }
+    @GetMapping("/user-count")
+    public Map<String, Long> getUserCountByRole() {
+        return userService.getUserCountByRole();
+    }
+
 }

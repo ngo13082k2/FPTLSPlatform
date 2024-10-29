@@ -11,4 +11,5 @@ public class WithdrawalRequestDTO {
     private String bank;
     private String idNumber;
     private Long applicationTypeId;
+    private double amount;
 }

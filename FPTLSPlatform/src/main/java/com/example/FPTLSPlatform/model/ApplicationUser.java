@@ -3,6 +3,9 @@ package com.example.FPTLSPlatform.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 @Builder
 @Getter
 @Setter
@@ -34,4 +37,22 @@ public class ApplicationUser {
     @ManyToOne
     @JoinColumn(name = "user_name", nullable = false)
     private User user;
+    public Double getAmountFromDescription() {
+        if (description == null || !description.contains("Amount:")) {
+            return null;
+        }
+
+        try {
+            // Sử dụng regex để tìm số tiền sau "Amount:"
+            Pattern pattern = Pattern.compile("Amount:\\s*(\\d+(\\.\\d{1,2})?)");
+            Matcher matcher = pattern.matcher(description);
+            if (matcher.find()) {
+                return Double.parseDouble(matcher.group(1));
+            }
+        } catch (NumberFormatException e) {
+            throw new RuntimeException("Không thể đọc số tiền từ description.");
+        }
+
+        return null;
+    }
 }

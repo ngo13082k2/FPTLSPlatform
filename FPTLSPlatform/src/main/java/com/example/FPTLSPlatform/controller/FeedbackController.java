@@ -31,4 +31,5 @@ public class FeedbackController {
         List<Map<String, Object>> summary = feedbackService.getClassFeedbackSummary(classId);
         return ResponseEntity.ok(summary);
     }
+
 }

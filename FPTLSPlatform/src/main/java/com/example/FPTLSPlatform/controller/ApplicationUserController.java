@@ -2,17 +2,17 @@ package com.example.FPTLSPlatform.controller;
 
 import com.example.FPTLSPlatform.dto.OtherApplicationDTO;
 import com.example.FPTLSPlatform.dto.WithdrawalRequestDTO;
+import com.example.FPTLSPlatform.model.ApplicationUser;
 import com.example.FPTLSPlatform.service.IApplicationUserService;
 import com.example.FPTLSPlatform.service.impl.ApplicationUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
-@RequestMapping("/api/applicationUser")
+@RequestMapping("/applicationUser")
 public class ApplicationUserController {
     @Autowired
     private IApplicationUserService applicationUserService;
@@ -27,5 +27,19 @@ public class ApplicationUserController {
     public ResponseEntity<String> submitOther(@RequestBody OtherApplicationDTO otherRequest) {
         applicationUserService.processOtherRequest(otherRequest);
         return ResponseEntity.ok("Other request submitted successfully");
+    }
+    @GetMapping("/applications/{applicationTypeId}")
+    public ResponseEntity<List<ApplicationUser>> getApplicationsByType(@PathVariable Long applicationTypeId) {
+        List<ApplicationUser> applications = applicationUserService.getApplicationsByType(applicationTypeId);
+        return ResponseEntity.ok(applications);
+    }
+//    @PostMapping("/process-withdrawal/{applicationUserId}")
+//    public ResponseEntity<String> processWithdrawalPayment(@PathVariable Long applicationUserId) {
+//        String response = applicationUserService.processWithdrawalPayment(applicationUserId);
+//        return ResponseEntity.ok(response);
+//    }
+    @PostMapping("/complete")
+    public String completeWithdrawalRequest(@RequestParam Long applicationUserId) {
+        return applicationUserService.completeWithdrawalRequest(applicationUserId);
     }
 }
