@@ -1,13 +1,14 @@
 package com.example.FPTLSPlatform.service;
 
-import com.example.FPTLSPlatform.dto.ClassDTO;
-import com.example.FPTLSPlatform.dto.OrderDTO;
-import com.example.FPTLSPlatform.dto.OrderDetailDTO;
-import com.example.FPTLSPlatform.dto.ResponseDTO;
+import com.example.FPTLSPlatform.dto.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDateTime;
+
 public interface IOrderService {
+    TotalOrderDTO getTotalOrders(LocalDateTime startDate, LocalDateTime endDate);
+
     OrderDTO createOrder(Long classId, String username) throws Exception;
 
     Page<OrderDTO> getOrdersByUser(String username, Pageable pageable) throws Exception;

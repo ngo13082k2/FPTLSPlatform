@@ -84,6 +84,10 @@ public class OrderService implements IOrderService {
         return orders.map(order -> new OrderDTO(order.getOrderId(), order.getUser().getUserName(), order.getCreateAt(), order.getTotalPrice(), order.getStatus()));
     }
 
+    @Override
+    public TotalOrderDTO getTotalOrders(LocalDateTime startDate, LocalDateTime endDate) {
+        return orderRepository.getTotalOrdersAndAmountByDateRange(startDate, endDate);
+    }
 
     @Override
     public OrderDTO createOrder(Long classId, String username) throws Exception {
