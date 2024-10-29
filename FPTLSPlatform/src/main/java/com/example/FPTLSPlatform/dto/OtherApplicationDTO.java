@@ -7,7 +7,10 @@ import lombok.Setter;
 @Setter
 public class OtherApplicationDTO {
     private String studentRollNo;
+
     private String studentName;
+
     private String reason;
+
     private Long applicationTypeId;
 }

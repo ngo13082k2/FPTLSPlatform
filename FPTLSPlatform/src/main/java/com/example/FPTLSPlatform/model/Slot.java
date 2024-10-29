@@ -19,7 +19,9 @@ public class Slot {
     private Long slotId;
 
     private String period;
+
     private LocalTime startTime;
+
     private LocalTime endTime;
 
 }

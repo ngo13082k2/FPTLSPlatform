@@ -2,8 +2,7 @@ package com.example.FPTLSPlatform.service.impl;
 
 import com.example.FPTLSPlatform.dto.ClassDTO;
 import com.example.FPTLSPlatform.dto.OrderDetailDTO;
-import com.example.FPTLSPlatform.dto.ScheduleDTO;
-import com.example.FPTLSPlatform.model.Class;
+
 import com.example.FPTLSPlatform.model.OrderDetail;
 import com.example.FPTLSPlatform.repository.OrderDetailRepository;
 import com.example.FPTLSPlatform.service.IOrderDetailService;
@@ -12,7 +11,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.stream.Collectors;
 
 @Service
 public class OrderDetailService implements IOrderDetailService {
@@ -43,18 +41,6 @@ public class OrderDetailService implements IOrderDetailService {
                         .startDate(orderDetail.getClasses().getStartDate())
                         .courseCode(orderDetail.getClasses().getCourses().getCourseCode())
                         .imageUrl(orderDetail.getClasses().getImage())
-                        .build())
-                .scheduleDTO(ScheduleDTO.builder()
-                        .scheduleId(orderDetail.getSchedules().getScheduleId())
-                        .slotId(orderDetail.getSchedules().getSlot().getSlotId())
-                        .startDate(orderDetail.getSchedules().getStartDate())
-                        .endDate(orderDetail.getSchedules().getEndDate())
-                        .classId(orderDetail
-                                .getSchedules()
-                                .getClasses()
-                                .stream()
-                                .map(Class::getClassId)
-                                .collect(Collectors.toList()))
                         .build())
                 .price(orderDetail.getPrice())
                 .build());

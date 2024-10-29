@@ -55,7 +55,7 @@
         </tr>
         <tr>
             <th>Date</th>
-            <td th:text="${#dates.format(transactionHistory.getTransactionDate(), 'yyyy-MM-dd HH:mm:ss')}"></td>
+            <td th:text="${transactionHistory.getTransactionDate()}"></td>
         </tr>
     </table>
 

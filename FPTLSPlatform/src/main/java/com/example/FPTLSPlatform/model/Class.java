@@ -1,6 +1,7 @@
 package com.example.FPTLSPlatform.model;
 
 import com.example.FPTLSPlatform.model.enums.ClassStatus;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -51,17 +52,24 @@ public class Class {
     private Teacher teacher;
 
     @Column(name = "create_date")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createDate;
 
     @Column(name = "start_date")
     private LocalDate startDate;
 
+    @Column(name = "end_date")
+    private LocalDate endDate;
+
     @ManyToOne
     @JoinColumn(name = "course_code", referencedColumnName = "course_code", nullable = false)
     private Course courses;
 
+    @Column(name = "day_of_week")
+    private String dayOfWeek;
+
     @ManyToOne
-    @JoinColumn(name = "schedule_id")
-    private Schedule schedule;
+    @JoinColumn(name = "slot_id")
+    private Slot slot;
 
 }

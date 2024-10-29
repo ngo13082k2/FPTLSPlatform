@@ -4,7 +4,6 @@ import com.example.FPTLSPlatform.dto.*;
 import com.example.FPTLSPlatform.exception.InsufficientBalanceException;
 import com.example.FPTLSPlatform.exception.OrderAlreadyExistsException;
 import com.example.FPTLSPlatform.exception.ResourceNotFoundException;
-import com.example.FPTLSPlatform.dto.ScheduleDTO;
 import com.example.FPTLSPlatform.model.Class;
 import com.example.FPTLSPlatform.model.*;
 import com.example.FPTLSPlatform.model.enums.ClassStatus;
@@ -29,7 +28,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Service
 public class OrderService implements IOrderService {
@@ -49,11 +47,7 @@ public class OrderService implements IOrderService {
 
     private final TransactionHistoryRepository transactionHistoryRepository;
 
-    private final ScheduleRepository scheduleRepository;
-
     private final SystemWalletRepository systemWalletRepository;
-
-    private final SystemTransactionHistoryRepository systemTransactionHistoryRepository;
 
     private final ClassService classService;
 
@@ -69,7 +63,7 @@ public class OrderService implements IOrderService {
                         IWalletService walletService, IEmailService emailService,
                         INotificationService notificationService,
                         TransactionHistoryRepository transactionHistoryRepository,
-                        ScheduleRepository scheduleRepository, SystemWalletRepository systemWalletRepository, SystemTransactionHistoryRepository systemTransactionHistoryRepository,
+                        SystemWalletRepository systemWalletRepository,
                         ClassService classService, WalletRepository walletRepository) {
         this.orderRepository = orderRepository;
         this.classRepository = classRepository;
@@ -79,9 +73,7 @@ public class OrderService implements IOrderService {
         this.emailService = emailService;
         this.notificationService = notificationService;
         this.transactionHistoryRepository = transactionHistoryRepository;
-        this.scheduleRepository = scheduleRepository;
         this.systemWalletRepository = systemWalletRepository;
-        this.systemTransactionHistoryRepository = systemTransactionHistoryRepository;
 
         this.classService = classService;
         this.walletRepository = walletRepository;
@@ -111,18 +103,13 @@ public class OrderService implements IOrderService {
         order.setStatus(OrderStatus.PENDING);
         order.setTotalPrice(scheduleClass.getPrice());
         order = orderRepository.save(order);
-        saveOrderDetailWithSchedules(order, scheduleClass);
+        saveOrderDetail(order, scheduleClass);
 
         wallet.setBalance(wallet.getBalance() - scheduleClass.getPrice());
         systemWallet.setTotalAmount(systemWallet.getTotalAmount() + scheduleClass.getPrice());
         systemWalletRepository.save(systemWallet);
         saveTransactionHistory(order.getUser(), order.getTotalPrice());
-        SystemTransactionHistory systemTransactionHistory = systemTransactionHistoryRepository.getReferenceById(1L);
-        systemTransactionHistory.setTransactionDate(LocalDateTime.now());
-        systemTransactionHistory.setTransactionAmount(systemWallet.getTotalAmount());
-        systemTransactionHistory.setBalanceAfterTransaction(systemWallet.getTotalAmount() - order.getTotalPrice());
-        systemTransactionHistory.setUsername("ADMIN");
-        systemTransactionHistoryRepository.save(systemTransactionHistory);
+
         userRepository.save(wallet.getUser());
 
         Context context = new Context();
@@ -140,15 +127,11 @@ public class OrderService implements IOrderService {
                 .build();
     }
 
-    private void saveOrderDetailWithSchedules(Order order, Class scheduledClass) {
+    private void saveOrderDetail(Order order, Class scheduledClass) {
         OrderDetail orderDetail = new OrderDetail();
         orderDetail.setOrder(order);
         orderDetail.setClasses(scheduledClass);
         orderDetail.setPrice(scheduledClass.getPrice());
-
-        Schedule schedules = scheduleRepository.findByClasses_ClassId(scheduledClass.getClassId());
-        orderDetail.setSchedules(schedules);
-
         orderDetailRepository.save(orderDetail);
     }
 
@@ -172,7 +155,6 @@ public class OrderService implements IOrderService {
         return orderDetails.map(orderDetail -> OrderDetailDTO.builder()
                 .orderDetailId(orderDetail.getOrderDetailId())
                 .orderId(orderDetail.getOrder().getOrderId())
-                .scheduleDTO(mapEntityToDTO(orderDetail.getSchedules()))
                 .classDTO(classService.mapEntityToDTO(orderDetail.getClasses()))
                 .price(orderDetail.getPrice())
                 .build());
@@ -262,8 +244,7 @@ public class OrderService implements IOrderService {
         List<Class> classesToStart = classRepository.findByStartDateAndStatus(now.toLocalDate(), ClassStatus.ACTIVE);
 
         for (Class scheduledClass : classesToStart) {
-            Schedule schedule = scheduledClass.getSchedule();
-            LocalDateTime startTime = schedule.getStartDate().atTime(schedule.getSlot().getStartTime());
+            LocalDateTime startTime = scheduledClass.getStartDate().atTime(scheduledClass.getSlot().getStartTime());
 
             if (now.isAfter(startTime)) {
                 Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(scheduledClass.getClassId(), Pageable.unpaged());
@@ -292,8 +273,7 @@ public class OrderService implements IOrderService {
         List<Class> classesToComplete = classRepository.findByStartDateAndStatus(now.toLocalDate(), ClassStatus.ONGOING);
 
         for (Class scheduledClass : classesToComplete) {
-            Schedule schedule = scheduledClass.getSchedule();
-            LocalDateTime endTime = schedule.getEndDate().atTime(schedule.getSlot().getEndTime());
+            LocalDateTime endTime = scheduledClass.getEndDate().atTime(scheduledClass.getSlot().getEndTime());
 
             if (now.isAfter(endTime)) {
                 Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(scheduledClass.getClassId(), Pageable.unpaged());
@@ -304,12 +284,10 @@ public class OrderService implements IOrderService {
                         orderRepository.save(order);
                         Wallet wallet = orderDetail.getClasses().getTeacher().getWallet();
                         wallet.setBalance(wallet.getBalance() + order.getTotalPrice());
-                        SystemWallet systemWallet = systemWalletRepository.getReferenceById(1L);
-                        saveSystemWallet(orderDetail, systemWallet);
-
                         saveTransactionHistory(order.getUser(), order.getTotalPrice());
-                        systemWalletRepository.save(systemWallet);
                         walletRepository.save(wallet);
+                        SystemWallet systemWallet = systemWalletRepository.getReferenceById(1L);
+                        systemWallet.setTotalAmount(systemWallet.getTotalAmount() - order.getTotalPrice());
                         notificationService.createNotification(NotificationDTO.builder()
                                 .title("Order " + order.getOrderId() + " has been completed")
                                 .description("Order" + order.getOrderId() + "has been completed")
@@ -368,7 +346,6 @@ public class OrderService implements IOrderService {
             SystemWallet systemWallet = systemWalletRepository.getReferenceById(1L);
 
             wallet.setBalance(student.getWallet().getBalance() + (orderDetail.getPrice()));
-            saveSystemWallet(orderDetail, systemWallet);
             systemWalletRepository.save(systemWallet);
             userRepository.save(student);
             saveTransactionHistory(wallet.getUser(), orderDetail.getPrice());
@@ -382,28 +359,17 @@ public class OrderService implements IOrderService {
         }
     }
 
-    private void saveSystemWallet(OrderDetail orderDetail, SystemWallet systemWallet) {
-        systemWallet.setTotalAmount(systemWallet.getTotalAmount() - orderDetail.getPrice());
-        SystemTransactionHistory systemTransactionHistory = systemTransactionHistoryRepository.getReferenceById(1L);
-        systemTransactionHistory.setTransactionDate(LocalDateTime.now());
-        systemTransactionHistory.setTransactionAmount(systemWallet.getTotalAmount());
-        systemTransactionHistory.setBalanceAfterTransaction(systemWallet.getTotalAmount() - orderDetail.getPrice());
-        systemTransactionHistory.setUsername("ADMIN");
-        systemTransactionHistoryRepository.save(systemTransactionHistory);
-    }
 
     public boolean hasDuplicateSchedule(String username, Long classId) {
         Page<OrderDetail> userOrders = orderDetailRepository.findByOrder_User_UserName(username, Pageable.unpaged());
 
-        Schedule newClassSchedule = scheduleRepository.findByClasses_ClassId(classId);
+        Class newClass = classRepository.getReferenceById(classId);
 
         for (OrderDetail orderDetail : userOrders) {
             Class existingClass = orderDetail.getClasses();
-            Schedule existingSchedule = scheduleRepository.findByClasses_ClassId(existingClass.getClassId());
-
-            if (existingSchedule != null
-                    && existingSchedule.getDayOfWeek().equals(newClassSchedule.getDayOfWeek())
-                    && existingSchedule.getSlot().equals(newClassSchedule.getSlot())) {
+            if (existingClass != null
+                    && existingClass.getDayOfWeek().equals(newClass.getDayOfWeek())
+                    && existingClass.getSlot().equals(newClass.getSlot())) {
                 return true;
             }
         }
@@ -457,18 +423,6 @@ public class OrderService implements IOrderService {
         if (orderDetailRepository.countByClasses_ClassId(classId) >= maxStudents) {
             throw new Exception("Class is fully booked.");
         }
-    }
-
-    private ScheduleDTO mapEntityToDTO(Schedule schedule) {
-        return ScheduleDTO.builder()
-                .scheduleId(schedule.getScheduleId())
-                .startDate(schedule.getStartDate())
-                .endDate(schedule.getEndDate())
-                .slotId(schedule.getSlot().getSlotId())
-                .classId(schedule.getClasses().stream()
-                        .map(Class::getClassId)
-                        .collect(Collectors.toList()))
-                .build();
     }
 
 }
