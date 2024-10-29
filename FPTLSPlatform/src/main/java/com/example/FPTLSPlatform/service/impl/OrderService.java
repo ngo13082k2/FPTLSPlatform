@@ -1,6 +1,5 @@
 package com.example.FPTLSPlatform.service.impl;
 
-import com.example.FPTLSPlatform.controller.AdminController;
 import com.example.FPTLSPlatform.dto.*;
 import com.example.FPTLSPlatform.exception.InsufficientBalanceException;
 import com.example.FPTLSPlatform.exception.OrderAlreadyExistsException;
@@ -53,9 +52,14 @@ public class OrderService implements IOrderService {
 
     private final SystemWalletRepository systemWalletRepository;
 
-    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
+    private final SystemTransactionHistoryRepository systemTransactionHistoryRepository;
+
     private final ClassService classService;
+
     private final WalletRepository walletRepository;
+
+    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
+
 
     public OrderService(OrderRepository orderRepository,
                         ClassRepository classRepository,
@@ -64,7 +68,7 @@ public class OrderService implements IOrderService {
                         IWalletService walletService, IEmailService emailService,
                         INotificationService notificationService,
                         TransactionHistoryRepository transactionHistoryRepository,
-                        ScheduleRepository scheduleRepository, SystemWalletRepository systemWalletRepository,
+                        ScheduleRepository scheduleRepository, SystemWalletRepository systemWalletRepository, SystemTransactionHistoryRepository systemTransactionHistoryRepository,
                         ClassService classService, WalletRepository walletRepository) {
         this.orderRepository = orderRepository;
         this.classRepository = classRepository;
@@ -76,6 +80,7 @@ public class OrderService implements IOrderService {
         this.transactionHistoryRepository = transactionHistoryRepository;
         this.scheduleRepository = scheduleRepository;
         this.systemWalletRepository = systemWalletRepository;
+        this.systemTransactionHistoryRepository = systemTransactionHistoryRepository;
 
         this.classService = classService;
         this.walletRepository = walletRepository;
@@ -110,7 +115,13 @@ public class OrderService implements IOrderService {
         wallet.setBalance(wallet.getBalance() - scheduleClass.getPrice());
         systemWallet.setTotalAmount(systemWallet.getTotalAmount() + scheduleClass.getPrice());
         systemWalletRepository.save(systemWallet);
-
+        saveTransactionHistory(order.getUser(), order.getTotalPrice());
+        SystemTransactionHistory systemTransactionHistory = systemTransactionHistoryRepository.getReferenceById(1L);
+        systemTransactionHistory.setTransactionDate(LocalDateTime.now());
+        systemTransactionHistory.setTransactionAmount(systemWallet.getTotalAmount());
+        systemTransactionHistory.setBalanceAfterTransaction(systemWallet.getTotalAmount() - order.getTotalPrice());
+        systemTransactionHistory.setUsername("ADMIN");
+        systemTransactionHistoryRepository.save(systemTransactionHistory);
         userRepository.save(wallet.getUser());
 
         Context context = new Context();
@@ -293,7 +304,9 @@ public class OrderService implements IOrderService {
                         Wallet wallet = orderDetail.getClasses().getTeacher().getWallet();
                         wallet.setBalance(wallet.getBalance() + order.getTotalPrice());
                         SystemWallet systemWallet = systemWalletRepository.getReferenceById(1L);
-                        systemWallet.setTotalAmount(systemWallet.getTotalAmount() - orderDetail.getPrice());
+                        saveSystemWallet(orderDetail, systemWallet);
+
+                        saveTransactionHistory(order.getUser(), order.getTotalPrice());
                         systemWalletRepository.save(systemWallet);
                         walletRepository.save(wallet);
                     }
@@ -354,13 +367,23 @@ public class OrderService implements IOrderService {
             SystemWallet systemWallet = systemWalletRepository.getReferenceById(1L);
 
             wallet.setBalance(student.getWallet().getBalance() + (orderDetail.getPrice()));
-            systemWallet.setTotalAmount(systemWallet.getTotalAmount() - orderDetail.getPrice());
+            saveSystemWallet(orderDetail, systemWallet);
             systemWalletRepository.save(systemWallet);
             userRepository.save(student);
             saveTransactionHistory(wallet.getUser(), orderDetail.getPrice());
 
             log.info("Refunded {} to student {} for class {} cancellation.", orderDetail.getPrice(), student.getUserName(), cancelledClass.getClassId());
         }
+    }
+
+    private void saveSystemWallet(OrderDetail orderDetail, SystemWallet systemWallet) {
+        systemWallet.setTotalAmount(systemWallet.getTotalAmount() - orderDetail.getPrice());
+        SystemTransactionHistory systemTransactionHistory = systemTransactionHistoryRepository.getReferenceById(1L);
+        systemTransactionHistory.setTransactionDate(LocalDateTime.now());
+        systemTransactionHistory.setTransactionAmount(systemWallet.getTotalAmount());
+        systemTransactionHistory.setBalanceAfterTransaction(systemWallet.getTotalAmount() - orderDetail.getPrice());
+        systemTransactionHistory.setUsername("ADMIN");
+        systemTransactionHistoryRepository.save(systemTransactionHistory);
     }
 
     public boolean hasDuplicateSchedule(String username, Long classId) {
