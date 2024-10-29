@@ -1,4 +1,4 @@
-package com.example.FPTLSPlatform.dto;
+package com.example.FPTLSPlatform.exception;
 
 import lombok.Builder;
 import lombok.Data;

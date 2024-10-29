@@ -2,23 +2,16 @@ package com.example.FPTLSPlatform.service.impl;
 
 import com.example.FPTLSPlatform.dto.ClassDTO;
 import com.example.FPTLSPlatform.dto.OrderDetailDTO;
-import com.example.FPTLSPlatform.dto.ScheduleDTO;
-import com.example.FPTLSPlatform.dto.StudentDTO;
+import com.example.FPTLSPlatform.exception.ScheduleDTO;
 import com.example.FPTLSPlatform.model.Class;
-import com.example.FPTLSPlatform.model.Order;
 import com.example.FPTLSPlatform.model.OrderDetail;
-import com.example.FPTLSPlatform.model.User;
 import com.example.FPTLSPlatform.repository.OrderDetailRepository;
-import com.example.FPTLSPlatform.repository.OrderRepository;
-import com.example.FPTLSPlatform.repository.ScheduleRepository;
-import com.example.FPTLSPlatform.repository.UserRepository;
 import com.example.FPTLSPlatform.service.IOrderDetailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.stream.Collectors;
 
 @Service

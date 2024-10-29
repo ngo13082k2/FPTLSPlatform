@@ -1,6 +1,6 @@
 package com.example.FPTLSPlatform.service.impl;
 
-import com.example.FPTLSPlatform.dto.ApplicationTypeDTO;
+import com.example.FPTLSPlatform.exception.ApplicationTypeDTO;
 import com.example.FPTLSPlatform.model.ApplicationType;
 import com.example.FPTLSPlatform.repository.ApplicationTypeRepository;
 import org.springframework.beans.factory.annotation.Autowired;

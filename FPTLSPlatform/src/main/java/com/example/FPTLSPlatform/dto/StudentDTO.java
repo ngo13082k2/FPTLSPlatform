@@ -13,18 +13,13 @@ import lombok.NoArgsConstructor;
 @Builder
 public class StudentDTO {
 
-    @Column(name = "user_name", nullable = false, unique = true)
     private String userName;
 
-    @Column(name = "phone_number", nullable = false, unique = true)
     private String phoneNumber;
 
-    @Column(name = "email", nullable = false, unique = true)
     private String email;
 
-    @Column(name = "full_name", nullable = false)
     private String fullName;
 
-    @Column(name = "address")
     private String address;
 }
