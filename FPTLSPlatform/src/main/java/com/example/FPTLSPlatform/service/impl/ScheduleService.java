@@ -31,6 +31,15 @@ public class ScheduleService implements IScheduleService {
 
 
     public ScheduleDto createSchedule(ScheduleDto scheduleDto) {
+        Optional<Schedule> existingSchedule = scheduleRepository.findByDayOfWeekAndSlot_SlotId(
+                scheduleDto.getDayOfWeek(),
+                scheduleDto.getSlotId()
+        );
+
+        if (existingSchedule.isPresent()) {
+            throw new RuntimeException("Đã có lịch học cho slot này vào ngày " + scheduleDto.getDayOfWeek());
+        }
+
         Schedule schedule = mapToEntity(scheduleDto);
         Schedule savedSchedule = scheduleRepository.save(schedule);
         return mapToDto(savedSchedule);
@@ -39,7 +48,13 @@ public class ScheduleService implements IScheduleService {
     public ScheduleDto updateSchedule(Long scheduleId, ScheduleDto scheduleDto) {
         Schedule existingSchedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new RuntimeException("Schedule not found with id: " + scheduleId));
-
+        Optional<Schedule> conflictingSchedule = scheduleRepository.findByDayOfWeekAndSlot_SlotId(
+                scheduleDto.getDayOfWeek(),
+                scheduleDto.getSlotId()
+        );
+        if (conflictingSchedule.isPresent() && !conflictingSchedule.get().getScheduleId().equals(scheduleId)) {
+            throw new RuntimeException("Đã có lịch học cho slot này vào ngày " + scheduleDto.getDayOfWeek());
+        }
         existingSchedule.setStartDate(scheduleDto.getStartDate());
         existingSchedule.setEndDate(scheduleDto.getEndDate());
         existingSchedule.setDayOfWeek(scheduleDto.getDayOfWeek());
