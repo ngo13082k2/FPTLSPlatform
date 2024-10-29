@@ -1,6 +1,6 @@
 package com.example.FPTLSPlatform.controller;
 
-import com.example.FPTLSPlatform.dto.ApplicationTypeDto;
+import com.example.FPTLSPlatform.dto.ApplicationTypeDTO;
 import com.example.FPTLSPlatform.model.ApplicationType;
 import com.example.FPTLSPlatform.service.impl.ApplicationTypeService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +15,7 @@ public class ApplicationTypeController {
     private ApplicationTypeService applicationTypeService;
 
     @PostMapping("")
-    public ResponseEntity<ApplicationType> createApplicationType(@RequestBody ApplicationTypeDto applicationTypeDto) {
+    public ResponseEntity<ApplicationType> createApplicationType(@RequestBody ApplicationTypeDTO applicationTypeDto) {
         ApplicationType applicationType = applicationTypeService.createApplicationType(applicationTypeDto);
         return ResponseEntity.ok(applicationType);
     }

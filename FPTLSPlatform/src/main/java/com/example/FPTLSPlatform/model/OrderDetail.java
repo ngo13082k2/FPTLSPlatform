@@ -26,6 +26,10 @@ public class OrderDetail {
     @JoinColumn(name = "class_id", referencedColumnName = "class_id", nullable = false)
     private Class classes;
 
+    @ManyToOne
+    @JoinColumn(name = "schedule_id")
+    private Schedule schedules;
+
     @Column(name = "price", nullable = false)
     private Long price;
 }

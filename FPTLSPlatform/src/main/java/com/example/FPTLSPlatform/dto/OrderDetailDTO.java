@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 public class OrderDetailDTO {
     private Long orderDetailId;
     private Long orderId;
+    private ScheduleDTO scheduleDTO;
     private ClassDTO classDTO;
     private Long price;
 }

@@ -28,6 +28,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderService implements IOrderService {
@@ -47,7 +48,10 @@ public class OrderService implements IOrderService {
 
     private final TransactionHistoryRepository transactionHistoryRepository;
 
+    private final ScheduleRepository scheduleRepository;
+
     private static final Logger log = LoggerFactory.getLogger(OrderService.class);
+    private final ClassService classService;
 
     public OrderService(OrderRepository orderRepository,
                         ClassRepository classRepository,
@@ -55,7 +59,7 @@ public class OrderService implements IOrderService {
                         UserRepository userRepository,
                         IWalletService walletService, IEmailService emailService,
                         INotificationService notificationService,
-                        TransactionHistoryRepository transactionHistoryRepository) {
+                        TransactionHistoryRepository transactionHistoryRepository, ScheduleRepository scheduleRepository, ClassService classService) {
         this.orderRepository = orderRepository;
         this.classRepository = classRepository;
         this.orderDetailRepository = orderDetailRepository;
@@ -64,6 +68,8 @@ public class OrderService implements IOrderService {
         this.emailService = emailService;
         this.notificationService = notificationService;
         this.transactionHistoryRepository = transactionHistoryRepository;
+        this.scheduleRepository = scheduleRepository;
+        this.classService = classService;
     }
 
     public Page<OrderDTO> getAllOrders(Pageable pageable) {
@@ -74,33 +80,32 @@ public class OrderService implements IOrderService {
 
     @Override
     public OrderDTO createOrder(Long classId, String username) throws Exception {
-        Class scheduledClass = getClassOrThrow(classId);
+        Class scheduleClass = getClassOrThrow(classId);
         User user = getUserOrThrow(username);
 
         checkOrderAlreadyExists(username, classId);
 
         Wallet wallet = walletService.getWalletByUserName();
-        checkSufficientBalance(wallet, scheduledClass.getPrice());
+        checkSufficientBalance(wallet, scheduleClass.getPrice());
 
-        checkClassCapacity(classId, scheduledClass.getMaxStudents());
+        checkClassCapacity(classId, scheduleClass.getMaxStudents());
 
         Order order = new Order();
         order.setUser(user);
         order.setCreateAt(LocalDateTime.now());
         order.setStatus(OrderStatus.PENDING);
-        order.setTotalPrice(scheduledClass.getPrice());
+        order.setTotalPrice(scheduleClass.getPrice());
         order = orderRepository.save(order);
+        saveOrderDetailWithSchedules(order, scheduleClass);
 
-        saveOrderDetail(order, scheduledClass);
-
-        double newBalance = wallet.getBalance() - scheduledClass.getPrice();
+        double newBalance = wallet.getBalance() - scheduleClass.getPrice();
         wallet.setBalance(newBalance);
         userRepository.save(wallet.getUser());
 
         Context context = new Context();
         context.setVariable("username", username);
-        context.setVariable("class", scheduledClass);
-        context.setVariable("teacherName", scheduledClass.getTeacher().getTeacherName());
+        context.setVariable("class", scheduleClass);
+        context.setVariable("teacherName", scheduleClass.getTeacher().getTeacherName());
         emailService.sendEmail(order.getUser().getUserName(), "Booking successful", "order-email", context);
 
         return OrderDTO.builder()
@@ -110,6 +115,18 @@ public class OrderService implements IOrderService {
                 .totalPrice(order.getTotalPrice())
                 .status(order.getStatus())
                 .build();
+    }
+
+    private void saveOrderDetailWithSchedules(Order order, Class scheduledClass) {
+        OrderDetail orderDetail = new OrderDetail();
+        orderDetail.setOrder(order);
+        orderDetail.setClasses(scheduledClass);
+        orderDetail.setPrice(scheduledClass.getPrice());
+
+        Schedule schedules = scheduleRepository.findByClasses_ClassId(scheduledClass.getClassId());
+        orderDetail.setSchedules(schedules);
+
+        orderDetailRepository.save(orderDetail);
     }
 
     @Override
@@ -125,13 +142,15 @@ public class OrderService implements IOrderService {
                         .build());
     }
 
+
     public Page<OrderDetailDTO> getClassesOrderedByUser(String username, Pageable pageable) {
         Page<OrderDetail> orderDetails = orderDetailRepository.findByOrder_User_UserName(username, pageable);
 
         return orderDetails.map(orderDetail -> OrderDetailDTO.builder()
                 .orderDetailId(orderDetail.getOrderDetailId())
                 .orderId(orderDetail.getOrder().getOrderId())
-                .classDTO(mapEntityToDTO(orderDetail.getClasses()))
+                .scheduleDTO(mapEntityToDTO(orderDetail.getSchedules()))
+                .classDTO(classService.mapEntityToDTO(orderDetail.getClasses()))
                 .price(orderDetail.getPrice())
                 .build());
     }
@@ -192,73 +211,82 @@ public class OrderService implements IOrderService {
     public void checkAndActivateClasses() {
         LocalDateTime twoDaysFromNow = LocalDateTime.now().plusDays(2);
         Pageable pageable = PageRequest.of(0, 50);
+
         Page<Class> classesPage = classRepository.findByStatusAndStartDateBefore(ClassStatus.PENDING, twoDaysFromNow, pageable);
 
         for (Class scheduledClass : classesPage) {
             try {
                 activateClassIfEligible(scheduledClass);
+                log.info("Class with ID {} has been activated successfully.", scheduledClass.getClassId());
             } catch (MessagingException e) {
                 log.error("Error sending activation email for class {}: {}", scheduledClass.getClassId(), e.getMessage());
+            } catch (Exception e) {
+                log.error("Unexpected error occurred while activating class {}: {}", scheduledClass.getClassId(), e.getMessage());
+            }
+        }
+
+        log.info("Checked and processed {} classes for activation.", classesPage.getNumberOfElements());
+    }
+
+
+    @Scheduled(cron = "0 * * * * *")
+    @Transactional
+    public void updateClassesToOngoing() {
+        LocalDateTime now = LocalDateTime.now();
+
+        List<Class> classesToStart = classRepository.findByStartDateBeforeAndStatus(now.toLocalDate(), ClassStatus.ACTIVE);
+
+        for (Class scheduledClass : classesToStart) {
+            Schedule schedule = scheduledClass.getSchedule();
+            LocalDateTime startTime = schedule.getStartDate().atTime(schedule.getSlot().getStartTime());
+
+            if (now.isAfter(startTime)) {
+                Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(scheduledClass.getClassId(), Pageable.unpaged());
+                for (OrderDetail orderDetail : orderDetails) {
+                    Order order = orderDetail.getOrder();
+                    if (order.getStatus().equals(OrderStatus.ACTIVE)) {
+                        order.setStatus(OrderStatus.ONGOING);
+                        orderRepository.save(order);
+                    }
+                }
+
+                scheduledClass.setStatus(ClassStatus.ONGOING);
+                classRepository.save(scheduledClass);
+                log.info("Class with ID {} has started and is now ONGOING.", scheduledClass.getClassId());
+
             }
         }
     }
 
-//    @Scheduled(cron = "0 0 * * * *")
-//    @Transactional
-//    public void updateClassesToOngoing() {
-//        LocalDateTime now = LocalDateTime.now();
-//
-//        List<Class> classesToStart = classRepository.findByStartDateBeforeAndStatus(now.toLocalDate(), ClassStatus.ACTIVE);
-//
-//        for (Class scheduledClass : classesToStart) {
-//            LocalDateTime startTime = scheduledClass.getStartDate().atTime(scheduledClass.getSlot().getStartTime());
-//
-//            if (now.isAfter(startTime)) {
-//                Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(scheduledClass.getClassId(), Pageable.unpaged());
-//                for (OrderDetail orderDetail : orderDetails) {
-//                    Order order = orderDetail.getOrder();
-//                    if (order.getStatus().equals(OrderStatus.ACTIVE)) {
-//                        order.setStatus(OrderStatus.ONGOING);
-//                        orderRepository.save(order);
-//                    }
-//                }
-//
-//                scheduledClass.setStatus(ClassStatus.ONGOING);
-//                classRepository.save(scheduledClass);
-//                log.info("Class with ID {} has started and is now ONGOING.", scheduledClass.getClassId());
-//
-//            }
-//        }
-//    }
-//
-//
-//    @Scheduled(cron = "0 0 * * * *")
-//    @Transactional
-//    public void checkAndCompleteOrders() {
-//        LocalDateTime now = LocalDateTime.now();
-//
-//        List<Class> classesToComplete = classRepository.findByStartDateBeforeAndStatus(now.toLocalDate(), ClassStatus.ONGOING);
-//
-//        for (Class scheduledClass : classesToComplete) {
-//            LocalDateTime endTime = scheduledClass.getStartDate().atTime(scheduledClass.getSlot().getEndTime());
-//
-//            if (now.isAfter(endTime)) {
-//                Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(scheduledClass.getClassId(), Pageable.unpaged());
-//                for (OrderDetail orderDetail : orderDetails) {
-//                    Order order = orderDetail.getOrder();
-//                    if (order.getStatus().equals(OrderStatus.ONGOING)) {
-//                        order.setStatus(OrderStatus.COMPLETED);
-//                        orderRepository.save(order);
-//                    }
-//                }
-//
-//                scheduledClass.setStatus(ClassStatus.COMPLETED);
-//                classRepository.save(scheduledClass);
-//                log.info("Class with ID {} has started and is now COMPLETED.", scheduledClass.getClassId());
-//
-//            }
-//        }
-//    }
+
+    @Scheduled(cron = "0 * * * * *")
+    @Transactional
+    public void checkAndCompleteOrders() {
+        LocalDateTime now = LocalDateTime.now();
+
+        List<Class> classesToComplete = classRepository.findByStartDateBeforeAndStatus(now.toLocalDate(), ClassStatus.ONGOING);
+
+        for (Class scheduledClass : classesToComplete) {
+            Schedule schedule = scheduledClass.getSchedule();
+            LocalDateTime endTime = schedule.getEndDate().atTime(schedule.getSlot().getEndTime());
+
+            if (now.isAfter(endTime)) {
+                Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(scheduledClass.getClassId(), Pageable.unpaged());
+                for (OrderDetail orderDetail : orderDetails) {
+                    Order order = orderDetail.getOrder();
+                    if (order.getStatus().equals(OrderStatus.ONGOING)) {
+                        order.setStatus(OrderStatus.COMPLETED);
+                        orderRepository.save(order);
+                    }
+                }
+
+                scheduledClass.setStatus(ClassStatus.COMPLETED);
+                classRepository.save(scheduledClass);
+                log.info("Class with ID {} has started and is now COMPLETED.", scheduledClass.getClassId());
+
+            }
+        }
+    }
 
     private void activateClassIfEligible(Class scheduledClass) throws MessagingException {
         int registeredStudents = orderDetailRepository.countByClasses_ClassId(scheduledClass.getClassId());
@@ -307,6 +335,22 @@ public class OrderService implements IOrderService {
         }
     }
 
+    public boolean hasDuplicateSchedule(String username, Long classId) {
+        Page<OrderDetail> userOrders = orderDetailRepository.findByOrder_User_UserName(username, Pageable.unpaged());
+
+        Schedule newClassSchedule = scheduleRepository.findByClasses_ClassId(classId);
+
+        for (OrderDetail orderDetail : userOrders) {
+            Class existingClass = orderDetail.getClasses();
+            Schedule existingSchedule = scheduleRepository.findByClasses_ClassId(existingClass.getClassId());
+
+            if (existingSchedule != null && existingSchedule.equals(newClassSchedule)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void saveTransactionHistory(User user, Long amount) {
         TransactionHistory transactionHistory = new TransactionHistory();
         transactionHistory.setAmount(amount);
@@ -316,9 +360,9 @@ public class OrderService implements IOrderService {
         transactionHistoryRepository.save(transactionHistory);
     }
 
-    private Class getClassOrThrow(Long classId) {
-        return classRepository.findById(classId)
-                .orElseThrow(() -> new ResourceNotFoundException("Class not found with id: " + classId));
+    private Class getClassOrThrow(Long id) {
+        return classRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Schedule not found with id: " + id));
     }
 
     private User getUserOrThrow(String username) {
@@ -329,6 +373,9 @@ public class OrderService implements IOrderService {
     private void checkOrderAlreadyExists(String username, Long classId) {
         if (orderDetailRepository.existsByOrder_User_UserNameAndClasses_ClassId(username, classId)) {
             throw new OrderAlreadyExistsException("User has already registered for this class.");
+        }
+        if (hasDuplicateSchedule(username, classId)) {
+            throw new IllegalStateException("User has already registered for this schedule.");
         }
     }
 
@@ -344,30 +391,16 @@ public class OrderService implements IOrderService {
         }
     }
 
-    private void saveOrderDetail(Order order, Class scheduledClass) {
-        OrderDetail orderDetail = new OrderDetail();
-        orderDetail.setOrder(order);
-        orderDetail.setClasses(scheduledClass);
-        orderDetail.setPrice(scheduledClass.getPrice());
-        orderDetailRepository.save(orderDetail);
-    }
-
-    private ClassDTO mapEntityToDTO(Class clazz) {
-        return ClassDTO.builder()
-                .classId(clazz.getClassId())
-                .name(clazz.getName())
-                .code(clazz.getCode())
-                .description(clazz.getDescription())
-                .status(clazz.getStatus())
-                .location(clazz.getLocation())
-                .maxStudents(clazz.getMaxStudents())
-                .createDate(clazz.getCreateDate())
-                .price(clazz.getPrice())
-                .teacherName(clazz.getTeacher().getTeacherName())
-                .fullName(clazz.getTeacher().getFullName())
-                .startDate(clazz.getStartDate())
-//                .endDate(clazz.getEndDate())
-                .courseCode(clazz.getCourses().getCourseCode())
+    private ScheduleDTO mapEntityToDTO(Schedule schedule) {
+        return ScheduleDTO.builder()
+                .scheduleId(schedule.getScheduleId())
+                .startDate(schedule.getStartDate())
+                .endDate(schedule.getEndDate())
+                .slotId(schedule.getSlot().getSlotId())
+                .classId(schedule.getClasses().stream()
+                        .map(Class::getClassId)
+                        .collect(Collectors.toList()))
                 .build();
     }
+
 }

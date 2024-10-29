@@ -1,8 +1,7 @@
 package com.example.FPTLSPlatform.service.impl;
 
 
-
-import com.example.FPTLSPlatform.dto.ScheduleDto;
+import com.example.FPTLSPlatform.dto.ScheduleDTO;
 import com.example.FPTLSPlatform.model.Class;
 import com.example.FPTLSPlatform.model.Schedule;
 import com.example.FPTLSPlatform.model.Slot;
@@ -30,7 +29,7 @@ public class ScheduleService implements IScheduleService {
     private ClassRepository classRepository;
 
 
-    public ScheduleDto createSchedule(ScheduleDto scheduleDto) {
+    public ScheduleDTO createSchedule(ScheduleDTO scheduleDto) {
         Optional<Schedule> existingSchedule = scheduleRepository.findByDayOfWeekAndSlot_SlotId(
                 scheduleDto.getDayOfWeek(),
                 scheduleDto.getSlotId()
@@ -45,7 +44,7 @@ public class ScheduleService implements IScheduleService {
         return mapToDto(savedSchedule);
     }
 
-    public ScheduleDto updateSchedule(Long scheduleId, ScheduleDto scheduleDto) {
+    public ScheduleDTO updateSchedule(Long scheduleId, ScheduleDTO scheduleDto) {
         Schedule existingSchedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new RuntimeException("Schedule not found with id: " + scheduleId));
         Optional<Schedule> conflictingSchedule = scheduleRepository.findByDayOfWeekAndSlot_SlotId(
@@ -66,43 +65,49 @@ public class ScheduleService implements IScheduleService {
         }
 
         if (scheduleDto.getClassId() != null) {
-            Class aClass = classRepository.findById(scheduleDto.getClassId())
-                    .orElseThrow(() -> new RuntimeException("Class not found with id: " + scheduleDto.getClassId()));
-            existingSchedule.setClasses(aClass);
+            List<Class> classes = scheduleDto.getClassId().stream()
+                    .map(id -> classRepository.findById(id)
+                            .orElseThrow(() -> new RuntimeException("Class not found with id: " + id)))
+                    .collect(Collectors.toList());
+            existingSchedule.setClasses(classes);
         }
 
         Schedule updatedSchedule = scheduleRepository.save(existingSchedule);
         return mapToDto(updatedSchedule);
     }
-    public ScheduleDto getScheduleById(Long scheduleId) {
+
+    public ScheduleDTO getScheduleById(Long scheduleId) {
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new RuntimeException("Schedule not found with id: " + scheduleId));
         return mapToDto(schedule);
     }
-    public List<ScheduleDto> getAllSchedules() {
+
+    public List<ScheduleDTO> getAllSchedules() {
         return scheduleRepository.findAll()
                 .stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
-    public List<ScheduleDto> getSchedulesByClassId(Long classId) {
-        return scheduleRepository.findByClasses_ClassId(classId)
-                .stream()
-                .map(this::mapToDto)
-                .collect(Collectors.toList());
+
+    public ScheduleDTO getSchedulesByClassId(Long classId) {
+        return mapToDto(scheduleRepository.findByClasses_ClassId(classId));
     }
-    public List<ScheduleDto> getSchedulesBySlotId(Long slotId) {
+
+    public List<ScheduleDTO> getSchedulesBySlotId(Long slotId) {
         return scheduleRepository.findBySlot_SlotId(slotId)
                 .stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
-    private Schedule mapToEntity(ScheduleDto dto) {
+
+    private Schedule mapToEntity(ScheduleDTO dto) {
         Slot slot = dto.getSlotId() != null ? slotRepository.findById(dto.getSlotId())
                 .orElseThrow(() -> new RuntimeException("Slot not found with id: " + dto.getSlotId())) : null;
 
-        Class aClass = dto.getClassId() != null ? classRepository.findById(dto.getClassId())
-                .orElseThrow(() -> new RuntimeException("Class not found with id: " + dto.getClassId())) : null;
+        List<Class> classes = dto.getClassId() != null ? dto.getClassId().stream()
+                .map(id -> classRepository.findById(id)
+                        .orElseThrow(() -> new RuntimeException("Class not found with id: " + id)))
+                .toList() : null;
 
         return Schedule.builder()
                 .scheduleId(dto.getScheduleId())
@@ -110,18 +115,19 @@ public class ScheduleService implements IScheduleService {
                 .endDate(dto.getEndDate())
                 .dayOfWeek(dto.getDayOfWeek())
                 .slot(slot)
-                .classes(aClass)
+                .classes(classes)
                 .build();
     }
 
-    private ScheduleDto mapToDto(Schedule schedule) {
-        return ScheduleDto.builder()
+    private ScheduleDTO mapToDto(Schedule schedule) {
+        return ScheduleDTO.builder()
                 .scheduleId(schedule.getScheduleId())
                 .startDate(schedule.getStartDate())
                 .endDate(schedule.getEndDate())
                 .dayOfWeek(schedule.getDayOfWeek())
                 .slotId(schedule.getSlot() != null ? schedule.getSlot().getSlotId() : null)
-                .classId(schedule.getClasses() != null ? schedule.getClasses().getClassId() : null)
+                .classId(schedule.getClasses() != null ?
+                        schedule.getClasses().stream().map(Class::getClassId).collect(Collectors.toList()) : null)
                 .build();
     }
 

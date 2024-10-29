@@ -43,18 +43,26 @@ public class Class {
 
     @Column(name = "price", nullable = false)
     private Long price;
+
     @Column(name = "image")
     private String image;
+
     @ManyToOne
     @JoinColumn(name = "teacher_name", referencedColumnName = "teacher_name", nullable = false)
     private Teacher teacher;
+
     @Column(name = "create_date")
     private LocalDateTime createDate;
+
     @Column(name = "start_date")
     private LocalDate startDate;
+
     @ManyToOne
     @JoinColumn(name = "course_code", referencedColumnName = "course_code", nullable = false)
     private Course courses;
-//    @OneToMany(mappedBy = "aClass", cascade = CascadeType.ALL)
-//    private Set<Schedule> schedules;
+
+    @ManyToOne
+    @JoinColumn(name = "schedule_id", nullable = false)
+    private Schedule schedule;
+
 }

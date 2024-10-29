@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -32,7 +33,7 @@ public class Schedule {
     @JoinColumn(name = "slot_id", referencedColumnName = "slot_id", nullable = false)
     private Slot slot;
 
-    @ManyToOne
-    @JoinColumn(name = "class_id", referencedColumnName = "class_id", nullable = false)
-    private Class classes;
+    @OneToMany(mappedBy = "schedule")
+    private List<Class> classes;
+
 }

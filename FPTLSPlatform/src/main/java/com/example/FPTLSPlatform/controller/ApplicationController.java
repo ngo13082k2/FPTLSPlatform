@@ -5,7 +5,6 @@ import com.example.FPTLSPlatform.exception.ApplicationAlreadyApprovedException;
 import com.example.FPTLSPlatform.exception.ResourceNotFoundException;
 import com.example.FPTLSPlatform.model.Application;
 import com.example.FPTLSPlatform.service.IApplicationService;
-import com.example.FPTLSPlatform.service.IEmailService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -22,8 +21,6 @@ import org.springframework.web.bind.annotation.*;
 public class ApplicationController {
     @Autowired
     private IApplicationService applicationService;
-    @Autowired
-    private IEmailService emailService;
 
     @PostMapping("/approve_application")
     public ResponseEntity<?> approveApplication(@RequestParam Long id) {

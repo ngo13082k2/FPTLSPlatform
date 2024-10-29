@@ -1,6 +1,7 @@
 package com.example.FPTLSPlatform.repository;
 
 import com.example.FPTLSPlatform.model.Class;
+import com.example.FPTLSPlatform.model.Schedule;
 import com.example.FPTLSPlatform.model.Teacher;
 import com.example.FPTLSPlatform.model.enums.ClassStatus;
 import org.springframework.data.domain.Page;

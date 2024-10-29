@@ -51,7 +51,7 @@ public class ClassService implements IClassService {
 
     public ClassDTO createClass(ClassDTO classDTO, MultipartFile image) throws GeneralSecurityException, IOException {
         if (classDTO.getName() == null || classDTO.getCode() == null || classDTO.getDescription() == null ||
-           classDTO.getMaxStudents() == null ||
+                classDTO.getMaxStudents() == null ||
                 classDTO.getPrice() == null || classDTO.getCourseCode() == null) {
             throw new RuntimeException("All fields must be provided and cannot be null");
         }
@@ -129,7 +129,6 @@ public class ClassService implements IClassService {
         if (!scheduledClass.getTeacher().getTeacherName().equals(teacherUsername)) {
             throw new Exception("You are not the teacher of this class.");
         }
-
 
 
         scheduledClass.setStatus(ClassStatus.COMPLETED);

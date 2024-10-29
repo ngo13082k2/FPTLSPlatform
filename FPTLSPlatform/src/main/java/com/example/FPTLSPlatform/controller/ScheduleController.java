@@ -1,6 +1,6 @@
 package com.example.FPTLSPlatform.controller;
 
-import com.example.FPTLSPlatform.dto.ScheduleDto;
+import com.example.FPTLSPlatform.dto.ScheduleDTO;
 import com.example.FPTLSPlatform.service.IScheduleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,9 +17,9 @@ public class ScheduleController {
     private IScheduleService scheduleService;
 
     @PostMapping
-    public ResponseEntity<ScheduleDto> createSchedule(@RequestBody ScheduleDto scheduleDto) {
+    public ResponseEntity<ScheduleDTO> createSchedule(@RequestBody ScheduleDTO scheduleDto) {
         try {
-            ScheduleDto createdSchedule = scheduleService.createSchedule(scheduleDto);
+            ScheduleDTO createdSchedule = scheduleService.createSchedule(scheduleDto);
             return new ResponseEntity<>(createdSchedule, HttpStatus.CREATED);
         } catch (RuntimeException e) {
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
@@ -27,9 +27,9 @@ public class ScheduleController {
     }
 
     @PutMapping("/{scheduleId}")
-    public ResponseEntity<ScheduleDto> updateSchedule(@PathVariable Long scheduleId, @RequestBody ScheduleDto scheduleDto) {
+    public ResponseEntity<ScheduleDTO> updateSchedule(@PathVariable Long scheduleId, @RequestBody ScheduleDTO scheduleDto) {
         try {
-            ScheduleDto updatedSchedule = scheduleService.updateSchedule(scheduleId, scheduleDto);
+            ScheduleDTO updatedSchedule = scheduleService.updateSchedule(scheduleId, scheduleDto);
             return new ResponseEntity<>(updatedSchedule, HttpStatus.OK);
         } catch (RuntimeException e) {
             return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
@@ -41,15 +41,17 @@ public class ScheduleController {
     public String handleRuntimeException(RuntimeException e) {
         return e.getMessage();
     }
+
     @GetMapping
-    public ResponseEntity<List<ScheduleDto>> getAllSchedules() {
-        List<ScheduleDto> schedules = scheduleService.getAllSchedules();
+    public ResponseEntity<List<ScheduleDTO>> getAllSchedules() {
+        List<ScheduleDTO> schedules = scheduleService.getAllSchedules();
         return new ResponseEntity<>(schedules, HttpStatus.OK);
     }
+
     @GetMapping("/{scheduleId}")
-    public ResponseEntity<ScheduleDto> getScheduleById(@PathVariable Long scheduleId) {
+    public ResponseEntity<ScheduleDTO> getScheduleById(@PathVariable Long scheduleId) {
         try {
-            ScheduleDto schedule = scheduleService.getScheduleById(scheduleId);
+            ScheduleDTO schedule = scheduleService.getScheduleById(scheduleId);
             return new ResponseEntity<>(schedule, HttpStatus.OK);
         } catch (RuntimeException e) {
             return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
@@ -57,14 +59,14 @@ public class ScheduleController {
     }
 
     @GetMapping("/class/{classId}")
-    public ResponseEntity<List<ScheduleDto>> getSchedulesByClassId(@PathVariable Long classId) {
-        List<ScheduleDto> schedules = scheduleService.getSchedulesByClassId(classId);
+    public ResponseEntity<ScheduleDTO> getSchedulesByClassId(@PathVariable Long classId) {
+        ScheduleDTO schedules = scheduleService.getSchedulesByClassId(classId);
         return new ResponseEntity<>(schedules, HttpStatus.OK);
     }
 
     @GetMapping("/slot/{slotId}")
-    public ResponseEntity<List<ScheduleDto>> getSchedulesBySlotId(@PathVariable Long slotId) {
-        List<ScheduleDto> schedules = scheduleService.getSchedulesBySlotId(slotId);
+    public ResponseEntity<List<ScheduleDTO>> getSchedulesBySlotId(@PathVariable Long slotId) {
+        List<ScheduleDTO> schedules = scheduleService.getSchedulesBySlotId(slotId);
         return new ResponseEntity<>(schedules, HttpStatus.OK);
     }
 }
