@@ -128,7 +128,7 @@ public class OrderService implements IOrderService {
         context.setVariable("username", username);
         context.setVariable("class", scheduleClass);
         context.setVariable("teacherName", scheduleClass.getTeacher().getTeacherName());
-        emailService.sendEmail(order.getUser().getUserName(), "Booking successful", "order-email", context);
+        emailService.sendEmail(order.getUser().getEmail(), "Booking successful", "order-email", context);
 
         return OrderDTO.builder()
                 .orderId(order.getOrderId())
@@ -210,7 +210,7 @@ public class OrderService implements IOrderService {
                 Context context = new Context();
                 context.setVariable("username", order.getUser().getUserName());
                 context.setVariable("class", scheduledClass);
-                emailService.sendEmail(order.getUser().getUserName(), "Cancelled booking successful", "cancel-email", context);
+                emailService.sendEmail(order.getUser().getEmail(), "Cancelled booking successful", "cancel-email", context);
                 return new ResponseDTO<>("SUCCESS", "Order cancelled successfully", null);
             }
 
@@ -225,7 +225,7 @@ public class OrderService implements IOrderService {
         Context context = new Context();
         context.setVariable("teacherName", scheduledClass.getTeacher().getTeacherName());
         context.setVariable("class", scheduledClass);
-        emailService.sendEmail(scheduledClass.getTeacher().getTeacherName(), "Class active", "active-email", context);
+        emailService.sendEmail(scheduledClass.getTeacher().getEmail(), "Class active", "active-email", context);
     }
 
     @Scheduled(cron = "0 * * * * ?")
@@ -309,6 +309,11 @@ public class OrderService implements IOrderService {
                         saveTransactionHistory(order.getUser(), order.getTotalPrice());
                         systemWalletRepository.save(systemWallet);
                         walletRepository.save(wallet);
+                        notificationService.createNotification(NotificationDTO.builder()
+                                .title("Order " + order.getOrderId() + " has been completed")
+                                .description("Order" + order.getOrderId() + "has been completed")
+                                .name("Notification")
+                                .build());
                     }
                 }
 
@@ -336,8 +341,8 @@ public class OrderService implements IOrderService {
             log.info("Class with ID {} has been activated.", scheduledClass.getClassId());
             sendActivationEmail(scheduledClass);
             notificationService.createNotification(NotificationDTO.builder()
-                    .title("Class" + scheduledClass.getCode() + "has been activated")
-                    .description("Class" + scheduledClass.getCode() + "has been start on" + scheduledClass.getStartDate())
+                    .title("Class " + scheduledClass.getCode() + " has been activated")
+                    .description("Class " + scheduledClass.getCode() + " has been start on" + scheduledClass.getStartDate())
                     .name("Notification")
                     .build());
         } else {
@@ -347,11 +352,6 @@ public class OrderService implements IOrderService {
                     scheduledClass.getClassId(), registeredStudents, minimumRequiredStudents);
 
             refundStudents(scheduledClass);
-            notificationService.createNotification(NotificationDTO.builder()
-                    .title("Class" + scheduledClass.getCode() + "has been cancelled")
-                    .description("Class" + scheduledClass.getCode() + "has been cancelled due to insufficient students")
-                    .name("Notification")
-                    .build());
         }
     }
 
@@ -371,6 +371,11 @@ public class OrderService implements IOrderService {
             systemWalletRepository.save(systemWallet);
             userRepository.save(student);
             saveTransactionHistory(wallet.getUser(), orderDetail.getPrice());
+            notificationService.createNotification(NotificationDTO.builder()
+                    .title("Refund for Order " + order.getOrderId() + " has been processed")
+                    .description("Your order with ID " + order.getOrderId() + " has been canceled, and a refund has been initiated.")
+                    .name("Refund Notification")
+                    .build());
 
             log.info("Refunded {} to student {} for class {} cancellation.", orderDetail.getPrice(), student.getUserName(), cancelledClass.getClassId());
         }
@@ -411,6 +416,15 @@ public class OrderService implements IOrderService {
         transactionHistory.setUser(user);
 
         transactionHistoryRepository.save(transactionHistory);
+        Context context = new Context();
+        context.setVariable("transactionHistory", transactionHistory);
+        emailService.sendEmail(user.getEmail(), "Transaction", "transaction-email", context);
+
+        notificationService.createNotification(NotificationDTO.builder()
+                .title("Funds Added to Wallet")
+                .description("An amount of " + amount + " has been added to your wallet.")
+                .name("Wallet Notification")
+                .build());
     }
 
     private Class getClassOrThrow(Long id) {
