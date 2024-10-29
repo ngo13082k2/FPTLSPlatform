@@ -2,7 +2,7 @@ package com.example.FPTLSPlatform.service.impl;
 
 import com.example.FPTLSPlatform.dto.ClassDTO;
 import com.example.FPTLSPlatform.dto.OrderDetailDTO;
-import com.example.FPTLSPlatform.exception.ScheduleDTO;
+import com.example.FPTLSPlatform.dto.ScheduleDTO;
 import com.example.FPTLSPlatform.model.Class;
 import com.example.FPTLSPlatform.model.OrderDetail;
 import com.example.FPTLSPlatform.repository.OrderDetailRepository;

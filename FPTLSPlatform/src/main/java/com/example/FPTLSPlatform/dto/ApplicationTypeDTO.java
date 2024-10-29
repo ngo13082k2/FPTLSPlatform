@@ -1,4 +1,4 @@
-package com.example.FPTLSPlatform.exception;
+package com.example.FPTLSPlatform.dto;
 
 import lombok.*;
 

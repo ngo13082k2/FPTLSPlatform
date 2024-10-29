@@ -1,6 +1,5 @@
 package com.example.FPTLSPlatform.dto;
 
-import com.example.FPTLSPlatform.exception.ScheduleDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

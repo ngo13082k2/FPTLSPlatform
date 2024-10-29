@@ -1,6 +1,6 @@
 package com.example.FPTLSPlatform.service;
 
-import com.example.FPTLSPlatform.exception.ScheduleDTO;
+import com.example.FPTLSPlatform.dto.ScheduleDTO;
 
 import java.util.List;
 

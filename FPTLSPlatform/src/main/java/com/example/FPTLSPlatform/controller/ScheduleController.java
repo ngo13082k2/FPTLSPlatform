@@ -1,6 +1,6 @@
 package com.example.FPTLSPlatform.controller;
 
-import com.example.FPTLSPlatform.exception.ScheduleDTO;
+import com.example.FPTLSPlatform.dto.ScheduleDTO;
 import com.example.FPTLSPlatform.service.IScheduleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

@@ -4,7 +4,7 @@ import com.example.FPTLSPlatform.dto.*;
 import com.example.FPTLSPlatform.exception.InsufficientBalanceException;
 import com.example.FPTLSPlatform.exception.OrderAlreadyExistsException;
 import com.example.FPTLSPlatform.exception.ResourceNotFoundException;
-import com.example.FPTLSPlatform.exception.ScheduleDTO;
+import com.example.FPTLSPlatform.dto.ScheduleDTO;
 import com.example.FPTLSPlatform.model.Class;
 import com.example.FPTLSPlatform.model.*;
 import com.example.FPTLSPlatform.model.enums.ClassStatus;

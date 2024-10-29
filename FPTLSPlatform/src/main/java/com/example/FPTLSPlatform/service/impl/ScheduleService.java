@@ -1,7 +1,7 @@
 package com.example.FPTLSPlatform.service.impl;
 
 
-import com.example.FPTLSPlatform.exception.ScheduleDTO;
+import com.example.FPTLSPlatform.dto.ScheduleDTO;
 import com.example.FPTLSPlatform.model.Class;
 import com.example.FPTLSPlatform.model.Schedule;
 import com.example.FPTLSPlatform.model.Slot;
