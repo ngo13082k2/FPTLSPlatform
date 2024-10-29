@@ -1,17 +1,18 @@
 package com.example.FPTLSPlatform.service.impl;
 
+import com.example.FPTLSPlatform.dto.NotificationDTO;
 import com.example.FPTLSPlatform.dto.OtherApplicationDTO;
 import com.example.FPTLSPlatform.dto.WithdrawalRequestDTO;
 import com.example.FPTLSPlatform.model.*;
-import com.example.FPTLSPlatform.model.enums.Role;
 import com.example.FPTLSPlatform.repository.*;
 import com.example.FPTLSPlatform.service.IApplicationUserService;
+import com.example.FPTLSPlatform.service.IEmailService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.context.Context;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -28,16 +29,28 @@ public class ApplicationUserService implements IApplicationUserService {
 
     @Autowired
     private UserRepository userRepository;
+
     @Autowired
     private WalletRepository walletRepository;
+
     @Autowired
     private SystemTransactionHistoryRepository systemTransactionHistoryRepository;
+
     @Autowired
     private SystemWalletRepository systemWalletRepository;
+
     @Autowired
     private TransactionHistoryRepository transactionHistoryRepository;
+
     @Autowired
     private TeacherRepository teacherRepository;
+
+    @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
+    private IEmailService emailService;
+
     public void processWithdrawalRequest(WithdrawalRequestDTO withdrawalRequestDto) {
         ApplicationType applicationType = applicationTypeRepository.findById(withdrawalRequestDto.getApplicationTypeId())
                 .orElseThrow(() -> new RuntimeException("Application type not found"));
@@ -80,7 +93,6 @@ public class ApplicationUserService implements IApplicationUserService {
     }
 
 
-
     public String completeWithdrawalRequest(Long applicationUserId) {
         ApplicationUser applicationUser = applicationUserRepository.findById(applicationUserId)
                 .orElseThrow(() -> new RuntimeException("Withdrawal request not found"));
@@ -109,23 +121,27 @@ public class ApplicationUserService implements IApplicationUserService {
             throw new RuntimeException("Invalid application user type, no associated User or Teacher.");
         }
 
-        SystemTransactionHistory transactionHistory = SystemTransactionHistory.builder()
+        SystemTransactionHistory systemTransactionHistory = SystemTransactionHistory.builder()
                 .transactionAmount(amount)
                 .transactionDate(LocalDateTime.now())
                 .balanceAfterTransaction(systemWallet.getTotalAmount())
                 .username(username)
                 .build();
-        systemTransactionHistoryRepository.save(transactionHistory);
+        systemTransactionHistoryRepository.save(systemTransactionHistory);
 
         // Đổi trạng thái của ApplicationUser thành completed
         applicationUser.setStatus("completed");
         applicationUserRepository.save(applicationUser);
-
+        notificationService.createNotification(NotificationDTO.builder()
+                .title("Withdraw successful")
+                .description("Rút tiền thành công")
+                .name("Notification")
+                .build());
+        Context context = new Context();
+        context.setVariable("systemTransactionHistory", systemTransactionHistory);
+        emailService.sendEmail(applicationUser.getUser().getEmail(), "Transaction", "withdraw-email", context);
         return "Đã trả tiền thành công và cập nhật trạng thái yêu cầu thành completed.";
     }
-
-
-
 
 
     public void processOtherRequest(OtherApplicationDTO otherRequestDto) {
@@ -137,6 +153,7 @@ public class ApplicationUserService implements IApplicationUserService {
         ApplicationUser applicationUser = mapOtherDtoToEntity(otherRequestDto, applicationType, userOrTeacher);
         applicationUserRepository.save(applicationUser);
     }
+
     public List<ApplicationUser> getApplicationsByType(Long applicationTypeId) {
         return applicationUserRepository.findByApplicationType_Id(applicationTypeId);
     }
@@ -157,6 +174,7 @@ public class ApplicationUserService implements IApplicationUserService {
 
         throw new RuntimeException("User or Teacher not found");
     }
+
     @Transactional
     public String processWithdrawalPayment(Long applicationUserId) {
 //        ApplicationUser applicationUser = applicationUserRepository.findById(applicationUserId)
@@ -180,8 +198,9 @@ public class ApplicationUserService implements IApplicationUserService {
 //        userRepository.save(user);
 //        applicationUserRepository.save(applicationUser);
 //
-       return "Withdrawal request processed successfully";
+        return "Withdrawal request processed successfully";
     }
+
     private ApplicationUser mapWithdrawalDtoToEntity(WithdrawalRequestDTO dto, ApplicationType applicationType, Object userOrTeacher) {
         ApplicationUser.ApplicationUserBuilder builder = ApplicationUser.builder()
                 .name(dto.getAccountHolderName())
@@ -201,7 +220,6 @@ public class ApplicationUserService implements IApplicationUserService {
 
         return builder.build();
     }
-
 
 
     private ApplicationUser mapOtherDtoToEntity(OtherApplicationDTO dto, ApplicationType applicationType, Object userOrTeacher) {

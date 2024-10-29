@@ -1,6 +1,5 @@
 package com.example.FPTLSPlatform.controller;
 
-import com.example.FPTLSPlatform.dto.ClassDTO;
 import com.example.FPTLSPlatform.dto.OrderDTO;
 import com.example.FPTLSPlatform.dto.OrderDetailDTO;
 import com.example.FPTLSPlatform.dto.ResponseDTO;
@@ -89,6 +88,17 @@ public class OrderController {
         Pageable pageable = PageRequest.of(page, size);
         Page<OrderDetailDTO> classDTOS = orderService.getClassesOrderedByUser(username, pageable);
         ResponseDTO<Page<OrderDetailDTO>> response = new ResponseDTO<>("SUCCESS", "Classes retrieved successfully", classDTOS);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/{username}")
+    public ResponseEntity<ResponseDTO<Page<OrderDTO>>> getOrdersByUserId(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @PathVariable String username
+    ) throws Exception {
+        Page<OrderDTO> orders = orderService.getOrdersByUser(username, PageRequest.of(page, size));
+        ResponseDTO<Page<OrderDTO>> response = new ResponseDTO<>("SUCCESS", "Users retrieved successfully", orders);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }
