@@ -27,7 +27,11 @@ public class TransactionHistory {
     @Column(name = "transaction_balance", nullable = false )
     private double transactionBalance;
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_name")
     @JsonIgnore
     private User user;
+    @ManyToOne
+    @JoinColumn(name = "teacher_name")
+    @JsonIgnore
+    private Teacher teacher;
 }

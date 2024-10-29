@@ -35,8 +35,12 @@ public class ApplicationUser {
     @JoinColumn(name = "application_type_id", nullable = false)
     private ApplicationType applicationType;
     @ManyToOne
-    @JoinColumn(name = "user_name", nullable = false)
+    @JoinColumn(name = "user_name", nullable = true)
     private User user;
+    @ManyToOne
+    @JoinColumn(name = "teacher", nullable = true)
+    private Teacher teacher;
+
     public Double getAmountFromDescription() {
         if (description == null || !description.contains("Amount:")) {
             return null;
