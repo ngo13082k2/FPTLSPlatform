@@ -1,5 +1,6 @@
 package com.example.FPTLSPlatform.service.impl;
 
+import com.example.FPTLSPlatform.controller.AdminController;
 import com.example.FPTLSPlatform.dto.*;
 import com.example.FPTLSPlatform.exception.InsufficientBalanceException;
 import com.example.FPTLSPlatform.exception.OrderAlreadyExistsException;
@@ -50,8 +51,11 @@ public class OrderService implements IOrderService {
 
     private final ScheduleRepository scheduleRepository;
 
+    private final SystemWalletRepository systemWalletRepository;
+
     private static final Logger log = LoggerFactory.getLogger(OrderService.class);
     private final ClassService classService;
+    private final WalletRepository walletRepository;
 
     public OrderService(OrderRepository orderRepository,
                         ClassRepository classRepository,
@@ -59,7 +63,9 @@ public class OrderService implements IOrderService {
                         UserRepository userRepository,
                         IWalletService walletService, IEmailService emailService,
                         INotificationService notificationService,
-                        TransactionHistoryRepository transactionHistoryRepository, ScheduleRepository scheduleRepository, ClassService classService) {
+                        TransactionHistoryRepository transactionHistoryRepository,
+                        ScheduleRepository scheduleRepository, SystemWalletRepository systemWalletRepository,
+                        ClassService classService, WalletRepository walletRepository) {
         this.orderRepository = orderRepository;
         this.classRepository = classRepository;
         this.orderDetailRepository = orderDetailRepository;
@@ -69,7 +75,10 @@ public class OrderService implements IOrderService {
         this.notificationService = notificationService;
         this.transactionHistoryRepository = transactionHistoryRepository;
         this.scheduleRepository = scheduleRepository;
+        this.systemWalletRepository = systemWalletRepository;
+
         this.classService = classService;
+        this.walletRepository = walletRepository;
     }
 
     public Page<OrderDTO> getAllOrders(Pageable pageable) {
@@ -85,9 +94,9 @@ public class OrderService implements IOrderService {
 
         checkOrderAlreadyExists(username, classId);
 
+        SystemWallet systemWallet = systemWalletRepository.getReferenceById(1L);
         Wallet wallet = walletService.getWalletByUserName();
         checkSufficientBalance(wallet, scheduleClass.getPrice());
-
         checkClassCapacity(classId, scheduleClass.getMaxStudents());
 
         Order order = new Order();
@@ -98,8 +107,10 @@ public class OrderService implements IOrderService {
         order = orderRepository.save(order);
         saveOrderDetailWithSchedules(order, scheduleClass);
 
-        double newBalance = wallet.getBalance() - scheduleClass.getPrice();
-        wallet.setBalance(newBalance);
+        wallet.setBalance(wallet.getBalance() - scheduleClass.getPrice());
+        systemWallet.setTotalAmount(systemWallet.getTotalAmount() + scheduleClass.getPrice());
+        systemWalletRepository.save(systemWallet);
+
         userRepository.save(wallet.getUser());
 
         Context context = new Context();
@@ -206,17 +217,19 @@ public class OrderService implements IOrderService {
         emailService.sendEmail(scheduledClass.getTeacher().getTeacherName(), "Class active", "active-email", context);
     }
 
-    @Scheduled(cron = "0 0 0 * * ?")
+    @Scheduled(cron = "0 * * * * ?")
     @Transactional
     public void checkAndActivateClasses() {
         LocalDateTime twoDaysFromNow = LocalDateTime.now().plusDays(2);
         Pageable pageable = PageRequest.of(0, 50);
+        LocalDate dateToCheck = twoDaysFromNow.toLocalDate();
 
-        Page<Class> classesPage = classRepository.findByStatusAndStartDateBefore(ClassStatus.PENDING, twoDaysFromNow, pageable);
+        Page<Class> classesPage = classRepository.findByStatusAndStartDateBefore(ClassStatus.PENDING, dateToCheck, pageable);
 
         for (Class scheduledClass : classesPage) {
             try {
                 activateClassIfEligible(scheduledClass);
+
                 log.info("Class with ID {} has been activated successfully.", scheduledClass.getClassId());
             } catch (MessagingException e) {
                 log.error("Error sending activation email for class {}: {}", scheduledClass.getClassId(), e.getMessage());
@@ -234,7 +247,7 @@ public class OrderService implements IOrderService {
     public void updateClassesToOngoing() {
         LocalDateTime now = LocalDateTime.now();
 
-        List<Class> classesToStart = classRepository.findByStartDateBeforeAndStatus(now.toLocalDate(), ClassStatus.ACTIVE);
+        List<Class> classesToStart = classRepository.findByStartDateAndStatus(now.toLocalDate(), ClassStatus.ACTIVE);
 
         for (Class scheduledClass : classesToStart) {
             Schedule schedule = scheduledClass.getSchedule();
@@ -264,7 +277,7 @@ public class OrderService implements IOrderService {
     public void checkAndCompleteOrders() {
         LocalDateTime now = LocalDateTime.now();
 
-        List<Class> classesToComplete = classRepository.findByStartDateBeforeAndStatus(now.toLocalDate(), ClassStatus.ONGOING);
+        List<Class> classesToComplete = classRepository.findByStartDateAndStatus(now.toLocalDate(), ClassStatus.ONGOING);
 
         for (Class scheduledClass : classesToComplete) {
             Schedule schedule = scheduledClass.getSchedule();
@@ -277,6 +290,12 @@ public class OrderService implements IOrderService {
                     if (order.getStatus().equals(OrderStatus.ONGOING)) {
                         order.setStatus(OrderStatus.COMPLETED);
                         orderRepository.save(order);
+                        Wallet wallet = orderDetail.getClasses().getTeacher().getWallet();
+                        wallet.setBalance(wallet.getBalance() + order.getTotalPrice());
+                        SystemWallet systemWallet = systemWalletRepository.getReferenceById(1L);
+                        systemWallet.setTotalAmount(systemWallet.getTotalAmount() - orderDetail.getPrice());
+                        systemWalletRepository.save(systemWallet);
+                        walletRepository.save(wallet);
                     }
                 }
 
@@ -291,12 +310,17 @@ public class OrderService implements IOrderService {
     private void activateClassIfEligible(Class scheduledClass) throws MessagingException {
         int registeredStudents = orderDetailRepository.countByClasses_ClassId(scheduledClass.getClassId());
         int minimumRequiredStudents = (int) (scheduledClass.getMaxStudents() * 0.8);
-
         if (registeredStudents >= minimumRequiredStudents) {
+            Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(scheduledClass.getClassId(), Pageable.unpaged());
+            for (OrderDetail orderDetail : orderDetails) {
+                orderDetail.getOrder().setStatus(OrderStatus.ACTIVE);
+            }
+
             scheduledClass.setStatus(ClassStatus.ACTIVE);
             classRepository.save(scheduledClass);
-            log.info("Class with ID {} has been activated.", scheduledClass.getClassId());
+            orderDetailRepository.saveAll(orderDetails);
 
+            log.info("Class with ID {} has been activated.", scheduledClass.getClassId());
             sendActivationEmail(scheduledClass);
             notificationService.createNotification(NotificationDTO.builder()
                     .title("Class" + scheduledClass.getCode() + "has been activated")
@@ -327,7 +351,11 @@ public class OrderService implements IOrderService {
             User student = order.getUser();
 
             Wallet wallet = student.getWallet();
+            SystemWallet systemWallet = systemWalletRepository.getReferenceById(1L);
+
             wallet.setBalance(student.getWallet().getBalance() + (orderDetail.getPrice()));
+            systemWallet.setTotalAmount(systemWallet.getTotalAmount() - orderDetail.getPrice());
+            systemWalletRepository.save(systemWallet);
             userRepository.save(student);
             saveTransactionHistory(wallet.getUser(), orderDetail.getPrice());
 
@@ -344,7 +372,9 @@ public class OrderService implements IOrderService {
             Class existingClass = orderDetail.getClasses();
             Schedule existingSchedule = scheduleRepository.findByClasses_ClassId(existingClass.getClassId());
 
-            if (existingSchedule != null && existingSchedule.equals(newClassSchedule)) {
+            if (existingSchedule != null
+                    && existingSchedule.getDayOfWeek().equals(newClassSchedule.getDayOfWeek())
+                    && existingSchedule.getSlot().equals(newClassSchedule.getSlot())) {
                 return true;
             }
         }

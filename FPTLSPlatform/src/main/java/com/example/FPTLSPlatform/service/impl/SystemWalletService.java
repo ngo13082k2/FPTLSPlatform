@@ -2,7 +2,9 @@ package com.example.FPTLSPlatform.service.impl;
 
 
 import com.example.FPTLSPlatform.model.SystemTransactionHistory;
+import com.example.FPTLSPlatform.model.SystemWallet;
 import com.example.FPTLSPlatform.repository.SystemTransactionHistoryRepository;
+import com.example.FPTLSPlatform.repository.SystemWalletRepository;
 import com.example.FPTLSPlatform.service.ISystemWalletService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
