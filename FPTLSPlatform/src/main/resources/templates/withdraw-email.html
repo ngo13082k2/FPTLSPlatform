@@ -41,21 +41,21 @@
 <body>
 <div class="container">
     <h1>Transaction Notification</h1>
-    <p>Dear <span th:text="${transactionHistory.getUser().getUserName()}"></span>,</p>
+    <p>Dear <span th:text="${systemTransactionHistory.getUsername()}"></span>,</p>
     <p>We have received your transaction. Here are the details:</p>
 
     <table class="transaction-details">
         <tr>
             <th>Transaction ID</th>
-            <td th:text="${transactionHistory.getId()}"></td>
+            <td th:text="${systemTransactionHistory.getId()}"></td>
         </tr>
         <tr>
             <th>Amount</th>
-            <td th:text="${transactionHistory.getAmount()}"></td>
+            <td th:text="${systemTransactionHistory.getTransactionAmount()}"></td>
         </tr>
         <tr>
             <th>Date</th>
-            <td th:text="${#dates.format(transactionHistory.getTransactionDate(), 'yyyy-MM-dd HH:mm:ss')}"></td>
+            <td th:text="${systemTransactionHistory.getTransactionDate()}"></td>
         </tr>
     </table>
 
