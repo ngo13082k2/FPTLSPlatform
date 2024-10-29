@@ -139,7 +139,12 @@ public class ApplicationUserService implements IApplicationUserService {
                 .build());
         Context context = new Context();
         context.setVariable("systemTransactionHistory", systemTransactionHistory);
-        emailService.sendEmail(applicationUser.getUser().getEmail(), "Transaction", "withdraw-email", context);
+        if (applicationUser.getUser() != null) {
+            emailService.sendEmail(applicationUser.getUser().getEmail(), "Transaction", "withdraw-email", context);
+        }
+        if (applicationUser.getTeacher() != null) {
+            emailService.sendEmail(applicationUser.getTeacher().getEmail(), "Transaction", "withdraw-email", context);
+        }
         return "Đã trả tiền thành công và cập nhật trạng thái yêu cầu thành completed.";
     }
 
