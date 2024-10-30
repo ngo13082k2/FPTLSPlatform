@@ -32,7 +32,6 @@ public class ClassDTO {
 
     private Long price;
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createDate;
 
     private String teacherName;

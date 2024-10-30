@@ -28,7 +28,6 @@ public class Order {
     private User user;
 
     @Column(name = "create_at", nullable = false)
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createAt;
 
     @Column(name = "total_price", nullable = false)

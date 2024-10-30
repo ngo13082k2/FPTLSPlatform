@@ -52,7 +52,6 @@ public class Class {
     private Teacher teacher;
 
     @Column(name = "create_date")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createDate;
 
     @Column(name = "start_date")

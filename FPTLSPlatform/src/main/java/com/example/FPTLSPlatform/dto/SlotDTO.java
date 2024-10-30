@@ -15,10 +15,8 @@ public class SlotDTO {
 
     private String period;
 
-    @JsonFormat(pattern = "HH:mm:ss")
     private LocalTime start;
 
-    @JsonFormat(pattern = "HH:mm:ss")
     private LocalTime end;
 }
 
