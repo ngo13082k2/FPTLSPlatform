@@ -17,6 +17,7 @@ import java.util.Optional;
 public interface ClassRepository extends JpaRepository<Class, Long> {
     List<Class> findByCoursesCourseCode(String courseCode);
     boolean existsBySlot_SlotIdAndDayOfWeek(Long slotId, String dayOfWeek);
+    boolean existsByTeacher_TeacherNameAndSlot_SlotIdAndDayOfWeek(String teacherName, Long slotId, String dayOfWeek);
 
     Optional<Class> findById(Long classId);
 

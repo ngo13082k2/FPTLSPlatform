@@ -55,16 +55,16 @@ public class ClassService implements IClassService {
             throw new RuntimeException("All fields must be provided and cannot be null");
         }
 
+        String teacherName = getCurrentUsername();
+        Teacher teacher = teacherRepository.findByTeacherName(teacherName)
+                .orElseThrow(() -> new RuntimeException("Teacher not found"));
         if (classDTO.getSlotId() != null && classDTO.getDayOfWeek() != null) {
-            boolean isSlotAndDayOfWeekTaken = classRepository.existsBySlot_SlotIdAndDayOfWeek(classDTO.getSlotId(), classDTO.getDayOfWeek());
+            boolean isSlotAndDayOfWeekTaken = classRepository.existsByTeacher_TeacherNameAndSlot_SlotIdAndDayOfWeek(teacherName,classDTO.getSlotId(), classDTO.getDayOfWeek());
             if (isSlotAndDayOfWeekTaken) {
                 throw new RuntimeException("The slot and day of week combination is already taken for another class.");
             }
         }
 
-        String teacherName = getCurrentUsername();
-        Teacher teacher = teacherRepository.findByTeacherName(teacherName)
-                .orElseThrow(() -> new RuntimeException("Teacher not found"));
         classDTO.setCreateDate(LocalDateTime.now());
         classDTO.setTeacherName(teacherName);
         classDTO.setStatus(ClassStatus.PENDING);
