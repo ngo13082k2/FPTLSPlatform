@@ -3,23 +3,23 @@ package com.example.FPTLSPlatform.service.impl;
 import com.example.FPTLSPlatform.dto.ApplicationDTO;
 import com.example.FPTLSPlatform.exception.ApplicationAlreadyApprovedException;
 import com.example.FPTLSPlatform.exception.ResourceNotFoundException;
-import com.example.FPTLSPlatform.model.Application;
-import com.example.FPTLSPlatform.model.Teacher;
-import com.example.FPTLSPlatform.model.User;
+import com.example.FPTLSPlatform.model.*;
 import com.example.FPTLSPlatform.model.enums.Role;
-import com.example.FPTLSPlatform.repository.ApplicationRepository;
-import com.example.FPTLSPlatform.repository.TeacherRepository;
-import com.example.FPTLSPlatform.repository.UserRepository;
+import com.example.FPTLSPlatform.repository.*;
 import com.example.FPTLSPlatform.service.IApplicationService;
 import com.example.FPTLSPlatform.service.IEmailService;
 import jakarta.servlet.http.HttpSession;
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import org.thymeleaf.context.Context;
 
-import java.util.List;
-import java.util.Optional;
+import java.io.File;
+import java.io.IOException;
+import java.lang.System;
+import java.util.*;
 
 @Service
 public class ApplicationService implements IApplicationService {
@@ -28,21 +28,32 @@ public class ApplicationService implements IApplicationService {
     private final IEmailService emailService;
     private final TeacherRepository teacherRepository;
     private final UserRepository userRepository;
+    private final CourseRepository courseRepository;
+    private final CategoryRepository categoryRepository;
+    private final CloudinaryService cloudinaryService;
+    private MultipartFile certificate;
+
 
     public ApplicationService(ApplicationRepository applicationRepository,
                               IEmailService emailService,
                               TeacherRepository teacherRepository,
-                              UserRepository userRepository) {
+                              UserRepository userRepository,
+                              CourseRepository courseRepository,
+                              CategoryRepository categoryRepository,
+                              CloudinaryService cloudinaryService) {
         this.applicationRepository = applicationRepository;
         this.emailService = emailService;
         this.teacherRepository = teacherRepository;
         this.userRepository = userRepository;
+        this.courseRepository = courseRepository;
+        this.categoryRepository = categoryRepository;
+        this.cloudinaryService = cloudinaryService;
     }
 
     @Override
-    public ApplicationDTO createApplication(ApplicationDTO applicationDTO, HttpSession session) {
+    public ApplicationDTO createApplication(ApplicationDTO applicationDTO, MultipartFile certificate, HttpSession session) throws IOException {
         Teacher teacher = (Teacher) session.getAttribute("teacher");
-
+        applicationDTO.setStatus("PENDING");
         if (teacher == null) {
             throw new ResourceNotFoundException("Teacher not found");
         }
@@ -55,13 +66,23 @@ public class ApplicationService implements IApplicationService {
                 .title(applicationDTO.getTitle())
                 .description(applicationDTO.getDescription())
                 .teacher(teacherRepository.getTeacherByTeacherName(teacher.getTeacherName()))
-                .status("PENDING")
-                .cv(applicationDTO.getCv())
-                .certificate(applicationDTO.getCertificate())
-                .major(applicationDTO.getMajor())
-                .experience(applicationDTO.getExperience())
-                .extraSkills(applicationDTO.getExtraSkills())
+                .status(applicationDTO.getStatus())
                 .build();
+
+
+        String certificateUrl = null;
+        if (certificate != null && !certificate.isEmpty()) {
+            certificateUrl = cloudinaryService.uploadImage(certificate);
+            applicationDTO.setCertificate(certificateUrl);
+        }
+
+        if (applicationDTO.getCategoryIds() != null) {
+            application.setCategoriesId(new HashSet<>(applicationDTO.getCategoryIds()));
+        }
+
+        if (applicationDTO.getCourseCodes() != null) {
+            application.setCourses(new HashSet<>(applicationDTO.getCourseCodes()));
+        }
 
         applicationRepository.save(application);
         applicationDTO.setTeacherName(teacher.getTeacherName());
@@ -69,69 +90,84 @@ public class ApplicationService implements IApplicationService {
         return applicationDTO;
     }
 
+
     @Override
+    @Transactional
     public ApplicationDTO approveApplication(Long id) {
         Optional<Application> optionalApplication = applicationRepository.findById(id);
         Context context = new Context();
+
         if (optionalApplication.isPresent()) {
             Application application = optionalApplication.get();
+
             if (application.getStatus().equalsIgnoreCase("APPROVED")) {
                 throw new ApplicationAlreadyApprovedException("Application has already been approved and cannot be modified.");
             }
-            if ("ASSIGNED".equals(application.getStatus())) {
 
+            if ("ASSIGNED".equals(application.getStatus())) {
                 Optional<Teacher> optionalTeacher = teacherRepository.findByTeacherName(application.getTeacher().getTeacherName());
 
                 if (optionalTeacher.isPresent()) {
                     Teacher teacher = optionalTeacher.get();
 
                     teacher.setStatus("ACTIVE");
+
+                    Set<Category> copiedCategories = new HashSet<>();
+                    for (Long categoryId : application.getCategoriesId()) {
+                        Category category = categoryRepository.findById(categoryId)
+                                .orElseThrow(() -> new ResourceNotFoundException("Category not found: " + categoryId));
+                        copiedCategories.add(category);
+                    }
+
+                    Set<Course> copiedCourses = new HashSet<>(courseRepository.findAllByCourseCodeIn(application.getCourses()));
+                    if (copiedCourses.size() != application.getCourses().size()) {
+                        List<String> missingCourses = application.getCourses().stream()
+                                .filter(courseCode -> copiedCourses.stream()
+                                        .noneMatch(course -> course.getCourseCode().equals(courseCode)))
+                                .toList();
+
+                        throw new ResourceNotFoundException("Courses not found: " + missingCourses);
+                    }
+
+                    teacher.setCategories(copiedCategories);
+                    teacher.setCourses(copiedCourses);
+
                     teacherRepository.save(teacher);
                 }
 
-                application.setStatus("APPROVE");
+                application.setStatus("APPROVED");
                 applicationRepository.save(application);
-
 
                 context.setVariable("applicationTitle", application.getTitle());
                 context.setVariable("teacherName", application.getTeacher().getTeacherName());
                 emailService.sendEmail(application.getTeacher().getTeacherName(), "Application Approved", "approval-email", context);
-                return ApplicationDTO.builder()
-                        .applicationId(application.getApplicationId())
-                        .title(application.getTitle())
-                        .status(application.getStatus())
-                        .cv(application.getCv())
-                        .certificate(application.getCertificate())
-                        .major(application.getMajor())
-                        .experience(application.getExperience())
-                        .extraSkills(application.getExtraSkills())
-                        .description(application.getDescription())
-                        .teacherName(application.getTeacher().getTeacherName())
-                        .build();
+
+                return convertToDTO(application);
             } else {
                 throw new IllegalArgumentException("Invalid status provided for application.");
             }
         } else {
             throw new ResourceNotFoundException("Application not found.");
         }
-
     }
+
 
     @Override
     public Page<ApplicationDTO> getAllApplications(Pageable pageable) {
         Page<Application> applications = applicationRepository.findAll(pageable);
-        return applications.map(app -> ApplicationDTO.builder()
+        return applications.map(this::convertToDTO);
+    }
+
+    private ApplicationDTO convertToDTO(Application app) {
+        return ApplicationDTO.builder()
                 .applicationId(app.getApplicationId())
                 .title(app.getTitle())
                 .description(app.getDescription())
+                .categoryIds(app.getCategoriesId())
+                .courseCodes(app.getCourses())
                 .status(app.getStatus())
-                .cv(app.getCv())
-                .certificate(app.getCertificate())
-                .major(app.getMajor())
-                .experience(app.getExperience())
-                .extraSkills(app.getExtraSkills())
                 .teacherName(app.getTeacher().getTeacherName())
-                .build());
+                .build();
     }
 
     @Override
@@ -139,18 +175,7 @@ public class ApplicationService implements IApplicationService {
         userRepository.findByUserName(staffUsername)
                 .orElseThrow(() -> new ResourceNotFoundException("Staff not found with username: " + staffUsername));
         Page<Application> applications = applicationRepository.findByAssignedStaffUserName(staffUsername, pageable);
-        return applications.map(app -> ApplicationDTO.builder()
-                .applicationId(app.getApplicationId())
-                .title(app.getTitle())
-                .description(app.getDescription())
-                .status(app.getStatus())
-                .cv(app.getCv())
-                .certificate(app.getCertificate())
-                .major(app.getMajor())
-                .experience(app.getExperience())
-                .extraSkills(app.getExtraSkills())
-                .teacherName(app.getTeacher().getTeacherName())
-                .build());
+        return applications.map(this::convertToDTO);
     }
 
     @Override
@@ -173,18 +198,7 @@ public class ApplicationService implements IApplicationService {
     @Override
     public Page<ApplicationDTO> getPendingApplications(Pageable pageable) {
         Page<Application> applications = applicationRepository.findByStatusAndAssignedStaffIsNull("PENDING", pageable);
-        return applications.map(app -> ApplicationDTO.builder()
-                .applicationId(app.getApplicationId())
-                .title(app.getTitle())
-                .description(app.getDescription())
-                .status(app.getStatus())
-                .cv(app.getCv())
-                .certificate(app.getCertificate())
-                .major(app.getMajor())
-                .experience(app.getExperience())
-                .extraSkills(app.getExtraSkills())
-                .teacherName(app.getTeacher().getTeacherName())
-                .build());
+        return applications.map(this::convertToDTO);
     }
 
     @Override
@@ -244,15 +258,8 @@ public class ApplicationService implements IApplicationService {
         context.setVariable("rejectionReason", rejectionReason);
         emailService.sendEmail(application.getTeacher().getTeacherName(), "Application Rejected", "reject-email", context);
 
-        return ApplicationDTO.builder()
-                .applicationId(application.getApplicationId())
-                .title(application.getTitle())
-                .description(application.getDescription())
-                .status(application.getStatus())
-                .rejectionReason(rejectionReason)
-                .teacherName(application.getTeacher().getTeacherName())
-                .build();
-        
+        return convertToDTO(application);
+
     }
 
 }

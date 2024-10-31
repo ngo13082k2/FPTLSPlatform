@@ -3,6 +3,8 @@ package com.example.FPTLSPlatform.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.Set;
+
 @Builder
 @Getter
 @Setter
@@ -26,17 +28,13 @@ public class Application {
     @Column(name = "description")
     private String description;
 
-    @Column(name = "major")
-    private String major;
+    @ElementCollection
+    @CollectionTable(name = "application_category_ids", joinColumns = @JoinColumn(name = "application_id"))
+    private Set<Long> categoriesId;
 
-    @Column(name = "experience")
-    private String experience;
-
-    @Column(name = "cv")
-    private String cv;
-
-    @Column(name = "extra_skills")
-    private String extraSkills;
+    @ElementCollection
+    @CollectionTable(name = "application_course_codes", joinColumns = @JoinColumn(name = "application_id"))
+    private Set<String> courses;
 
     @Column(name = "certificate")
     private String certificate;

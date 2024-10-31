@@ -6,6 +6,7 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 @Builder
 @Entity
@@ -23,9 +24,22 @@ public class Teacher {
     @Column(name = "password", nullable = false)
     private String password;
 
-    @Column(name = "major")
-    private String major;
-    
+    @ManyToMany
+    @JoinTable(
+            name = "teacher_category",
+            joinColumns = @JoinColumn(name = "teacher_id"),
+            inverseJoinColumns = @JoinColumn(name = "category_id")
+    )
+    private Set<Category> categories;
+
+    @ManyToMany
+    @JoinTable(
+            name = "teacher_course",
+            joinColumns = @JoinColumn(name = "teacher_id"),
+            inverseJoinColumns = @JoinColumn(name = "course_id")
+    )
+    private Set<Course> courses;
+
     @Column(name = "phone_number")
     private String phoneNumber;
 
@@ -54,5 +68,5 @@ public class Teacher {
     @Enumerated(EnumType.STRING)
     @Column(name = "role")
     private Role role;
-    
+
 }

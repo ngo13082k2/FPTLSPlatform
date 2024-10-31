@@ -6,9 +6,12 @@ import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 public interface IApplicationService {
-    ApplicationDTO createApplication(ApplicationDTO applicationDTO, HttpSession session);
+    ApplicationDTO createApplication(ApplicationDTO applicationDTO, MultipartFile certificate, HttpSession session) throws IOException;
 
     ApplicationDTO approveApplication(Long id) throws MessagingException;
 

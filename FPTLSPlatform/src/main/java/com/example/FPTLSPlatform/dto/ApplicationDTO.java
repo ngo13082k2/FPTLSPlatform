@@ -1,7 +1,9 @@
 package com.example.FPTLSPlatform.dto;
 
-import jakarta.persistence.Column;
 import lombok.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Set;
 
 @Getter
 @Setter
@@ -15,13 +17,9 @@ public class ApplicationDTO {
 
     private String title;
 
-    private String major;
+    private Set<Long> categoryIds;
 
-    private String experience;
-
-    private String cv;
-
-    private String extraSkills;
+    private Set<String> courseCodes;
 
     private String certificate;
 

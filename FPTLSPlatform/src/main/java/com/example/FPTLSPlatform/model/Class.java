@@ -1,7 +1,6 @@
 package com.example.FPTLSPlatform.model;
 
 import com.example.FPTLSPlatform.model.enums.ClassStatus;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.*;
 

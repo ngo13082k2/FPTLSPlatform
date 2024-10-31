@@ -5,6 +5,7 @@ import com.example.FPTLSPlatform.exception.ApplicationAlreadyApprovedException;
 import com.example.FPTLSPlatform.exception.ResourceNotFoundException;
 import com.example.FPTLSPlatform.model.Application;
 import com.example.FPTLSPlatform.service.IApplicationService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -15,12 +16,20 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/applications")
 public class ApplicationController {
-    @Autowired
-    private IApplicationService applicationService;
+
+    private final IApplicationService applicationService;
+    private final ObjectMapper objectMapper;
+
+    public ApplicationController(IApplicationService applicationService,
+                                 ObjectMapper objectMapper) {
+        this.applicationService = applicationService;
+        this.objectMapper = objectMapper;
+    }
 
     @PostMapping("/approve_application")
     public ResponseEntity<?> approveApplication(@RequestParam Long id) {
@@ -52,16 +61,19 @@ public class ApplicationController {
 
 
     @PostMapping("/create-application")
-    public ResponseEntity<?> createApplication(@RequestBody ApplicationDTO applicationDTO, HttpSession session) {
+    public ResponseEntity<?> createApplication(@RequestPart("applicationDTO") String classDTOJson,
+                                               @RequestParam(value = "certificate", required = false) MultipartFile certificate,
+                                               HttpSession session) {
         try {
-            ApplicationDTO application = applicationService.createApplication(applicationDTO, session);
+            ApplicationDTO dto = objectMapper.readValue(classDTOJson, ApplicationDTO.class);
+            ApplicationDTO application = applicationService.createApplication(dto, certificate, session);
             return ResponseEntity.ok(application);
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (ApplicationAlreadyApprovedException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
 
