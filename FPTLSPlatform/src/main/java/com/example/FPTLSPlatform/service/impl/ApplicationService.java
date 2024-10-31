@@ -16,9 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.thymeleaf.context.Context;
 
-import java.io.File;
 import java.io.IOException;
-import java.lang.System;
 import java.util.*;
 
 @Service
@@ -31,8 +29,6 @@ public class ApplicationService implements IApplicationService {
     private final CourseRepository courseRepository;
     private final CategoryRepository categoryRepository;
     private final CloudinaryService cloudinaryService;
-    private MultipartFile certificate;
-
 
     public ApplicationService(ApplicationRepository applicationRepository,
                               IEmailService emailService,

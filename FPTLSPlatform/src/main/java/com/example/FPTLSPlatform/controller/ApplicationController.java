@@ -7,7 +7,6 @@ import com.example.FPTLSPlatform.model.Application;
 import com.example.FPTLSPlatform.service.IApplicationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpSession;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;

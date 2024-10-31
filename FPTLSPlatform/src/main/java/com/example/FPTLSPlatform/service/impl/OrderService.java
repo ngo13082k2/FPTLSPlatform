@@ -6,6 +6,7 @@ import com.example.FPTLSPlatform.exception.OrderAlreadyExistsException;
 import com.example.FPTLSPlatform.exception.ResourceNotFoundException;
 import com.example.FPTLSPlatform.model.Class;
 import com.example.FPTLSPlatform.model.*;
+import com.example.FPTLSPlatform.model.System;
 import com.example.FPTLSPlatform.model.enums.ClassStatus;
 import com.example.FPTLSPlatform.model.enums.OrderStatus;
 import com.example.FPTLSPlatform.repository.*;
@@ -53,6 +54,8 @@ public class OrderService implements IOrderService {
 
     private final WalletRepository walletRepository;
 
+    private final SystemRepository systemRepository;
+
     private static final Logger log = LoggerFactory.getLogger(OrderService.class);
 
 
@@ -64,7 +67,7 @@ public class OrderService implements IOrderService {
                         INotificationService notificationService,
                         TransactionHistoryRepository transactionHistoryRepository,
                         SystemWalletRepository systemWalletRepository,
-                        ClassService classService, WalletRepository walletRepository) {
+                        ClassService classService, WalletRepository walletRepository, SystemRepository systemRepository) {
         this.orderRepository = orderRepository;
         this.classRepository = classRepository;
         this.orderDetailRepository = orderDetailRepository;
@@ -77,6 +80,7 @@ public class OrderService implements IOrderService {
 
         this.classService = classService;
         this.walletRepository = walletRepository;
+        this.systemRepository = systemRepository;
     }
 
     public Page<OrderDTO> getAllOrders(Pageable pageable) {
@@ -287,11 +291,16 @@ public class OrderService implements IOrderService {
                         order.setStatus(OrderStatus.COMPLETED);
                         orderRepository.save(order);
                         Wallet wallet = orderDetail.getClasses().getTeacher().getWallet();
-                        wallet.setBalance(wallet.getBalance() + order.getTotalPrice());
+                        double defaultDiscount = 0.2;
+                        System discountPercentage = systemRepository.findByName("discount_percentage");
+                        double discountedPrice = discountPercentage != null
+                                ? orderDetail.getPrice() * (1 - Double.parseDouble(discountPercentage.getValue()))
+                                : defaultDiscount;
+                        wallet.setBalance(wallet.getBalance() + discountedPrice);
                         saveTransactionHistory(order.getUser(), order.getTotalPrice());
                         walletRepository.save(wallet);
                         SystemWallet systemWallet = systemWalletRepository.getReferenceById(1L);
-                        systemWallet.setTotalAmount(systemWallet.getTotalAmount() - order.getTotalPrice());
+                        systemWallet.setTotalAmount(systemWallet.getTotalAmount() - discountedPrice);
                         notificationService.createNotification(NotificationDTO.builder()
                                 .title("Order " + order.getOrderId() + " has been completed")
                                 .description("Order" + order.getOrderId() + "has been completed")
@@ -310,7 +319,12 @@ public class OrderService implements IOrderService {
 
     private void activateClassIfEligible(Class scheduledClass) throws MessagingException {
         int registeredStudents = orderDetailRepository.countByClasses_ClassId(scheduledClass.getClassId());
-        int minimumRequiredStudents = (int) (scheduledClass.getMaxStudents() * 0.8);
+        double defaultMinimumPercentage = 0.8;
+        System minimumPercentageParam = systemRepository.findByName("minimum_required_percentage");
+        double minimumPercentage = minimumPercentageParam != null
+                ? Double.parseDouble(minimumPercentageParam.getValue())
+                : defaultMinimumPercentage;
+        int minimumRequiredStudents = (int) (scheduledClass.getMaxStudents() * minimumPercentage);
         if (registeredStudents >= minimumRequiredStudents) {
             Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(scheduledClass.getClassId(), Pageable.unpaged());
             for (OrderDetail orderDetail : orderDetails) {
