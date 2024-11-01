@@ -61,6 +61,9 @@ public class Teacher {
     @Column(name = "status")
     private String status;
 
+    @Column(name = "certificate")
+    private String certificate;
+
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "wallet_id", referencedColumnName = "wallet_id")
     private Wallet wallet;

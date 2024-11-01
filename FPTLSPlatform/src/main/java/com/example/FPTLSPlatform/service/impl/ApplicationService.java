@@ -70,6 +70,7 @@ public class ApplicationService implements IApplicationService {
         if (certificate != null && !certificate.isEmpty()) {
             certificateUrl = cloudinaryService.uploadImage(certificate);
             applicationDTO.setCertificate(certificateUrl);
+            application.setCertificate(certificateUrl);
         }
 
         if (applicationDTO.getCategoryIds() != null) {
@@ -107,6 +108,7 @@ public class ApplicationService implements IApplicationService {
                     Teacher teacher = optionalTeacher.get();
 
                     teacher.setStatus("ACTIVE");
+                    teacher.setCertificate(application.getCertificate());
 
                     Set<Category> copiedCategories = new HashSet<>();
                     for (Long categoryId : application.getCategoriesId()) {
