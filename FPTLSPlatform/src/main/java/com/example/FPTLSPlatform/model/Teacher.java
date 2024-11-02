@@ -26,19 +26,12 @@ public class Teacher {
 
     @ManyToMany
     @JoinTable(
-            name = "teacher_category",
-            joinColumns = @JoinColumn(name = "teacher_id"),
+            name = "teacher_categories",
+            joinColumns = @JoinColumn(name = "teacher_name"),
             inverseJoinColumns = @JoinColumn(name = "category_id")
     )
-    private Set<Category> categories;
+    private Set<Category> major;
 
-    @ManyToMany
-    @JoinTable(
-            name = "teacher_course",
-            joinColumns = @JoinColumn(name = "teacher_id"),
-            inverseJoinColumns = @JoinColumn(name = "course_id")
-    )
-    private Set<Course> courses;
 
     @Column(name = "phone_number")
     private String phoneNumber;
@@ -60,9 +53,6 @@ public class Teacher {
 
     @Column(name = "status")
     private String status;
-
-    @Column(name = "certificate")
-    private String certificate;
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "wallet_id", referencedColumnName = "wallet_id")

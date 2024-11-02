@@ -25,7 +25,11 @@ public class CourseController {
         this.courseService = courseService;
         this.objectMapper = objectMapper;
     }
-
+    @GetMapping("/courses")
+    public ResponseEntity<List<CourseDTO>> getCourseOfTeacher() {
+        List<CourseDTO> courses = courseService.getCourseOfTeacher();
+        return ResponseEntity.ok(courses);
+    }
     @PostMapping("")
     public ResponseEntity<?> createCourse(
             @RequestPart("courseDTO") String courseJson,

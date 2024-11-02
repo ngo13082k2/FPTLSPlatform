@@ -1,10 +1,12 @@
 package com.example.FPTLSPlatform.service.impl;
 
 
+import com.example.FPTLSPlatform.model.Category;
 import com.example.FPTLSPlatform.model.Teacher;
 import com.example.FPTLSPlatform.model.User;
 import com.example.FPTLSPlatform.model.Wallet;
 import com.example.FPTLSPlatform.model.enums.Role;
+import com.example.FPTLSPlatform.repository.CategoryRepository;
 import com.example.FPTLSPlatform.repository.TeacherRepository;
 import com.example.FPTLSPlatform.repository.UserRepository;
 import com.example.FPTLSPlatform.repository.WalletRepository;
@@ -25,9 +27,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -43,11 +43,12 @@ public class AuthService {
     private final WalletRepository walletRepository;
     private final OTPGmailService otpGmailService;
     private final IEmailService emailService;
+    private final CategoryRepository categoryRepository;
     @Autowired
     private HttpSession session;
     public AuthService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, JwtUtil jwtUtil,
-                       CustomUserDetailsService userDetailsService, TeacherRepository teacherRepository, WalletRepository walletRepository, OTPGmailService otpGmailService, IEmailService emailService) {
+                       CustomUserDetailsService userDetailsService, TeacherRepository teacherRepository, WalletRepository walletRepository, OTPGmailService otpGmailService, IEmailService emailService, CategoryRepository categoryRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
@@ -58,6 +59,7 @@ public class AuthService {
         this.walletRepository = walletRepository;
         this.otpGmailService = otpGmailService;
         this.emailService = emailService;
+        this.categoryRepository = categoryRepository;
     }
 
     public UserResponse register(RegisterRequest request) throws MessagingException {
@@ -94,15 +96,19 @@ public class AuthService {
                     .role(Role.STUDENT)
                     .build();
         }
-
+        List<Category> selectedCategoriesList = categoryRepository.findAllById(request.getCategoryIds());
+        Set<Category> selectedCategories = new HashSet<>(selectedCategoriesList);
+        user.setMajor(selectedCategories);
         userRepository.save(user);
-
+        Set<String> categoryNames = selectedCategories.stream()
+                .map(Category::getName)
+                .collect(Collectors.toSet());
         int otp = otpGmailService.generateOTP(request.getEmail());
         emailService.sendOTP(request.getEmail(), otp);
 
         session.setAttribute("email", request.getEmail());
 
-        return new UserResponse(user.getUserName(), user.getEmail(), user.getFullName(), user.getStatus(), user.getPhoneNumber(), user.getRole());
+        return new UserResponse(user.getUserName(), user.getEmail(), user.getFullName(), user.getStatus(), user.getPhoneNumber(), user.getRole(), categoryNames);
     }
 
 
@@ -153,10 +159,15 @@ public class AuthService {
                 .wallet(wallet)
                 .status("PENDING")
                 .build();
-
+        List<Category> selectedCategoriesList = categoryRepository.findAllById(request.getCategoryIds());
+        Set<Category> selectedCategories = new HashSet<>(selectedCategoriesList);
+        teacher.setMajor(selectedCategories);
         teacherRepository.save(teacher);
+        Set<String> categoryNames = selectedCategories.stream()
+                .map(Category::getName)
+                .collect(Collectors.toSet());
         session.setAttribute("teacher", teacher);
-        return new UserResponse(teacher.getTeacherName(), teacher.getEmail(), teacher.getFullName(), teacher.getStatus(), teacher.getPhoneNumber(), teacher.getRole());
+        return new UserResponse(teacher.getTeacherName(), teacher.getEmail(), teacher.getFullName(), teacher.getStatus(), teacher.getPhoneNumber(), teacher.getRole(), categoryNames);
     }
 
 

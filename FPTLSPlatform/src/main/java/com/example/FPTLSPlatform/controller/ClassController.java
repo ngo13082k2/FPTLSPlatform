@@ -133,6 +133,11 @@ public class ClassController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
+    @GetMapping("/by-major")
+    public ResponseEntity<List<ClassDTO>> getClassByMajor() {
+        List<ClassDTO> classDTOList = classService.getClassByMajor();
+        return ResponseEntity.ok(classDTOList);
+    }
 
     private String getCurrentUsername() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();

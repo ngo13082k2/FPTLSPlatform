@@ -3,15 +3,21 @@ package com.example.FPTLSPlatform.service.impl;
 import com.example.FPTLSPlatform.dto.CourseDTO;
 import com.example.FPTLSPlatform.model.Category;
 import com.example.FPTLSPlatform.model.Course;
+import com.example.FPTLSPlatform.model.Teacher;
 import com.example.FPTLSPlatform.repository.CategoryRepository;
 import com.example.FPTLSPlatform.repository.CourseRepository;
+import com.example.FPTLSPlatform.repository.TeacherRepository;
 import com.example.FPTLSPlatform.service.ICourseService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class CourseService implements ICourseService {
@@ -19,16 +25,38 @@ public class CourseService implements ICourseService {
     private final CourseRepository courseRepository;
     private final CategoryRepository categoryRepository;
     private final CloudinaryService cloudinaryService;
-
+    private final TeacherRepository teacherRepository;
     @Autowired
-    public CourseService(CourseRepository courseRepository, CategoryRepository categoryRepository, CloudinaryService cloudinaryService) {
+    public CourseService(CourseRepository courseRepository, CategoryRepository categoryRepository, CloudinaryService cloudinaryService, TeacherRepository teacherRepository) {
         this.courseRepository = courseRepository;
         this.categoryRepository = categoryRepository;
         this.cloudinaryService = cloudinaryService;
+        this.teacherRepository = teacherRepository;
     }
 
 
+    public List<CourseDTO> getCourseOfTeacher() {
+        String teacherName = getCurrentUsername();
 
+        Teacher teacher = teacherRepository.findByTeacherName(teacherName)
+                .orElseThrow(() -> new IllegalArgumentException("Teacher not found"));
+
+        Set<Long> categoryIds = teacher.getMajor().stream()
+                .map(Category::getCategoryId)
+                .collect(Collectors.toSet());
+
+        List<Course> courses = courseRepository.findByCategoriesCategoryIdIn(categoryIds);
+        return courses.stream().map(this::mapEntityToDTO).collect(Collectors.toList());
+    }
+
+    private String getCurrentUsername() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof UserDetails) {
+            return ((UserDetails) principal).getUsername();
+        } else {
+            return principal.toString();
+        }
+    }
     public CourseDTO createCourse(CourseDTO courseDTO, MultipartFile image) throws IOException {
         Course course = mapDTOToEntity(courseDTO, image);
         Course savedCourse = courseRepository.save(course);

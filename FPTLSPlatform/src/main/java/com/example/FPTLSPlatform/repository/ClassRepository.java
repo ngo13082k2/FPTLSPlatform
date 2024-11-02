@@ -13,6 +13,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface ClassRepository extends JpaRepository<Class, Long> {
     List<Class> findByCoursesCourseCode(String courseCode);
@@ -31,4 +32,6 @@ public interface ClassRepository extends JpaRepository<Class, Long> {
     Page<Class> findByStartDate(LocalDate date, Pageable pageable);
 
     List<Class> findByStartDateAndStatus(LocalDate localDate, ClassStatus status);
+    List<Class> findByCoursesCategoriesCategoryIdIn(Set<Long> categoryIds);
+;
 }

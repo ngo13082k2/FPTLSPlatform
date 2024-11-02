@@ -21,4 +21,10 @@ public class Category {
 
     @Column(nullable = false)
     private String name;
+    @ManyToMany(mappedBy = "major")
+    private List<User> users;
+
+    @ManyToMany(mappedBy = "major")
+    private List<Teacher> teachers;
+
 }
