@@ -264,7 +264,9 @@ public class OrderService implements IOrderService {
                     }
                 }
 
-                scheduledClass.setStatus(ClassStatus.ONGOING);
+                if (scheduledClass.getStatus().equals(ClassStatus.ACTIVE)) {
+                    scheduledClass.setStatus(ClassStatus.ONGOING);
+                }
                 classRepository.save(scheduledClass);
                 log.info("Class with ID {} has started and is now ONGOING.", scheduledClass.getClassId());
 
@@ -308,8 +310,9 @@ public class OrderService implements IOrderService {
                                 .build());
                     }
                 }
-
-                scheduledClass.setStatus(ClassStatus.COMPLETED);
+                if (scheduledClass.getStatus().equals(ClassStatus.ONGOING)) {
+                    scheduledClass.setStatus(ClassStatus.COMPLETED);
+                }
                 classRepository.save(scheduledClass);
                 log.info("Class with ID {} has started and is now COMPLETED.", scheduledClass.getClassId());
 
