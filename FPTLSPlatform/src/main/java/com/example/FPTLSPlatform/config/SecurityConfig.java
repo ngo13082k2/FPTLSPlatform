@@ -44,8 +44,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/courses/{courseCode}").hasAuthority("STAFF")
                         .requestMatchers(HttpMethod.POST, "/categories").hasAuthority("STAFF")
                         .requestMatchers(HttpMethod.PUT, "/categories").hasAuthority("STAFF")
-                        .requestMatchers(HttpMethod.GET, "/categories").hasAnyAuthority("TEACHER", "STAFF", "STUDENT")
-                        .requestMatchers(HttpMethod.GET, "/categories/{id}").hasAnyAuthority("TEACHER", "STAFF", "STUDENT")
                         .requestMatchers(HttpMethod.POST, "/categories").hasAuthority("STAFF")
                         .requestMatchers("/classes/byCourse/{courseCode}").hasAnyAuthority("STUDENT", "TEACHER")
                         .requestMatchers(HttpMethod.GET, "/classes/{classId}").hasAnyAuthority("STUDENT", "TEACHER")
