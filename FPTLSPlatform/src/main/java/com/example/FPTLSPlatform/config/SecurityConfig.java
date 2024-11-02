@@ -34,6 +34,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/login", "/applications/**", "/auth/register-student", "/auth/register-teacher", "/forgotpassword/**", "api/**", "/auth/confirm-otp").permitAll() // Publicly accessible endpoints
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/categories", "/categories/{id}").permitAll()
                         .requestMatchers("/staff/**").hasAuthority("STAFF")
                         .requestMatchers("/teacher/**").hasAuthority("TEACHER")
                         .requestMatchers("/student/**").hasAuthority("STUDENT")
