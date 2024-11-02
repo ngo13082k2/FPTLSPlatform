@@ -26,23 +26,18 @@ public class ApplicationService implements IApplicationService {
     private final IEmailService emailService;
     private final TeacherRepository teacherRepository;
     private final UserRepository userRepository;
-    private final CourseRepository courseRepository;
-    private final CategoryRepository categoryRepository;
+
     private final CloudinaryService cloudinaryService;
 
     public ApplicationService(ApplicationRepository applicationRepository,
                               IEmailService emailService,
                               TeacherRepository teacherRepository,
                               UserRepository userRepository,
-                              CourseRepository courseRepository,
-                              CategoryRepository categoryRepository,
                               CloudinaryService cloudinaryService) {
         this.applicationRepository = applicationRepository;
         this.emailService = emailService;
         this.teacherRepository = teacherRepository;
         this.userRepository = userRepository;
-        this.courseRepository = courseRepository;
-        this.categoryRepository = categoryRepository;
         this.cloudinaryService = cloudinaryService;
     }
 
@@ -73,13 +68,6 @@ public class ApplicationService implements IApplicationService {
             application.setCertificate(certificateUrl);
         }
 
-        if (applicationDTO.getCategoryIds() != null) {
-            application.setCategoriesId(new HashSet<>(applicationDTO.getCategoryIds()));
-        }
-
-        if (applicationDTO.getCourseCodes() != null) {
-            application.setCourses(new HashSet<>(applicationDTO.getCourseCodes()));
-        }
 
         applicationRepository.save(application);
         applicationDTO.setTeacherName(teacher.getTeacherName());
@@ -109,27 +97,6 @@ public class ApplicationService implements IApplicationService {
 
                     teacher.setStatus("ACTIVE");
                     teacher.setCertificate(application.getCertificate());
-
-                    Set<Category> copiedCategories = new HashSet<>();
-                    for (Long categoryId : application.getCategoriesId()) {
-                        Category category = categoryRepository.findById(categoryId)
-                                .orElseThrow(() -> new ResourceNotFoundException("Category not found: " + categoryId));
-                        copiedCategories.add(category);
-                    }
-
-                    Set<Course> copiedCourses = new HashSet<>(courseRepository.findAllByCourseCodeIn(application.getCourses()));
-                    if (copiedCourses.size() != application.getCourses().size()) {
-                        List<String> missingCourses = application.getCourses().stream()
-                                .filter(courseCode -> copiedCourses.stream()
-                                        .noneMatch(course -> course.getCourseCode().equals(courseCode)))
-                                .toList();
-
-                        throw new ResourceNotFoundException("Courses not found: " + missingCourses);
-                    }
-
-                    teacher.setCategories(copiedCategories);
-                    teacher.setCourses(copiedCourses);
-
                     teacherRepository.save(teacher);
                 }
 
@@ -161,8 +128,7 @@ public class ApplicationService implements IApplicationService {
                 .applicationId(app.getApplicationId())
                 .title(app.getTitle())
                 .description(app.getDescription())
-                .categoryIds(app.getCategoriesId())
-                .courseCodes(app.getCourses())
+                .certificate(app.getCertificate())
                 .status(app.getStatus())
                 .teacherName(app.getTeacher().getTeacherName())
                 .build();

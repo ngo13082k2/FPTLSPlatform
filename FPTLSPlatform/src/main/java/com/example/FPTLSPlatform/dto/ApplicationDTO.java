@@ -17,10 +17,6 @@ public class ApplicationDTO {
 
     private String title;
 
-    private Set<Long> categoryIds;
-
-    private Set<String> courseCodes;
-
     private String certificate;
 
     private String description;

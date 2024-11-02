@@ -28,14 +28,6 @@ public class Application {
     @Column(name = "description")
     private String description;
 
-    @ElementCollection
-    @CollectionTable(name = "application_category_ids", joinColumns = @JoinColumn(name = "application_id"))
-    private Set<Long> categoriesId;
-
-    @ElementCollection
-    @CollectionTable(name = "application_course_codes", joinColumns = @JoinColumn(name = "application_id"))
-    private Set<String> courses;
-
     @Column(name = "certificate")
     private String certificate;
 

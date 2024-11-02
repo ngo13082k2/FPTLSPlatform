@@ -50,6 +50,9 @@ public class Teacher {
 
     @Column(name = "fullname", nullable = false)
     private String fullName;
+    
+    @Column(name = "certificate")
+    private String certificate;
 
     @Column(name = "status")
     private String status;

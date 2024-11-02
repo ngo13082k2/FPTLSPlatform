@@ -35,6 +35,7 @@ public class AuthController {
 
         return ResponseEntity.ok(userResponse);
     }
+
     @PostMapping("/confirm-otp")
     public ResponseEntity<Map<String, Object>> confirmOTP(@RequestParam int otp, HttpSession session) {
         UserResponse userResponse = authService.confirmOTP(otp);
@@ -52,15 +53,16 @@ public class AuthController {
 //        authService.register(request, Role.TEACHER);
 //        return ResponseEntity.ok("Teacher registered successfully. Status: Pending");
 //    }
-@PostMapping("/register-teacher")
-public ResponseEntity<UserResponse> register(@RequestBody RegisterRequest request, HttpSession session) {
-    try {
-        UserResponse response = authService.registerTeacher(request, session);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    } catch (RuntimeException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new UserResponse(null, null, null, "Error: " + e.getMessage(), null, null));
+    @PostMapping("/register-teacher")
+    public ResponseEntity<?> register(@RequestBody RegisterRequest request, HttpSession session) {
+        try {
+            UserResponse response = authService.registerTeacher(request, session);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error: " + e.getMessage());
+        }
     }
-}
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthenticationRequest request) {
         try {
@@ -76,11 +78,13 @@ public ResponseEntity<UserResponse> register(@RequestBody RegisterRequest reques
         UserResponse userResponse = authService.viewCurrentUser(token);
         return ResponseEntity.ok(userResponse);
     }
+
     @PutMapping("")
     public ResponseEntity<UserResponse> updateCurrentUser(@RequestHeader("Authorization") String token, @RequestBody AuthenticationRequest request) {
         UserResponse updatedUser = authService.updateCurrentUser(token, request);
         return ResponseEntity.ok(updatedUser);
     }
+
     @GetMapping("/{id}")
     public ResponseEntity<UserResponse> getUserById(@PathVariable String username) {
         UserResponse userResponse = authService.getUserByUserName(username);
