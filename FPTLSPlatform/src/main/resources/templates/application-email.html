@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Application Notification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .transaction-details {
+            margin-top: 20px;
+        }
+
+        .transaction-details th,
+        .transaction-details td {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+
+        .footer {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Transaction Notification</h1>
+    <p>Dear <span th:text="${application.getUser().getUserName()}"></span>,</p>
+    <p>We have received your transaction. Here are the details:</p>
+
+    <table class="transaction-details">
+        <tr>
+            <th>Application</th>
+            <td th:text="${application.getTitle()}"></td>
+        </tr>
+        <tr>
+            <th>Amount</th>
+            <td th:text="${application.getDescription()}"></td>
+        </tr>
+    </table>
+
+    <p>Your application has been <span th:text="${application.getStatus()()}"></span>!</p>
+    <div class="footer">
+        <p>Best regards,<br>Your Company Name</p>
+    </div>
+</div>
+</body>
+</html>

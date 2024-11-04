@@ -28,13 +28,14 @@ public class ApplicationUserController {
         applicationUserService.processOtherRequest(otherRequest);
         return ResponseEntity.ok("Other request submitted successfully");
     }
+
     @GetMapping("/applications/{applicationTypeId}")
     public ResponseEntity<List<ApplicationUser>> getApplicationsByType(@PathVariable Long applicationTypeId) {
         List<ApplicationUser> applications = applicationUserService.getApplicationsByType(applicationTypeId);
         return ResponseEntity.ok(applications);
     }
 
-//    @PostMapping("/process-withdrawal/{applicationUserId}")
+    //    @PostMapping("/process-withdrawal/{applicationUserId}")
 //    public ResponseEntity<String> processWithdrawalPayment(@PathVariable Long applicationUserId) {
 //        String response = applicationUserService.processWithdrawalPayment(applicationUserId);
 //        return ResponseEntity.ok(response);
@@ -42,5 +43,15 @@ public class ApplicationUserController {
     @PostMapping("/complete")
     public String completeWithdrawalRequest(@RequestParam Long applicationUserId) {
         return applicationUserService.completeWithdrawalRequest(applicationUserId);
+    }
+
+    @PutMapping("/approve")
+    public String approveRequest(@RequestParam Long applicationUserId) {
+        return applicationUserService.approveApplication(applicationUserId);
+    }
+
+    @PutMapping("/reject")
+    public String rejectRequest(@RequestParam Long applicationUserId) {
+        return applicationUserService.rejectApplication(applicationUserId);
     }
 }

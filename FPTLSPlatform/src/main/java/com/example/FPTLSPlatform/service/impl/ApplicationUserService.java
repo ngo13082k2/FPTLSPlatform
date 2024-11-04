@@ -92,6 +92,48 @@ public class ApplicationUserService implements IApplicationUserService {
         applicationUserRepository.save(applicationUser);
     }
 
+    @Override
+    public String approveApplication(Long applicationId) {
+        ApplicationUser applicationUser = applicationUserRepository.findById(applicationId)
+                .orElseThrow(() -> new RuntimeException("Application not found"));
+
+        applicationUser.setStatus("completed");
+        applicationUserRepository.save(applicationUser);
+        notificationService.createNotification(NotificationDTO.builder()
+                .title("Application approved")
+                .description("Your application has been approved")
+                .name("Notification")
+                .build());
+        sendEmail(applicationUser);
+        return "Your application has been approved.";
+    }
+
+    private void sendEmail(ApplicationUser applicationUser) {
+        Context context = new Context();
+        context.setVariable("application", applicationUser);
+        if (applicationUser.getUser() != null) {
+            emailService.sendEmail(applicationUser.getUser().getEmail(), "application", "application-email", context);
+        }
+        if (applicationUser.getTeacher() != null) {
+            emailService.sendEmail(applicationUser.getTeacher().getEmail(), "application", "application-email", context);
+        }
+    }
+
+    @Override
+    public String rejectApplication(Long applicationId) {
+        ApplicationUser applicationUser = applicationUserRepository.findById(applicationId)
+                .orElseThrow(() -> new RuntimeException("Application not found"));
+
+        applicationUser.setStatus("rejected");
+        applicationUserRepository.save(applicationUser);
+        notificationService.createNotification(NotificationDTO.builder()
+                .title("Application rejected")
+                .description("Your application has been approved")
+                .name("Notification")
+                .build());
+        sendEmail(applicationUser);
+        return "Your application has been rejected.";
+    }
 
     public String completeWithdrawalRequest(Long applicationUserId) {
         ApplicationUser applicationUser = applicationUserRepository.findById(applicationUserId)
@@ -225,7 +267,6 @@ public class ApplicationUserService implements IApplicationUserService {
 
         return builder.build();
     }
-
 
 
     private ApplicationUser mapOtherDtoToEntity(OtherApplicationDTO dto, ApplicationType applicationType, Object userOrTeacher) {
