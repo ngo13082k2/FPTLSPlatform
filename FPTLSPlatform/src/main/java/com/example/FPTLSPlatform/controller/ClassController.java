@@ -92,7 +92,7 @@ public class ClassController {
         }
     }
 
-    @GetMapping("/{classId}")
+    @GetMapping("/getByClassId/{classId}")
     public ResponseEntity<?> getClassById(@PathVariable Long classId) {
         try {
             ClassDTO clazz = classService.getClassById(classId);
