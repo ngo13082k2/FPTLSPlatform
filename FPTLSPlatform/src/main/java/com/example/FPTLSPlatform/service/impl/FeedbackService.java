@@ -1,6 +1,7 @@
 package com.example.FPTLSPlatform.service.impl;
 
 import com.example.FPTLSPlatform.dto.FeedbackCategoryDTO;
+import com.example.FPTLSPlatform.dto.FeedbackDTO;
 import com.example.FPTLSPlatform.dto.FeedbackQuestionAnswerDTO;
 import com.example.FPTLSPlatform.dto.FeedbackSubmissionDTO;
 import com.example.FPTLSPlatform.model.*;
@@ -109,5 +110,22 @@ public class FeedbackService implements IFeedbackService {
         }
 
         return resultList;
+    }
+
+    public List<FeedbackDTO> getAllFeedbackByClassId(Long classId) {
+        List<Feedback> feedbacks = feedbackRepository.findByClassEntityClassId(classId);
+
+        if (feedbacks.isEmpty()) {
+            throw new IllegalArgumentException("No feedback found for class ID: " + classId);
+        }
+
+        return feedbacks.stream().map(feedback -> {
+            FeedbackDTO responseDTO = new FeedbackDTO();
+            responseDTO.setStudentUsername(feedback.getStudent().getUserName());
+            responseDTO.setQuestionId(feedback.getFeedbackQuestion().getId());
+            responseDTO.setRating(feedback.getRating());
+            responseDTO.setComment(feedback.getComment());
+            return responseDTO;
+        }).collect(Collectors.toList());
     }
 }

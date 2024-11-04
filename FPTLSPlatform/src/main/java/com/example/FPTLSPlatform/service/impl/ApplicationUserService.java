@@ -80,7 +80,7 @@ public class ApplicationUserService implements IApplicationUserService {
         walletRepository.save(wallet);
 
         TransactionHistory transactionHistory = TransactionHistory.builder()
-                .amount(withdrawalAmount)
+                .amount(-withdrawalAmount)
                 .transactionDate(LocalDateTime.now())
                 .transactionBalance(wallet.getBalance())
                 .user(userOrTeacher instanceof User ? (User) userOrTeacher : null)

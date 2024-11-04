@@ -252,6 +252,17 @@
                     .map(this::mapEntityToDTO)
                     .collect(Collectors.toList());
         }
+        public List<ClassDTO> getClassesByStatusCompleted() {
+            List<Class> completedClasses = classRepository.findByStatus(ClassStatus.COMPLETED);
+
+            if (completedClasses.isEmpty()) {
+                throw new IllegalStateException("No classes found with status COMPLETED.");
+            }
+
+            return completedClasses.stream()
+                    .map(this::mapEntityToDTO)
+                    .collect(Collectors.toList());
+        }
 
 
         private Class mapDTOToEntity(ClassDTO classDTO, Course course, Teacher teacher) {

@@ -28,4 +28,5 @@ public interface IClassService {
     Page<StudentDTO> getAllStudentsInClass(Long classId, Pageable pageable);
     List<ClassDTO> getAllClassesByCurrentTeacher();
     List<ClassDTO> getClassByMajor();
+    List<ClassDTO> getClassesByStatusCompleted();
 }

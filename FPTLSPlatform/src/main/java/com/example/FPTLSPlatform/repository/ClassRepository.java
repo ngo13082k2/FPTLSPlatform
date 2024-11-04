@@ -33,5 +33,7 @@ public interface ClassRepository extends JpaRepository<Class, Long> {
 
     List<Class> findByStartDateAndStatus(LocalDate localDate, ClassStatus status);
     List<Class> findByCoursesCategoriesCategoryIdIn(Set<Long> categoryIds);
-;
+    List<Class> findByStatus(ClassStatus status);
+
+    ;
 }

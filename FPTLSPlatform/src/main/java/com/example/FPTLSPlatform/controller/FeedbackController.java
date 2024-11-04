@@ -1,5 +1,6 @@
 package com.example.FPTLSPlatform.controller;
 
+import com.example.FPTLSPlatform.dto.FeedbackDTO;
 import com.example.FPTLSPlatform.dto.FeedbackSubmissionDTO;
 import com.example.FPTLSPlatform.model.User;
 import com.example.FPTLSPlatform.service.IFeedbackService;
@@ -26,10 +27,15 @@ public class FeedbackController {
     }
 
     @GetMapping("/class/{classId}/summary")
-    @PreAuthorize("hasRole('STAFF')")
     public ResponseEntity<List<Map<String, Object>>> getClassFeedbackSummary(@PathVariable Long classId) {
         List<Map<String, Object>> summary = feedbackService.getClassFeedbackSummary(classId);
         return ResponseEntity.ok(summary);
     }
+    @GetMapping("/class/{classId}")
+    public ResponseEntity<List<FeedbackDTO>> getAllFeedbackByClassId(@PathVariable Long classId) {
+        List<FeedbackDTO> feedbacks = feedbackService.getAllFeedbackByClassId(classId);
+        return ResponseEntity.ok(feedbacks);
+    }
+
 
 }

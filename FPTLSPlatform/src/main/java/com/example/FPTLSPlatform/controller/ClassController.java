@@ -138,6 +138,11 @@ public class ClassController {
         List<ClassDTO> classDTOList = classService.getClassByMajor();
         return ResponseEntity.ok(classDTOList);
     }
+    @GetMapping("/StatusCompleted")
+    public ResponseEntity<List<ClassDTO>> getCompletedClasses() {
+        List<ClassDTO> completedClasses = classService.getClassesByStatusCompleted();
+        return ResponseEntity.ok(completedClasses);
+    }
 
     private String getCurrentUsername() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
