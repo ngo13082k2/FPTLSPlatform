@@ -32,7 +32,7 @@ public interface IClassService {
     List<ClassDTO> getAllClassesByCurrentTeacher();
     List<ClassDTO> getClassByMajor();
     List<ClassDTO> getClassesByStatusCompleted();
-    Map<YearMonth, Long> getClassesByStatusAndMonth(ClassStatus status);
+    Map<YearMonth, Long> getClassesByStatusAndMonth(ClassStatus status, Integer year);
     long getTotalClasses();
     List<ClassDTO> getClassesByStatusAndMonthDetailed(ClassStatus status, YearMonth month);
 }

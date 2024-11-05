@@ -327,11 +327,14 @@
             return classRepository.count();
         }
 
-        public Map<YearMonth, Long> getClassesByStatusAndMonth(ClassStatus status) {
+        public Map<YearMonth, Long> getClassesByStatusAndMonth(ClassStatus status, Integer year) {
             List<Class> classes = classRepository.findByStatus(status);
+
             return classes.stream()
+                    .filter(clazz -> clazz.getCreateDate() != null) // Lọc các bản ghi có create_date
+                    .filter(clazz -> year == null || clazz.getCreateDate().getYear() == year) // Lọc theo năm nếu có
                     .collect(Collectors.groupingBy(
-                            clazz -> YearMonth.from(clazz.getCreateDate()),
+                            clazz -> YearMonth.from(clazz.getCreateDate()), // Nhóm theo tháng và năm
                             Collectors.counting()
                     ));
         }
