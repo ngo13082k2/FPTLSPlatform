@@ -130,6 +130,7 @@ public class ApplicationService implements IApplicationService {
                 .description(app.getDescription())
                 .certificate(app.getCertificate())
                 .status(app.getStatus())
+                .rejectionReason(app.getRejectionReason())
                 .teacherName(app.getTeacher().getTeacherName())
                 .build();
     }
