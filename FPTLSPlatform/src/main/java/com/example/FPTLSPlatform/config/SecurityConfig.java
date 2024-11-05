@@ -52,7 +52,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/classes").hasAuthority("STUDENT")
                         .requestMatchers("/classes/teacher/{teacherName}").hasAuthority("STUDENT")
                         .requestMatchers("/classes/{classId}/students").hasAnyAuthority("STAFF", "STUDENT", "TEACHER")
-                        .requestMatchers("/classes/{classId}").hasAuthority("TEACHER")
+                        .requestMatchers(HttpMethod.PUT,"/classes/{classId}").hasAuthority("TEACHER")
                         .requestMatchers("/classes/my-classes").hasAuthority("TEACHER")
                         .requestMatchers(HttpMethod.POST, "/classes").hasAuthority("TEACHER")
                         .requestMatchers("classes/confirm-classes/").hasAuthority("TEACHER")
