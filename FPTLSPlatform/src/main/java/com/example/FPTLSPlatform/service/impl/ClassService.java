@@ -338,14 +338,17 @@
                             Collectors.counting()
                     ));
         }
-        public List<ClassDTO> getClassesByStatusAndMonthDetailed(ClassStatus status, YearMonth month) {
+        public List<ClassDTO> getClassesByStatusAndMonthDetailed(ClassStatus status, int year, Integer month) {
             List<Class> classes = classRepository.findByStatus(status);
 
-            // Lọc các lớp học theo tháng
+            // Lọc các lớp học theo năm và tháng (nếu có)
             return classes.stream()
-                    .filter(clazz -> YearMonth.from(clazz.getCreateDate()).equals(month))
+                    .filter(clazz -> clazz.getCreateDate() != null)
+                    .filter(clazz -> clazz.getCreateDate().getYear() == year)
+                    .filter(clazz -> month == null || clazz.getCreateDate().getMonthValue() == month) // Lọc theo tháng nếu có
                     .map(this::mapEntityToDTO)
                     .collect(Collectors.toList());
         }
+
 
     }

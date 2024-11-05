@@ -34,5 +34,5 @@ public interface IClassService {
     List<ClassDTO> getClassesByStatusCompleted();
     Map<YearMonth, Long> getClassesByStatusAndMonth(ClassStatus status, Integer year);
     long getTotalClasses();
-    List<ClassDTO> getClassesByStatusAndMonthDetailed(ClassStatus status, YearMonth month);
+    List<ClassDTO> getClassesByStatusAndMonthDetailed(ClassStatus status, int year, Integer month);
 }

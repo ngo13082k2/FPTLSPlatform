@@ -80,25 +80,23 @@ public class AdminController {
 
     @GetMapping("/details/active")
     public ResponseEntity<List<ClassDTO>> getActiveClassesByMonthDetailed(
-            @RequestParam int year, @RequestParam int month) {
-        YearMonth yearMonth = YearMonth.of(year, month);
-        List<ClassDTO> classes = classService.getClassesByStatusAndMonthDetailed(ClassStatus.ACTIVE, yearMonth);
+            @RequestParam int year, @RequestParam(required = false) Integer month) {
+        List<ClassDTO> classes = classService.getClassesByStatusAndMonthDetailed(ClassStatus.ACTIVE, year,month);
         return ResponseEntity.ok(classes);
     }
 
     @GetMapping("/details/ongoing")
     public ResponseEntity<List<ClassDTO>> getOngoingClassesByMonthDetailed(
-            @RequestParam int year, @RequestParam int month) {
-        YearMonth yearMonth = YearMonth.of(year, month);
-        List<ClassDTO> classes = classService.getClassesByStatusAndMonthDetailed(ClassStatus.ONGOING, yearMonth);
+            @RequestParam int year, @RequestParam(required = false) Integer month) {
+        List<ClassDTO> classes = classService.getClassesByStatusAndMonthDetailed(ClassStatus.ONGOING, year, month);
         return ResponseEntity.ok(classes);
     }
 
     @GetMapping("/details/completed")
     public ResponseEntity<List<ClassDTO>> getCompletedClassesByMonthDetailed(
-            @RequestParam int year, @RequestParam int month) {
-        YearMonth yearMonth = YearMonth.of(year, month);
-        List<ClassDTO> classes = classService.getClassesByStatusAndMonthDetailed(ClassStatus.COMPLETED, yearMonth);
+            @RequestParam int year, @RequestParam(required = false) Integer month) {
+        List<ClassDTO> classes = classService.getClassesByStatusAndMonthDetailed(ClassStatus.COMPLETED, year, month);
         return ResponseEntity.ok(classes);
     }
+
 }
