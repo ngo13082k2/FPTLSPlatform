@@ -2,13 +2,16 @@ package com.example.FPTLSPlatform.service;
 
 import com.example.FPTLSPlatform.dto.ClassDTO;
 import com.example.FPTLSPlatform.dto.StudentDTO;
+import com.example.FPTLSPlatform.model.enums.ClassStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.time.YearMonth;
 import java.util.List;
+import java.util.Map;
 
 public interface IClassService {
     ClassDTO createClass(ClassDTO classDTO, MultipartFile image) throws GeneralSecurityException, IOException;
@@ -29,4 +32,7 @@ public interface IClassService {
     List<ClassDTO> getAllClassesByCurrentTeacher();
     List<ClassDTO> getClassByMajor();
     List<ClassDTO> getClassesByStatusCompleted();
+    Map<YearMonth, Long> getClassesByStatusAndMonth(ClassStatus status);
+    long getTotalClasses();
+    List<ClassDTO> getClassesByStatusAndMonthDetailed(ClassStatus status, YearMonth month);
 }

@@ -21,14 +21,8 @@
 
     import java.io.IOException;
     import java.security.GeneralSecurityException;
-    import java.time.LocalDate;
-    import java.time.LocalDateTime;
-    import java.time.LocalTime;
-    import java.time.ZoneOffset;
-    import java.util.List;
-    import java.util.Optional;
-    import java.util.Set;
-    import java.util.UUID;
+    import java.time.*;
+    import java.util.*;
     import java.util.stream.Collectors;
 
     @Service
@@ -328,6 +322,27 @@
                     .dayOfWeek(clazz.getDayOfWeek())
                     .students(studentDTOList)
                     .build();
+        }
+        public long getTotalClasses() {
+            return classRepository.count();
+        }
+
+        public Map<YearMonth, Long> getClassesByStatusAndMonth(ClassStatus status) {
+            List<Class> classes = classRepository.findByStatus(status);
+            return classes.stream()
+                    .collect(Collectors.groupingBy(
+                            clazz -> YearMonth.from(clazz.getCreateDate()),
+                            Collectors.counting()
+                    ));
+        }
+        public List<ClassDTO> getClassesByStatusAndMonthDetailed(ClassStatus status, YearMonth month) {
+            List<Class> classes = classRepository.findByStatus(status);
+
+            // Lọc các lớp học theo tháng
+            return classes.stream()
+                    .filter(clazz -> YearMonth.from(clazz.getCreateDate()).equals(month))
+                    .map(this::mapEntityToDTO)
+                    .collect(Collectors.toList());
         }
 
     }
