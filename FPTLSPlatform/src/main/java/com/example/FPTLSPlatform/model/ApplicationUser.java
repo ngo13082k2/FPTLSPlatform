@@ -1,5 +1,6 @@
 package com.example.FPTLSPlatform.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -36,6 +37,7 @@ public class ApplicationUser {
     private ApplicationType applicationType;
     @ManyToOne
     @JoinColumn(name = "user_name", nullable = true)
+    @JsonIgnore
     private User user;
     @ManyToOne
     @JoinColumn(name = "teacher", nullable = true)
