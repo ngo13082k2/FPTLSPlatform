@@ -116,7 +116,7 @@ public class OrderService implements IOrderService {
         wallet.setBalance(wallet.getBalance() - scheduleClass.getPrice());
         systemWallet.setTotalAmount(systemWallet.getTotalAmount() + scheduleClass.getPrice());
         systemWalletRepository.save(systemWallet);
-        saveTransactionHistory(order.getUser(), order.getTotalPrice());
+        saveTransactionHistory(order.getUser(), -order.getTotalPrice(), wallet);
 
         userRepository.save(wallet.getUser());
 
@@ -194,8 +194,9 @@ public class OrderService implements IOrderService {
                 }
 
                 // Refund and update order status
+                Wallet wallet = walletService.getWalletByUserName();
                 walletService.refundToWallet(order.getTotalPrice());
-                saveTransactionHistory(order.getUser(), orderDetail.getPrice());
+                saveTransactionHistory(order.getUser(), orderDetail.getPrice(), wallet);
                 order.setStatus(OrderStatus.CANCELLED);
                 orderRepository.save(order);
                 Context context = new Context();
@@ -299,7 +300,7 @@ public class OrderService implements IOrderService {
                                 ? orderDetail.getPrice() * (1 - Double.parseDouble(discountPercentage.getValue()))
                                 : defaultDiscount;
                         wallet.setBalance(wallet.getBalance() + discountedPrice);
-                        saveTransactionHistory(order.getUser(), order.getTotalPrice());
+                        saveTransactionHistory(order.getUser(), order.getTotalPrice(), wallet);
                         walletRepository.save(wallet);
                         SystemWallet systemWallet = systemWalletRepository.getReferenceById(1L);
                         systemWallet.setTotalAmount(systemWallet.getTotalAmount() - discountedPrice);
@@ -369,7 +370,7 @@ public class OrderService implements IOrderService {
             wallet.setBalance(student.getWallet().getBalance() + (orderDetail.getPrice()));
             systemWalletRepository.save(systemWallet);
             userRepository.save(student);
-            saveTransactionHistory(wallet.getUser(), orderDetail.getPrice());
+            saveTransactionHistory(wallet.getUser(), orderDetail.getPrice(), wallet);
             notificationService.createNotification(NotificationDTO.builder()
                     .title("Refund for Order " + order.getOrderId() + " has been processed")
                     .description("Your order with ID " + order.getOrderId() + " has been canceled, and a refund has been initiated.")
@@ -397,11 +398,12 @@ public class OrderService implements IOrderService {
         return false;
     }
 
-    private void saveTransactionHistory(User user, Long amount) {
+    private void saveTransactionHistory(User user, Long amount, Wallet wallet) {
         TransactionHistory transactionHistory = new TransactionHistory();
         transactionHistory.setAmount(amount);
         transactionHistory.setTransactionDate(LocalDateTime.now());
         transactionHistory.setUser(user);
+        transactionHistory.setTransactionBalance(wallet.getBalance());
 
         transactionHistoryRepository.save(transactionHistory);
         Context context = new Context();
