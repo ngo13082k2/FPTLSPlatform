@@ -41,6 +41,7 @@ public class VNPayService implements IVNPayService {
     private final TransactionHistoryRepository transactionHistoryRepository;
     private final SystemWalletRepository systemWalletRepository;
     private final SystemTransactionHistoryRepository systemTransactionHistoryRepository;
+
     public VNPayService(UserRepository userRepository, WalletRepository walletRepository, TransactionHistoryRepository transactionHistoryRepository, SystemWalletRepository systemWalletRepository, SystemTransactionHistoryRepository systemTransactionHistoryRepository) {
         this.userRepository = userRepository;
         this.walletRepository = walletRepository;
@@ -174,9 +175,6 @@ public class VNPayService implements IVNPayService {
     }
 
 
-
-
-
     private String getCurrentUsername() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
@@ -186,6 +184,7 @@ public class VNPayService implements IVNPayService {
             return principal.toString();
         }
     }
+
     @Override
     public void updateWalletBalance(String username, long amount) throws ResourceNotFoundException {
         System.out.println("Cập nhật ví cho người dùng: " + username + " với số tiền: " + amount);
@@ -209,6 +208,7 @@ public class VNPayService implements IVNPayService {
                 transactionHistory.setAmount(amount);
                 transactionHistory.setTransactionDate(LocalDateTime.now());
                 transactionHistory.setUser(user);
+                transactionHistory.setNote("Deposit");
                 transactionHistory.setTransactionBalance(user.getWallet().getBalance());
 
 
@@ -232,7 +232,6 @@ public class VNPayService implements IVNPayService {
             throw new ResourceNotFoundException("Không tìm thấy người dùng: " + username);
         }
     }
-
 
 
 }

@@ -37,4 +37,7 @@ public class TransactionHistory {
     @JoinColumn(name = "teacher_name")
     @JsonIgnore
     private Teacher teacher;
+
+    @Column(name = "note")
+    private String note;
 }

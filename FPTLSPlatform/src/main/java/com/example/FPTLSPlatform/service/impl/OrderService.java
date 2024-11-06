@@ -116,8 +116,8 @@ public class OrderService implements IOrderService {
         wallet.setBalance(wallet.getBalance() - scheduleClass.getPrice());
         systemWallet.setTotalAmount(systemWallet.getTotalAmount() + scheduleClass.getPrice());
         systemWalletRepository.save(systemWallet);
-        saveTransactionHistory(order.getUser(), -order.getTotalPrice(), wallet);
-
+        TransactionHistory transactionHistory = saveTransactionHistory(order.getUser(), -order.getTotalPrice(), wallet);
+        transactionHistory.setNote("Order");
         userRepository.save(wallet.getUser());
 
         Context context = new Context();
@@ -196,7 +196,8 @@ public class OrderService implements IOrderService {
                 // Refund and update order status
                 Wallet wallet = walletService.getWalletByUserName();
                 walletService.refundToWallet(order.getTotalPrice());
-                saveTransactionHistory(order.getUser(), orderDetail.getPrice(), wallet);
+                TransactionHistory transactionHistory = saveTransactionHistory(order.getUser(), orderDetail.getPrice(), wallet);
+                transactionHistory.setNote("Refunded");
                 order.setStatus(OrderStatus.CANCELLED);
                 orderRepository.save(order);
                 Context context = new Context();
@@ -339,7 +340,6 @@ public class OrderService implements IOrderService {
             classRepository.save(scheduledClass);
             orderDetailRepository.saveAll(orderDetails);
 
-            log.info("Class with ID {} has been activated.", scheduledClass.getClassId());
             sendActivationEmail(scheduledClass);
             notificationService.createNotification(NotificationDTO.builder()
                     .title("Class " + scheduledClass.getCode() + " has been activated")
@@ -349,9 +349,6 @@ public class OrderService implements IOrderService {
         } else {
             scheduledClass.setStatus(ClassStatus.CANCELED);
             classRepository.save(scheduledClass);
-            log.info("Class with ID {} has been cancelled due to insufficient students. Only {} registered, minimum required is {}.",
-                    scheduledClass.getClassId(), registeredStudents, minimumRequiredStudents);
-
             refundStudents(scheduledClass);
         }
     }
@@ -364,20 +361,24 @@ public class OrderService implements IOrderService {
             Order order = orderDetail.getOrder();
             User student = order.getUser();
 
+            if (orderDetail.getPrice() <= 0) {
+                throw new IllegalArgumentException("Refund amount cannot be less than zero.");
+            }
+
             Wallet wallet = student.getWallet();
             SystemWallet systemWallet = systemWalletRepository.getReferenceById(1L);
 
             wallet.setBalance(student.getWallet().getBalance() + (orderDetail.getPrice()));
             systemWalletRepository.save(systemWallet);
             userRepository.save(student);
-            saveTransactionHistory(wallet.getUser(), orderDetail.getPrice(), wallet);
+            TransactionHistory transactionHistory = saveTransactionHistory(wallet.getUser(), orderDetail.getPrice(), wallet);
+            transactionHistory.setNote("Refunded");
             notificationService.createNotification(NotificationDTO.builder()
                     .title("Refund for Order " + order.getOrderId() + " has been processed")
                     .description("Your order with ID " + order.getOrderId() + " has been canceled, and a refund has been initiated.")
                     .name("Refund Notification")
                     .build());
 
-            log.info("Refunded {} to student {} for class {} cancellation.", orderDetail.getPrice(), student.getUserName(), cancelledClass.getClassId());
         }
     }
 
@@ -398,7 +399,7 @@ public class OrderService implements IOrderService {
         return false;
     }
 
-    private void saveTransactionHistory(User user, Long amount, Wallet wallet) {
+    private TransactionHistory saveTransactionHistory(User user, Long amount, Wallet wallet) {
         TransactionHistory transactionHistory = new TransactionHistory();
         transactionHistory.setAmount(amount);
         transactionHistory.setTransactionDate(LocalDateTime.now());
@@ -415,6 +416,8 @@ public class OrderService implements IOrderService {
                 .description("An amount of " + amount + " has been added to your wallet.")
                 .name("Wallet Notification")
                 .build());
+
+        return transactionHistory;
     }
 
     private Class getClassOrThrow(Long id) {

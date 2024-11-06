@@ -1,11 +1,13 @@
 package com.example.FPTLSPlatform.service.impl;
 
 import com.example.FPTLSPlatform.dto.TransactionHistoryDTO;
+import com.example.FPTLSPlatform.dto.WalletStatisticDTO;
 import com.example.FPTLSPlatform.model.TransactionHistory;
 import com.example.FPTLSPlatform.model.User;
 import com.example.FPTLSPlatform.model.Wallet;
 import com.example.FPTLSPlatform.repository.TransactionHistoryRepository;
 import com.example.FPTLSPlatform.repository.UserRepository;
+import com.example.FPTLSPlatform.repository.WalletRepository;
 import com.example.FPTLSPlatform.service.IWalletService;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -20,10 +22,12 @@ import java.util.stream.Collectors;
 public class WalletService implements IWalletService {
     private final UserRepository userRepository;
     private final TransactionHistoryRepository transactionHistoryRepository;
+    private final WalletRepository walletRepository;
 
-    public WalletService(UserRepository userRepository, TransactionHistoryRepository transactionHistoryRepository) {
+    public WalletService(UserRepository userRepository, TransactionHistoryRepository transactionHistoryRepository, WalletRepository walletRepository) {
         this.userRepository = userRepository;
         this.transactionHistoryRepository = transactionHistoryRepository;
+        this.walletRepository = walletRepository;
     }
 
     public Wallet getWalletByUserName() throws Exception {
@@ -43,6 +47,7 @@ public class WalletService implements IWalletService {
             throw new Exception("Không tìm thấy người dùng: " + username);
         }
     }
+
     public List<TransactionHistoryDTO> getTransactionHistory() throws Exception {
         String username = getCurrentUsername();
 
@@ -72,6 +77,11 @@ public class WalletService implements IWalletService {
         saveTransactionHistory(wallet.getUser(), amount, "Hoàn tiền");
     }
 
+    @Override
+    public List<WalletStatisticDTO> getWalletStatistic(Integer year) {
+        return walletRepository.getWalletStatisticByMonth(year);
+    }
+
 
     private String getCurrentUsername() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -82,6 +92,7 @@ public class WalletService implements IWalletService {
             return principal.toString();
         }
     }
+
     private void saveTransactionHistory(User user, Long amount, String description) {
         TransactionHistory transactionHistory = new TransactionHistory();
         transactionHistory.setAmount(amount);

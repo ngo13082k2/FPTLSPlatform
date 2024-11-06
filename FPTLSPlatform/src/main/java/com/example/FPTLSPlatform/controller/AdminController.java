@@ -2,16 +2,12 @@ package com.example.FPTLSPlatform.controller;
 
 import com.example.FPTLSPlatform.dto.ClassDTO;
 import com.example.FPTLSPlatform.dto.TotalOrderDTO;
+import com.example.FPTLSPlatform.dto.WalletStatisticDTO;
 import com.example.FPTLSPlatform.model.SystemTransactionHistory;
-import com.example.FPTLSPlatform.model.SystemWallet;
 import com.example.FPTLSPlatform.model.enums.ClassStatus;
-import com.example.FPTLSPlatform.service.IClassService;
-import com.example.FPTLSPlatform.service.IOrderService;
-import com.example.FPTLSPlatform.service.ISystemWalletService;
-import com.example.FPTLSPlatform.service.IUserService;
-import com.example.FPTLSPlatform.service.impl.OrderService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.FPTLSPlatform.service.*;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,14 +20,28 @@ import java.util.Map;
 @RequestMapping("/admin")
 public class AdminController {
 
-    @Autowired
-    private IUserService userService;
-    @Autowired
-    private ISystemWalletService systemWalletService;
-    @Autowired
-    private IOrderService orderService;
-    @Autowired
-    private IClassService classService;
+
+    private final IUserService userService;
+
+    private final ISystemWalletService systemWalletService;
+
+    private final IOrderService orderService;
+
+    private final IClassService classService;
+
+    private final IWalletService walletService;
+
+    public AdminController(IUserService userService,
+                           ISystemWalletService systemWalletService,
+                           IOrderService orderService,
+                           IClassService classService,
+                           IWalletService walletService) {
+        this.userService = userService;
+        this.systemWalletService = systemWalletService;
+        this.orderService = orderService;
+        this.classService = classService;
+        this.walletService = walletService;
+    }
 
     @GetMapping("/system-wallet/balance")
     public Double getSystemWalletBalance() {
@@ -54,6 +64,7 @@ public class AdminController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
         return orderService.getTotalOrders(startDate, endDate);
     }
+
     @GetMapping("/totalClass")
     public ResponseEntity<Long> getTotalClasses() {
         long totalClasses = classService.getTotalClasses();
@@ -81,7 +92,7 @@ public class AdminController {
     @GetMapping("/details/active")
     public ResponseEntity<List<ClassDTO>> getActiveClassesByMonthDetailed(
             @RequestParam int year, @RequestParam(required = false) Integer month) {
-        List<ClassDTO> classes = classService.getClassesByStatusAndMonthDetailed(ClassStatus.ACTIVE, year,month);
+        List<ClassDTO> classes = classService.getClassesByStatusAndMonthDetailed(ClassStatus.ACTIVE, year, month);
         return ResponseEntity.ok(classes);
     }
 
@@ -97,6 +108,16 @@ public class AdminController {
             @RequestParam int year, @RequestParam(required = false) Integer month) {
         List<ClassDTO> classes = classService.getClassesByStatusAndMonthDetailed(ClassStatus.COMPLETED, year, month);
         return ResponseEntity.ok(classes);
+    }
+
+    @GetMapping("statistics/deposit")
+    public ResponseEntity<?> getDepositsByMonth(@RequestParam(required = false) Integer year) {
+        try {
+            List<WalletStatisticDTO> walletStatisticDTO = walletService.getWalletStatistic(year);
+            return ResponseEntity.ok(walletStatisticDTO);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
     }
 
 }
