@@ -76,7 +76,7 @@ public class WalletService implements IWalletService {
         wallet.setBalance(currentBalance + amount);
         userRepository.save(wallet.getUser());
 
-        saveTransactionHistory(wallet.getUser(), amount, "Hoàn tiền");
+        saveTransactionHistory(wallet.getUser(), amount);
     }
 
     @Override
@@ -95,11 +95,12 @@ public class WalletService implements IWalletService {
         }
     }
 
-    private void saveTransactionHistory(User user, Long amount, String description) {
+    private void saveTransactionHistory(User user, Long amount) {
         TransactionHistory transactionHistory = new TransactionHistory();
         transactionHistory.setAmount(amount);
         transactionHistory.setTransactionDate(LocalDateTime.now());
         transactionHistory.setUser(user);
+        transactionHistory.setNote("Refunded");
 
         transactionHistoryRepository.save(transactionHistory);
     }

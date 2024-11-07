@@ -200,10 +200,7 @@ public class OrderService implements IOrderService {
                 }
 
                 // Refund and update order status
-                Wallet wallet = walletService.getWalletByUserName();
                 walletService.refundToWallet(order.getTotalPrice());
-                TransactionHistory transactionHistory = saveTransactionHistory(order.getUser(), orderDetail.getPrice(), wallet);
-                transactionHistory.setNote("Refunded");
                 order.setStatus(OrderStatus.CANCELLED);
                 orderRepository.save(order);
                 Context context = new Context();
