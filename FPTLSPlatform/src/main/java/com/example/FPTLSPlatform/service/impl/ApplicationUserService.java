@@ -292,6 +292,25 @@ public class ApplicationUserService implements IApplicationUserService {
 //
         return "Withdrawal request processed successfully";
     }
+    public List<ApplicationUser> getApplicationUserByUserName() {
+        Object loggedInUserOrTeacher = getLoggedInUserOrTeacher();
+        List<ApplicationUser> applications;
+
+        if (loggedInUserOrTeacher instanceof User user) {
+            applications = applicationUserRepository.findByUser_UserName(user.getUserName());
+        } else if (loggedInUserOrTeacher instanceof Teacher teacher) {
+            applications = applicationUserRepository.findByTeacher_TeacherName(teacher.getTeacherName());
+        } else {
+            throw new RuntimeException("Invalid user type.");
+        }
+
+        if (applications.isEmpty()) {
+            throw new RuntimeException("No applications found for the logged-in user.");
+        }
+
+        return applications;
+    }
+
 
     private ApplicationUser mapWithdrawalDtoToEntity(WithdrawalRequestDTO dto, ApplicationType applicationType, Object userOrTeacher) {
         ApplicationUser.ApplicationUserBuilder builder = ApplicationUser.builder()

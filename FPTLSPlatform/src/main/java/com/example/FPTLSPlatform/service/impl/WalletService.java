@@ -64,7 +64,9 @@ public class WalletService implements IWalletService {
                 history.getAmount(),
                 history.getTransactionDate(),
                 history.getTransactionBalance(),
-                history.getUser().getUserName()
+                history.getUser().getUserName(),
+                history.getNote()
+
         );
     }
 

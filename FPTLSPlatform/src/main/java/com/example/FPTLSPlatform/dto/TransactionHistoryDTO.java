@@ -16,5 +16,6 @@ public class TransactionHistoryDTO {
     private LocalDateTime transactionDate;
     private double transactionBalance;
     private String userName;
+    private String note;
 
 }

@@ -21,4 +21,5 @@ public interface IApplicationUserService {
 
     String completeWithdrawalRequest(Long applicationUserId);
     void cancelWithdrawalRequest(Long withdrawalRequestId);
+    List<ApplicationUser> getApplicationUserByUserName();
 }

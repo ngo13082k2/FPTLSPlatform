@@ -63,4 +63,13 @@ public class ApplicationUserController {
             return ResponseEntity.status(400).body("Error: " + e.getMessage());
         }
     }
+    @GetMapping("getApplicationUserByUserName")
+    public ResponseEntity<List<ApplicationUser>> getApplicationUserByUserName() {
+        try {
+            List<ApplicationUser> applicationUsers = applicationUserService.getApplicationUserByUserName();
+            return ResponseEntity.ok(applicationUsers);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(404).body(null);
+        }
+    }
 }
