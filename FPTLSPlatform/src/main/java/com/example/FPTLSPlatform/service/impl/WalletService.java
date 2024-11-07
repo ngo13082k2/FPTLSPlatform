@@ -76,7 +76,7 @@ public class WalletService implements IWalletService {
         wallet.setBalance(currentBalance + amount);
         userRepository.save(wallet.getUser());
 
-        saveTransactionHistory(wallet.getUser(), amount);
+        saveTransactionHistory(wallet.getUser(), amount, wallet.getBalance());
     }
 
     @Override
@@ -95,9 +95,10 @@ public class WalletService implements IWalletService {
         }
     }
 
-    private void saveTransactionHistory(User user, Long amount) {
+    private void saveTransactionHistory(User user, Long amount, Double balance) {
         TransactionHistory transactionHistory = new TransactionHistory();
         transactionHistory.setAmount(amount);
+        transactionHistory.setTransactionBalance(balance);
         transactionHistory.setTransactionDate(LocalDateTime.now());
         transactionHistory.setUser(user);
         transactionHistory.setNote("Refunded");
