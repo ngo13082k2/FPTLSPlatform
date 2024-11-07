@@ -76,7 +76,7 @@ public class WalletService implements IWalletService {
         wallet.setBalance(currentBalance + amount);
         userRepository.save(wallet.getUser());
 
-        saveTransactionHistory(wallet.getUser(), amount, wallet.getBalance());
+        saveTransactionHistory(wallet.getUser(), amount, currentBalance);
     }
 
     @Override

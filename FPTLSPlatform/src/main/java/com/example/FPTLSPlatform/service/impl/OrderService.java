@@ -98,6 +98,9 @@ public class OrderService implements IOrderService {
         Class scheduleClass = getClassOrThrow(classId);
         User user = getUserOrThrow(username);
 
+        OrderDetail existingOrderDetail = orderDetailRepository.findByOrder_User_UserNameAndClasses_ClassId(username, classId);
+        Order order;
+
         checkOrderAlreadyExists(username, classId);
 
         SystemWallet systemWallet = systemWalletRepository.getReferenceById(1L);
@@ -105,13 +108,22 @@ public class OrderService implements IOrderService {
         checkSufficientBalance(wallet, scheduleClass.getPrice());
         checkClassCapacity(classId, scheduleClass.getMaxStudents());
 
-        Order order = new Order();
-        order.setUser(user);
-        order.setCreateAt(LocalDateTime.now());
-        order.setStatus(OrderStatus.PENDING);
-        order.setTotalPrice(scheduleClass.getPrice());
-        order = orderRepository.save(order);
-        saveOrderDetail(order, scheduleClass);
+        if (existingOrderDetail != null && existingOrderDetail.getOrder().getStatus().equals(OrderStatus.CANCELLED)) {
+            order = existingOrderDetail.getOrder();
+            order.setStatus(OrderStatus.PENDING);
+            order.setCreateAt(LocalDateTime.now());
+        } else {
+            checkOrderAlreadyExists(username, classId);
+
+            order = new Order();
+            order.setUser(user);
+            order.setCreateAt(LocalDateTime.now());
+            order.setStatus(OrderStatus.PENDING);
+            order.setTotalPrice(scheduleClass.getPrice());
+            order = orderRepository.save(order);
+
+            saveOrderDetail(order, scheduleClass);
+        }
 
         wallet.setBalance(wallet.getBalance() - scheduleClass.getPrice());
         systemWallet.setTotalAmount(systemWallet.getTotalAmount() + scheduleClass.getPrice());
@@ -133,6 +145,20 @@ public class OrderService implements IOrderService {
                 .totalPrice(order.getTotalPrice())
                 .status(order.getStatus())
                 .build();
+    }
+
+
+    private void checkOrderAlreadyExists(String username, Long classId) {
+        OrderDetail orderDetail = orderDetailRepository.findByOrder_User_UserNameAndClasses_ClassId(username, classId);
+        // Chỉ ngăn chặn nếu đơn hàng đã tồn tại và không bị hủy
+        if (orderDetail != null && !orderDetail.getOrder().getStatus().equals(OrderStatus.CANCELLED)) {
+            throw new OrderAlreadyExistsException("User has already registered for this class.");
+        }
+
+        // Kiểm tra trùng lặp lịch học dựa trên thời gian của `Class`
+        if (hasDuplicateSchedule(username, classId)) {
+            throw new IllegalStateException("User has already registered for this schedule.");
+        }
     }
 
     private void saveOrderDetail(Order order, Class scheduledClass) {
@@ -326,7 +352,7 @@ public class OrderService implements IOrderService {
     }
 
     private void activateClassIfEligible(Class scheduledClass) throws MessagingException {
-        int registeredStudents = orderDetailRepository.countByClasses_ClassId(scheduledClass.getClassId());
+        int registeredStudents = orderDetailRepository.countByClasses_ClassIdAndOrder_StatusNot(scheduledClass.getClassId(), OrderStatus.CANCELLED);
         double defaultMinimumPercentage = 0.8;
         System minimumPercentageParam = systemRepository.findByName("minimum_required_percentage");
         double minimumPercentage = minimumPercentageParam != null
@@ -392,6 +418,10 @@ public class OrderService implements IOrderService {
         Class newClass = classRepository.getReferenceById(classId);
 
         for (OrderDetail orderDetail : userOrders) {
+            if (orderDetail.getOrder().getStatus().equals(OrderStatus.CANCELLED)) {
+                continue;
+            }
+
             Class existingClass = orderDetail.getClasses();
             if (existingClass != null
                     && existingClass.getDayOfWeek().equals(newClass.getDayOfWeek())
@@ -401,6 +431,7 @@ public class OrderService implements IOrderService {
         }
         return false;
     }
+
 
     private TransactionHistory saveTransactionHistory(User user, Long amount, Wallet wallet) {
         TransactionHistory transactionHistory = new TransactionHistory();
@@ -433,14 +464,6 @@ public class OrderService implements IOrderService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));
     }
 
-    private void checkOrderAlreadyExists(String username, Long classId) {
-        if (orderDetailRepository.existsByOrder_User_UserNameAndClasses_ClassId(username, classId)) {
-            throw new OrderAlreadyExistsException("User has already registered for this class.");
-        }
-        if (hasDuplicateSchedule(username, classId)) {
-            throw new IllegalStateException("User has already registered for this schedule.");
-        }
-    }
 
     private void checkSufficientBalance(Wallet wallet, double requiredAmount) {
         if (wallet.getBalance() < requiredAmount) {
@@ -449,7 +472,8 @@ public class OrderService implements IOrderService {
     }
 
     private void checkClassCapacity(Long classId, int maxStudents) throws Exception {
-        if (orderDetailRepository.countByClasses_ClassId(classId) >= maxStudents) {
+
+        if (orderDetailRepository.countByClasses_ClassIdAndOrder_StatusNot(classId, OrderStatus.CANCELLED) >= maxStudents) {
             throw new Exception("Class is fully booked.");
         }
     }
