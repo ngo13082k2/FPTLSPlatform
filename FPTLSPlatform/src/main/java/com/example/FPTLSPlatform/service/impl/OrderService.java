@@ -162,7 +162,13 @@ public class OrderService implements IOrderService {
 
         return orderDetails.map(orderDetail -> OrderDetailDTO.builder()
                 .orderDetailId(orderDetail.getOrderDetailId())
-                .orderId(orderDetail.getOrder().getOrderId())
+                .orderDTO(OrderDTO.builder()
+                        .orderId(orderDetail.getOrder().getOrderId())
+                        .totalPrice(orderDetail.getOrder().getTotalPrice())
+                        .username(orderDetail.getOrder().getUser().getUserName())
+                        .createAt(orderDetail.getOrder().getCreateAt())
+                        .status(orderDetail.getOrder().getStatus())
+                        .build())
                 .classDTO(classService.mapEntityToDTO(orderDetail.getClasses()))
                 .price(orderDetail.getPrice())
                 .build());

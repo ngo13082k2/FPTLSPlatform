@@ -1,6 +1,7 @@
 package com.example.FPTLSPlatform.service.impl;
 
 import com.example.FPTLSPlatform.dto.ClassDTO;
+import com.example.FPTLSPlatform.dto.OrderDTO;
 import com.example.FPTLSPlatform.dto.OrderDetailDTO;
 
 import com.example.FPTLSPlatform.model.OrderDetail;
@@ -25,7 +26,13 @@ public class OrderDetailService implements IOrderDetailService {
 
         return orderDetails.map(orderDetail -> OrderDetailDTO.builder()
                 .orderDetailId(orderDetail.getOrderDetailId())
-                .orderId(orderDetail.getOrder().getOrderId())
+                .orderDTO(OrderDTO.builder()
+                        .orderId(orderDetail.getOrder().getOrderId())
+                        .totalPrice(orderDetail.getOrder().getTotalPrice())
+                        .username(orderDetail.getOrder().getUser().getUserName())
+                        .createAt(orderDetail.getOrder().getCreateAt())
+                        .status(orderDetail.getOrder().getStatus())
+                        .build())
                 .classDTO(ClassDTO.builder()
                         .classId(orderDetail.getClasses().getClassId())
                         .name(orderDetail.getClasses().getName())
