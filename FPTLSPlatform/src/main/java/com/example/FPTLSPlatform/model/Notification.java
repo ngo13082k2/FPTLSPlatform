@@ -2,6 +2,9 @@ package com.example.FPTLSPlatform.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.time.LocalDateTime;
+
 @Builder
 @Getter
 @Setter
@@ -22,5 +25,14 @@ public class Notification {
     @Column(nullable = false)
     private String title;
 
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
+    
+    private String type;
+
+    private String username;
+
+    private LocalDateTime createAt;
+
+    private boolean readStatus;
 }

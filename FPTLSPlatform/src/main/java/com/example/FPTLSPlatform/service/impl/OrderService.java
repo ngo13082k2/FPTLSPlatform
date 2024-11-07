@@ -5,8 +5,8 @@ import com.example.FPTLSPlatform.exception.InsufficientBalanceException;
 import com.example.FPTLSPlatform.exception.OrderAlreadyExistsException;
 import com.example.FPTLSPlatform.exception.ResourceNotFoundException;
 import com.example.FPTLSPlatform.model.Class;
-import com.example.FPTLSPlatform.model.*;
 import com.example.FPTLSPlatform.model.System;
+import com.example.FPTLSPlatform.model.*;
 import com.example.FPTLSPlatform.model.enums.ClassStatus;
 import com.example.FPTLSPlatform.model.enums.OrderStatus;
 import com.example.FPTLSPlatform.repository.*;
@@ -27,6 +27,7 @@ import org.thymeleaf.context.Context;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -109,6 +110,7 @@ public class OrderService implements IOrderService {
         checkClassCapacity(classId, scheduleClass.getMaxStudents());
 
         if (existingOrderDetail != null && existingOrderDetail.getOrder().getStatus().equals(OrderStatus.CANCELLED)) {
+            // Đơn hàng đã bị hủy và cần phục hồi
             order = existingOrderDetail.getOrder();
             order.setStatus(OrderStatus.PENDING);
             order.setCreateAt(LocalDateTime.now());
@@ -128,15 +130,27 @@ public class OrderService implements IOrderService {
         wallet.setBalance(wallet.getBalance() - scheduleClass.getPrice());
         systemWallet.setTotalAmount(systemWallet.getTotalAmount() + scheduleClass.getPrice());
         systemWalletRepository.save(systemWallet);
+
+        // Lưu lịch sử giao dịch
         TransactionHistory transactionHistory = saveTransactionHistory(order.getUser(), -order.getTotalPrice(), wallet);
         transactionHistory.setNote("Order");
         userRepository.save(wallet.getUser());
 
+        // Gửi email xác nhận
         Context context = new Context();
         context.setVariable("username", username);
         context.setVariable("class", scheduleClass);
         context.setVariable("teacherName", scheduleClass.getTeacher().getTeacherName());
         emailService.sendEmail(order.getUser().getEmail(), "Booking successful", "order-email", context);
+
+        // Tạo thông báo
+        notificationService.createNotification(NotificationDTO.builder()
+                .title("Order " + order.getOrderId() + " has been booked")
+                .description("Your order " + order.getOrderId() + " has been successfully booked")
+                .username(order.getUser().getUserName())
+                .type("Create Order")
+                .name("Order Notification")
+                .build());
 
         return OrderDTO.builder()
                 .orderId(order.getOrderId())
@@ -233,6 +247,13 @@ public class OrderService implements IOrderService {
                 context.setVariable("username", order.getUser().getUserName());
                 context.setVariable("class", scheduledClass);
                 emailService.sendEmail(order.getUser().getEmail(), "Cancelled booking successful", "cancel-email", context);
+                notificationService.createNotification(NotificationDTO.builder()
+                        .title("Order " + order.getOrderId() + " has been cancelled")
+                        .description("Order" + order.getOrderId() + "has been cancelled")
+                        .name("Notification")
+                        .type("Cancel Order")
+                        .username(order.getUser().getUserName())
+                        .build());
                 return new ResponseDTO<>("SUCCESS", "Order cancelled successfully", null);
             }
 
@@ -337,7 +358,9 @@ public class OrderService implements IOrderService {
                         notificationService.createNotification(NotificationDTO.builder()
                                 .title("Order " + order.getOrderId() + " has been completed")
                                 .description("Order" + order.getOrderId() + "has been completed")
+                                .username(order.getUser().getUserName())
                                 .name("Notification")
+                                .type("Complete Order")
                                 .build());
                     }
                 }
@@ -354,28 +377,48 @@ public class OrderService implements IOrderService {
     private void activateClassIfEligible(Class scheduledClass) throws MessagingException {
         int registeredStudents = orderDetailRepository.countByClasses_ClassIdAndOrder_StatusNot(scheduledClass.getClassId(), OrderStatus.CANCELLED);
         double defaultMinimumPercentage = 0.8;
+
+        // Lấy tham số phần trăm tối thiểu từ cơ sở dữ liệu, nếu không có thì dùng giá trị mặc định
         System minimumPercentageParam = systemRepository.findByName("minimum_required_percentage");
         double minimumPercentage = minimumPercentageParam != null
                 ? Double.parseDouble(minimumPercentageParam.getValue())
                 : defaultMinimumPercentage;
+
         int minimumRequiredStudents = (int) (scheduledClass.getMaxStudents() * minimumPercentage);
         if (registeredStudents >= minimumRequiredStudents) {
             Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(scheduledClass.getClassId(), Pageable.unpaged());
+
+            // Thay đổi trạng thái của từng đơn hàng học sinh và gửi thông báo
             for (OrderDetail orderDetail : orderDetails) {
                 orderDetail.getOrder().setStatus(OrderStatus.ACTIVE);
+                notificationService.createNotification(NotificationDTO.builder()
+                        .title("Class " + scheduledClass.getCode() + " has been activated")
+                        .description("Class " + scheduledClass.getCode() + " will start on " + scheduledClass.getStartDate() +
+                                " from " + scheduledClass.getSlot().getStartTime() + " to " + scheduledClass.getSlot().getEndTime()).name("Notification")
+                        .type("Active Order")
+                        .username(orderDetail.getOrder().getUser().getUserName())
+                        .build());
             }
 
+            // Cập nhật trạng thái lớp học thành ACTIVE và lưu
             scheduledClass.setStatus(ClassStatus.ACTIVE);
             classRepository.save(scheduledClass);
             orderDetailRepository.saveAll(orderDetails);
 
-            sendActivationEmail(scheduledClass);
+            // Gửi thông báo cho giáo viên về việc lớp học đã được kích hoạt
             notificationService.createNotification(NotificationDTO.builder()
-                    .title("Class " + scheduledClass.getCode() + " has been activated")
-                    .description("Class " + scheduledClass.getCode() + " has been start on" + scheduledClass.getStartDate())
+                    .title("Your class " + scheduledClass.getCode() + " has been activated")
+                    .description("Class " + scheduledClass.getCode() + " is starting on " + scheduledClass.getStartDate())
                     .name("Notification")
+                    .type("Active Class Notification")
+                    .username(scheduledClass.getTeacher().getTeacherName())
                     .build());
+
+            // Gửi email thông báo cho học sinh và giáo viên
+            sendActivationEmail(scheduledClass);
+
         } else {
+            // Hủy lớp học nếu không đạt số lượng học sinh tối thiểu
             scheduledClass.setStatus(ClassStatus.CANCELED);
             classRepository.save(scheduledClass);
             refundStudents(scheduledClass);
@@ -405,7 +448,9 @@ public class OrderService implements IOrderService {
             notificationService.createNotification(NotificationDTO.builder()
                     .title("Refund for Order " + order.getOrderId() + " has been processed")
                     .description("Your order with ID " + order.getOrderId() + " has been canceled, and a refund has been initiated.")
-                    .name("Refund Notification")
+                    .name("Notification")
+                    .type("Refund Notification")
+                    .username(order.getUser().getUserName())
                     .build());
 
         }
@@ -432,6 +477,45 @@ public class OrderService implements IOrderService {
         return false;
     }
 
+    @Scheduled(cron = "0 0 * * * *") // Chạy mỗi giờ
+    public void sendUpcomingClassReminders() {
+        // Lấy thời gian hiện tại và thời gian giới hạn cho lớp sắp bắt đầu (trong 24 giờ tới)
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime upcomingThreshold = now.plusHours(24);
+
+        // Lọc các lớp có trạng thái ACTIVE và bắt đầu trong khoảng 24 giờ tới
+        List<Class> upcomingClasses = classRepository.findByStatusAndStartDateBetween(ClassStatus.ACTIVE, now.toLocalDate(), upcomingThreshold.toLocalDate());
+
+        for (Class upcomingClass : upcomingClasses) {
+            // Thời gian bắt đầu và kết thúc theo slot của lớp học
+            LocalTime startTime = upcomingClass.getSlot().getStartTime();
+            LocalTime endTime = upcomingClass.getSlot().getEndTime();
+
+            // Gửi thông báo cho từng học viên đã đăng ký lớp
+            Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(upcomingClass.getClassId(), Pageable.unpaged());
+            for (OrderDetail orderDetail : orderDetails) {
+                notificationService.createNotification(NotificationDTO.builder()
+                        .title("Reminder: Upcoming Class " + upcomingClass.getCode())
+                        .description("Your class " + upcomingClass.getName() + " will start on " +
+                                upcomingClass.getStartDate() + " from " + startTime + " to " + endTime)
+                        .name("Notification")
+                        .type("Class Reminder")
+                        .username(orderDetail.getOrder().getUser().getUserName())
+                        .build());
+            }
+
+            // Gửi thông báo cho giáo viên phụ trách
+            notificationService.createNotification(NotificationDTO.builder()
+                    .title("Reminder: You have an upcoming class")
+                    .description("Class " + upcomingClass.getName() + " (Code: " + upcomingClass.getCode() + ") will start on " +
+                            upcomingClass.getStartDate() + " from " + startTime + " to " + endTime)
+                    .name("Notification")
+                    .type("Class Reminder")
+                    .username(upcomingClass.getTeacher().getTeacherName())
+                    .build());
+        }
+    }
+
 
     private TransactionHistory saveTransactionHistory(User user, Long amount, Wallet wallet) {
         TransactionHistory transactionHistory = new TransactionHistory();
@@ -444,12 +528,6 @@ public class OrderService implements IOrderService {
         Context context = new Context();
         context.setVariable("transactionHistory", transactionHistory);
         emailService.sendEmail(user.getEmail(), "Transaction", "transaction-email", context);
-
-        notificationService.createNotification(NotificationDTO.builder()
-                .title("Funds Added to Wallet")
-                .description("An amount of " + amount + " has been added to your wallet.")
-                .name("Wallet Notification")
-                .build());
 
         return transactionHistory;
     }

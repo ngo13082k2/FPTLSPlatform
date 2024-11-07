@@ -17,7 +17,9 @@ import java.util.Set;
 
 public interface ClassRepository extends JpaRepository<Class, Long> {
     List<Class> findByCoursesCourseCode(String courseCode);
+
     boolean existsBySlot_SlotIdAndDayOfWeek(Long slotId, String dayOfWeek);
+
     boolean existsByTeacher_TeacherNameAndSlot_SlotIdAndDayOfWeek(String teacherName, Long slotId, String dayOfWeek);
 
     Optional<Class> findById(Long classId);
@@ -32,8 +34,12 @@ public interface ClassRepository extends JpaRepository<Class, Long> {
     Page<Class> findByStartDate(LocalDate date, Pageable pageable);
 
     List<Class> findByStartDateAndStatus(LocalDate localDate, ClassStatus status);
+
     List<Class> findByCoursesCategoriesCategoryIdIn(Set<Long> categoryIds);
+
     List<Class> findByStatus(ClassStatus status);
+
+    List<Class> findByStatusAndStartDateBetween(ClassStatus classStatus, LocalDate localDate, LocalDate localDate1);
 
     ;
 }

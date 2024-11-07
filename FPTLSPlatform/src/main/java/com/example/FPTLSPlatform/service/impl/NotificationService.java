@@ -8,19 +8,27 @@ import com.example.FPTLSPlatform.service.INotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 public class NotificationService implements INotificationService {
 
-    @Autowired
-    private NotificationRepository notificationRepository;
+    private final NotificationRepository notificationRepository;
 
+    public NotificationService(NotificationRepository notificationRepository) {
+        this.notificationRepository = notificationRepository;
+    }
+
+    @Override
     public Notification createNotification(NotificationDTO notificationDto) {
         Notification notification = Notification.builder()
-                .name(notificationDto.getName())
                 .title(notificationDto.getTitle())
                 .description(notificationDto.getDescription())
+                .readStatus(false)
+                .createAt(LocalDateTime.now())
+                .username(notificationDto.getUsername())
+                .type(notificationDto.getType())
                 .build();
         return notificationRepository.save(notification);
     }
@@ -37,5 +45,17 @@ public class NotificationService implements INotificationService {
     public void deleteNotification(Long id) {
         Notification notification = getNotificationById(id);
         notificationRepository.delete(notification);
+    }
+
+    @Override
+    public List<Notification> getNotificationByUsername(String username) {
+        return notificationRepository.findByUsernameOrderByNotificationIdDesc(username);
+    }
+
+    @Override
+    public void markAsRead(Long notificationId) {
+        Notification notification = getNotificationById(notificationId);
+        notification.setReadStatus(true);
+        notificationRepository.save(notification);
     }
 }
