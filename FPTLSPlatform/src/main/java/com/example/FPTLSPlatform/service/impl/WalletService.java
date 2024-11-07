@@ -72,11 +72,11 @@ public class WalletService implements IWalletService {
 
     public void refundToWallet(Long amount) throws Exception {
         Wallet wallet = getWalletByUserName();
-        double currentBalance = wallet.getBalance();
-        wallet.setBalance(currentBalance + amount);
+        double balance = wallet.getBalance();
+        wallet.setBalance(balance + amount);
         userRepository.save(wallet.getUser());
 
-        saveTransactionHistory(wallet.getUser(), amount, currentBalance);
+        saveTransactionHistory(wallet.getUser(), amount, wallet.getBalance());
     }
 
     @Override

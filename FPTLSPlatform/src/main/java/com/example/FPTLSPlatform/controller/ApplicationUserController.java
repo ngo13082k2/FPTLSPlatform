@@ -45,16 +45,17 @@ public class ApplicationUserController {
         return applicationUserService.completeWithdrawalRequest(applicationUserId);
     }
 
-    @PutMapping("/approve")
-    public String approveRequest(@RequestParam Long applicationUserId) {
-        return applicationUserService.approveApplication(applicationUserId);
+    @PutMapping("/approve/{id}")
+    public String approveRequest(@PathVariable Long id) {
+        return applicationUserService.approveApplication(id);
     }
 
-    @PutMapping("/reject")
-    public String rejectRequest(@RequestParam Long applicationUserId) {
-        return applicationUserService.rejectApplication(applicationUserId);
+    @PutMapping("/reject/{id}")
+    public String rejectRequest(@PathVariable Long id) {
+        return applicationUserService.rejectApplication(id);
     }
-    @PutMapping("/cancelWithDrawal/{id}")
+
+    @PutMapping("/cancelWithdrawal/{id}")
     public ResponseEntity<String> cancelWithdrawal(@PathVariable Long id) {
         try {
             applicationUserService.cancelWithdrawalRequest(id);
@@ -63,6 +64,7 @@ public class ApplicationUserController {
             return ResponseEntity.status(400).body("Error: " + e.getMessage());
         }
     }
+
     @GetMapping("getApplicationUserByUserName")
     public ResponseEntity<List<ApplicationUser>> getApplicationUserByUserName() {
         try {
