@@ -223,6 +223,7 @@ public class VNPayService implements IVNPayService {
                 systemTransactionHistory.setTransactionDate(LocalDateTime.now());
                 systemTransactionHistory.setUsername(username);
                 systemTransactionHistory.setBalanceAfterTransaction(systemWallet.getTotalAmount());
+                systemTransactionHistory.setNote("Deposit");
                 systemTransactionHistoryRepository.save(systemTransactionHistory);
                 System.out.println("Cập nhật ví hệ thống với số tiền: " + amount);
             } else {

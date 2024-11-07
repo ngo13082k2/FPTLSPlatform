@@ -85,12 +85,56 @@ public class ApplicationUserService implements IApplicationUserService {
                 .transactionBalance(wallet.getBalance())
                 .user(userOrTeacher instanceof User ? (User) userOrTeacher : null)
                 .teacher(userOrTeacher instanceof Teacher ? (Teacher) userOrTeacher : null)
+                .note("WithdrawalRequest")
                 .build();
         transactionHistoryRepository.save(transactionHistory);
 
         ApplicationUser applicationUser = mapWithdrawalDtoToEntity(withdrawalRequestDto, applicationType, userOrTeacher);
         applicationUserRepository.save(applicationUser);
     }
+    public void cancelWithdrawalRequest(Long withdrawalRequestId) {
+        ApplicationUser applicationUser = applicationUserRepository.findById(withdrawalRequestId)
+                .orElseThrow(() -> new RuntimeException("Withdrawal request not found"));
+
+        if (!"pending".equals(applicationUser.getStatus())) {
+            throw new RuntimeException("Only pending withdrawal requests can be canceled.");
+        }
+        Double refundAmount = applicationUser.getAmountFromDescription();
+        if (refundAmount == null || refundAmount <= 0) {
+            throw new RuntimeException("Invalid or missing amount in the withdrawal request.");
+        }
+        Object userOrTeacher = applicationUser.getUser() != null ? applicationUser.getUser() : applicationUser.getTeacher();
+        Wallet wallet;
+        double currentBalance;
+
+        if (userOrTeacher instanceof User user) {
+            wallet = user.getWallet();
+            currentBalance = wallet.getBalance();
+        } else if (userOrTeacher instanceof Teacher teacher) {
+            wallet = teacher.getWallet();
+            currentBalance = wallet.getBalance();
+        } else {
+            throw new RuntimeException("Invalid user type.");
+        }
+
+        wallet.setBalance(currentBalance + refundAmount);
+        walletRepository.save(wallet);
+
+        TransactionHistory transactionHistory = TransactionHistory.builder()
+                .amount(refundAmount)
+                .transactionDate(LocalDateTime.now())
+                .transactionBalance(wallet.getBalance())
+                .user(userOrTeacher instanceof User ? (User) userOrTeacher : null)
+                .teacher(userOrTeacher instanceof Teacher ? (Teacher) userOrTeacher : null)
+                .note("WithdrawalRequest Canceled")
+                .build();
+        transactionHistoryRepository.save(transactionHistory);
+
+        applicationUser.setStatus("Canceled");
+        applicationUserRepository.save(applicationUser);
+    }
+
+
 
     @Override
     public String approveApplication(Long applicationId) {
@@ -168,6 +212,7 @@ public class ApplicationUserService implements IApplicationUserService {
                 .transactionDate(LocalDateTime.now())
                 .balanceAfterTransaction(systemWallet.getTotalAmount())
                 .username(username)
+                .note("WithdrawalRequest Successful")
                 .build();
         systemTransactionHistoryRepository.save(systemTransactionHistory);
 

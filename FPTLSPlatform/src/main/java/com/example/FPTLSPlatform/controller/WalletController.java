@@ -1,7 +1,6 @@
 package com.example.FPTLSPlatform.controller;
 
 import com.example.FPTLSPlatform.dto.TransactionHistoryDTO;
-import com.example.FPTLSPlatform.model.TransactionHistory;
 import com.example.FPTLSPlatform.model.Wallet;
 import com.example.FPTLSPlatform.service.IWalletService;
 import org.springframework.beans.factory.annotation.Autowired;

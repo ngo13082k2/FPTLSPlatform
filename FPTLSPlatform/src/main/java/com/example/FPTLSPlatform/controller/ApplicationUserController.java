@@ -54,4 +54,13 @@ public class ApplicationUserController {
     public String rejectRequest(@RequestParam Long applicationUserId) {
         return applicationUserService.rejectApplication(applicationUserId);
     }
+    @PutMapping("/cancelWithDrawal/{id}")
+    public ResponseEntity<String> cancelWithdrawal(@PathVariable Long id) {
+        try {
+            applicationUserService.cancelWithdrawalRequest(id);
+            return ResponseEntity.ok("Withdrawal request canceled successfully.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(400).body("Error: " + e.getMessage());
+        }
+    }
 }
