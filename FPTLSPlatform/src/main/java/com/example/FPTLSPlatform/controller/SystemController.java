@@ -1,8 +1,8 @@
 package com.example.FPTLSPlatform.controller;
 
 import com.example.FPTLSPlatform.dto.SystemDTO;
-import com.example.FPTLSPlatform.model.System;
 import com.example.FPTLSPlatform.service.ISystemService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,6 +14,7 @@ public class SystemController {
 
     private final ISystemService systemService;
 
+    @Autowired
     public SystemController(ISystemService systemService) {
         this.systemService = systemService;
     }

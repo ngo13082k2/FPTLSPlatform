@@ -11,7 +11,7 @@ import java.util.Map;
 @RestController
 public class VNPayController {
 
-    private IVNPayService vnpayService;
+    private final IVNPayService vnpayService;
 
     public VNPayController(IVNPayService vnpayService) {
         this.vnpayService = vnpayService;

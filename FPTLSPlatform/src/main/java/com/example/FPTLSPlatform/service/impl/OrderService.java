@@ -18,6 +18,7 @@ import jakarta.mail.MessagingException;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -59,16 +60,19 @@ public class OrderService implements IOrderService {
 
     private static final Logger log = LoggerFactory.getLogger(OrderService.class);
 
-
+    @Autowired
     public OrderService(OrderRepository orderRepository,
                         ClassRepository classRepository,
                         OrderDetailRepository orderDetailRepository,
                         UserRepository userRepository,
-                        IWalletService walletService, IEmailService emailService,
+                        IWalletService walletService,
+                        IEmailService emailService,
                         INotificationService notificationService,
                         TransactionHistoryRepository transactionHistoryRepository,
                         SystemWalletRepository systemWalletRepository,
-                        ClassService classService, WalletRepository walletRepository, SystemRepository systemRepository) {
+                        ClassService classService,
+                        WalletRepository walletRepository,
+                        SystemRepository systemRepository) {
         this.orderRepository = orderRepository;
         this.classRepository = classRepository;
         this.orderDetailRepository = orderDetailRepository;
@@ -375,6 +379,7 @@ public class OrderService implements IOrderService {
     }
 
     private void activateClassIfEligible(Class scheduledClass) throws MessagingException {
+
         int registeredStudents = orderDetailRepository.countByClasses_ClassIdAndOrder_StatusNot(scheduledClass.getClassId(), OrderStatus.CANCELLED);
         double defaultMinimumPercentage = 0.8;
 
@@ -393,8 +398,9 @@ public class OrderService implements IOrderService {
                 orderDetail.getOrder().setStatus(OrderStatus.ACTIVE);
                 notificationService.createNotification(NotificationDTO.builder()
                         .title("Class " + scheduledClass.getCode() + " has been activated")
+                        .name("Notification")
                         .description("Class " + scheduledClass.getCode() + " will start on " + scheduledClass.getStartDate() +
-                                " from " + scheduledClass.getSlot().getStartTime() + " to " + scheduledClass.getSlot().getEndTime()).name("Notification")
+                                " from " + scheduledClass.getSlot().getStartTime() + " to " + scheduledClass.getSlot().getEndTime())
                         .type("Active Order")
                         .username(orderDetail.getOrder().getUser().getUserName())
                         .build());
@@ -409,7 +415,7 @@ public class OrderService implements IOrderService {
             notificationService.createNotification(NotificationDTO.builder()
                     .title("Your class " + scheduledClass.getCode() + " has been activated")
                     .description("Class " + scheduledClass.getCode() + " is starting on " + scheduledClass.getStartDate())
-                    .name("Notification")
+                    .name("Notification")  // Chỉ gọi name 1 lần
                     .type("Active Class Notification")
                     .username(scheduledClass.getTeacher().getTeacherName())
                     .build());

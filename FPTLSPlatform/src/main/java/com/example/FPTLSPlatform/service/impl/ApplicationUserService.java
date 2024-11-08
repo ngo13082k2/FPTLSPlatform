@@ -92,6 +92,7 @@ public class ApplicationUserService implements IApplicationUserService {
         ApplicationUser applicationUser = mapWithdrawalDtoToEntity(withdrawalRequestDto, applicationType, userOrTeacher);
         applicationUserRepository.save(applicationUser);
     }
+
     public void cancelWithdrawalRequest(Long withdrawalRequestId) {
         ApplicationUser applicationUser = applicationUserRepository.findById(withdrawalRequestId)
                 .orElseThrow(() -> new RuntimeException("Withdrawal request not found"));
@@ -135,7 +136,6 @@ public class ApplicationUserService implements IApplicationUserService {
     }
 
 
-
     @Override
     public String approveApplication(Long applicationId) {
         ApplicationUser applicationUser = applicationUserRepository.findById(applicationId)
@@ -147,6 +147,7 @@ public class ApplicationUserService implements IApplicationUserService {
                 .title("Application approved")
                 .description("Your application has been approved")
                 .name("Notification")
+                .type("Approve application")
                 .build());
         sendEmail(applicationUser);
         return "Your application has been approved.";
@@ -172,8 +173,9 @@ public class ApplicationUserService implements IApplicationUserService {
         applicationUserRepository.save(applicationUser);
         notificationService.createNotification(NotificationDTO.builder()
                 .title("Application rejected")
-                .description("Your application has been approved")
+                .description("Your application has been rejected")
                 .name("Notification")
+                .type("Rejected application")
                 .build());
         sendEmail(applicationUser);
         return "Your application has been rejected.";
@@ -223,6 +225,7 @@ public class ApplicationUserService implements IApplicationUserService {
                 .title("Withdraw successful")
                 .description("Rút tiền thành công")
                 .name("Notification")
+                .type("Withdraw successful")
                 .build());
         Context context = new Context();
         context.setVariable("systemTransactionHistory", systemTransactionHistory);
@@ -292,6 +295,7 @@ public class ApplicationUserService implements IApplicationUserService {
 //
         return "Withdrawal request processed successfully";
     }
+
     public List<ApplicationUser> getApplicationUserByUserName() {
         Object loggedInUserOrTeacher = getLoggedInUserOrTeacher();
         List<ApplicationUser> applications;

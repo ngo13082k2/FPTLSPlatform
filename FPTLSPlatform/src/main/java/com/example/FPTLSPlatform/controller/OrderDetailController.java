@@ -12,8 +12,12 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/order-details")
 public class OrderDetailController {
+    private final IOrderDetailService orderDetailService;
+
     @Autowired
-    private IOrderDetailService orderDetailService;
+    public OrderDetailController(IOrderDetailService orderDetailService) {
+        this.orderDetailService = orderDetailService;
+    }
 
     @GetMapping("/order/{orderId}")
     public ResponseEntity<Page<OrderDetailDTO>> getOrderDetailsByOrderId(@PathVariable Long orderId,

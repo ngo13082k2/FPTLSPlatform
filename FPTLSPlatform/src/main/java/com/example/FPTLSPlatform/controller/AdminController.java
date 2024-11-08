@@ -6,6 +6,7 @@ import com.example.FPTLSPlatform.dto.WalletStatisticDTO;
 import com.example.FPTLSPlatform.model.SystemTransactionHistory;
 import com.example.FPTLSPlatform.model.enums.ClassStatus;
 import com.example.FPTLSPlatform.service.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +32,7 @@ public class AdminController {
 
     private final IWalletService walletService;
 
+    @Autowired
     public AdminController(IUserService userService,
                            ISystemWalletService systemWalletService,
                            IOrderService orderService,

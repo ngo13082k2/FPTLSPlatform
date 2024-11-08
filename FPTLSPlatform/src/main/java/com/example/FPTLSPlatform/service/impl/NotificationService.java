@@ -24,6 +24,7 @@ public class NotificationService implements INotificationService {
     public Notification createNotification(NotificationDTO notificationDto) {
         Notification notification = Notification.builder()
                 .title(notificationDto.getTitle())
+                .name(notificationDto.getName())
                 .description(notificationDto.getDescription())
                 .readStatus(false)
                 .createAt(LocalDateTime.now())

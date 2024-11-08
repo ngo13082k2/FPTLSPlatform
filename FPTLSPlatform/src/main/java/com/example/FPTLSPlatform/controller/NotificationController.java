@@ -2,15 +2,9 @@ package com.example.FPTLSPlatform.controller;
 
 import com.example.FPTLSPlatform.dto.NotificationDTO;
 import com.example.FPTLSPlatform.model.Notification;
-import com.example.FPTLSPlatform.model.User;
 import com.example.FPTLSPlatform.service.INotificationService;
-import com.example.FPTLSPlatform.service.IUserService;
-import com.example.FPTLSPlatform.service.impl.NotificationService;
-import com.example.FPTLSPlatform.service.impl.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,15 +15,7 @@ import java.util.stream.Collectors;
 public class NotificationController {
     private final INotificationService notificationService;
 
-    private String getCurrentUsername() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal instanceof UserDetails) {
-            return ((UserDetails) principal).getUsername();
-        } else {
-            return principal.toString();
-        }
-    }
-
+    @Autowired
     public NotificationController(INotificationService notificationService) {
         this.notificationService = notificationService;
     }

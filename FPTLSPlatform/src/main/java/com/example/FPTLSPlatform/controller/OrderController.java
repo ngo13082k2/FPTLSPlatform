@@ -5,6 +5,7 @@ import com.example.FPTLSPlatform.dto.OrderDetailDTO;
 import com.example.FPTLSPlatform.dto.ResponseDTO;
 import com.example.FPTLSPlatform.exception.ResourceNotFoundException;
 import com.example.FPTLSPlatform.service.IOrderService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +21,7 @@ public class OrderController {
 
     private final IOrderService orderService;
 
+    @Autowired
     public OrderController(IOrderService orderService) {
         this.orderService = orderService;
     }

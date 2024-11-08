@@ -27,12 +27,13 @@ public class Notification {
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
-    
+
     private String type;
 
     private String username;
 
     private LocalDateTime createAt;
 
+    @Column(nullable = false, columnDefinition = "BIT default 0")
     private boolean readStatus;
 }

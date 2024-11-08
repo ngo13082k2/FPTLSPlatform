@@ -2,7 +2,6 @@ package com.example.FPTLSPlatform.controller;
 
 import com.example.FPTLSPlatform.dto.SlotDTO;
 import com.example.FPTLSPlatform.service.ISlotService;
-import com.example.FPTLSPlatform.service.impl.SlotService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,8 +13,12 @@ import java.util.List;
 @RequestMapping("/slots")
 public class SlotController {
 
+    private final ISlotService slotService;
+
     @Autowired
-    private ISlotService slotService;
+    public SlotController(ISlotService slotService) {
+        this.slotService = slotService;
+    }
 
     @PostMapping
     public ResponseEntity<SlotDTO> createSlot(@RequestBody SlotDTO slotDTO) {
