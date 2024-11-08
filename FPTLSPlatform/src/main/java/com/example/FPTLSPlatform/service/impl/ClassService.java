@@ -55,10 +55,12 @@ public class ClassService implements IClassService {
         String teacherName = getCurrentUsername();
         Teacher teacher = teacherRepository.findByTeacherName(teacherName)
                 .orElseThrow(() -> new RuntimeException("Teacher not found"));
-        if (classDTO.getSlotId() != null && classDTO.getDayOfWeek() != null) {
-            boolean isSlotAndDayOfWeekTaken = classRepository.existsByTeacher_TeacherNameAndSlot_SlotIdAndDayOfWeek(teacherName, classDTO.getSlotId(), classDTO.getDayOfWeek());
-            if (isSlotAndDayOfWeekTaken) {
-                throw new RuntimeException("The slot and day of week combination is already taken for another class.");
+        if (classDTO.getStartDate() != null && classDTO.getSlotId() != null && classDTO.getDayOfWeek() != null) {
+            boolean isDuplicateClass = classRepository.existsByTeacher_TeacherNameAndSlot_SlotIdAndDayOfWeekAndStartDate(
+                    teacherName, classDTO.getSlotId(), classDTO.getDayOfWeek(), classDTO.getStartDate());
+
+            if (isDuplicateClass) {
+                throw new RuntimeException("A class with the same start date, teacher, slot, and day of the week already exists.");
             }
         }
 

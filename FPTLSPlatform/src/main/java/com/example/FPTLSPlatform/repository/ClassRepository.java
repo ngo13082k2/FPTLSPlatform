@@ -21,6 +21,8 @@ public interface ClassRepository extends JpaRepository<Class, Long> {
     boolean existsBySlot_SlotIdAndDayOfWeek(Long slotId, String dayOfWeek);
 
     boolean existsByTeacher_TeacherNameAndSlot_SlotIdAndDayOfWeek(String teacherName, Long slotId, String dayOfWeek);
+    boolean existsByTeacher_TeacherNameAndSlot_SlotIdAndDayOfWeekAndStartDate(
+            String teacherName, Long slotId, String dayOfWeek, LocalDate startDate);
 
     Optional<Class> findById(Long classId);
 
