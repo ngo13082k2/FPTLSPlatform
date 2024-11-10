@@ -16,4 +16,6 @@ public interface ISystemService {
     SystemDTO updateParam(Long id, SystemDTO systemDTO);
 
     String deleteParam(Long id);
+
+    List<SystemDTO> createDefaultParam();
 }

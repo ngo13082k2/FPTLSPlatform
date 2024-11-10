@@ -6,6 +6,7 @@ import com.example.FPTLSPlatform.repository.SystemRepository;
 import com.example.FPTLSPlatform.service.ISystemService;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -56,8 +57,19 @@ public class SystemService implements ISystemService {
         return "Delete success param with id: " + system.getId();
     }
 
+    @Override
+    public List<SystemDTO> createDefaultParam() {
+        List<System> systems = new ArrayList<>();
+        systems.add(new System(1L, "day_check", "2"));
+        systems.add(new System(2L, "minimum_required_percentage", "0.8"));
+        systems.add(new System(3L, "discount_percentage", "0.2"));
+        systemRepository.saveAll(systems);
+        return systems.stream().map(this::convertToDTO).collect(Collectors.toList());
+    }
+
     private SystemDTO convertToDTO(System system) {
         return SystemDTO.builder()
+                .id(system.getId())
                 .name(system.getName())
                 .value(system.getValue())
                 .build();

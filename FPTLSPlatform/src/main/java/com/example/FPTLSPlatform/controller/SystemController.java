@@ -48,4 +48,10 @@ public class SystemController {
         String param = systemService.deleteParam(id);
         return ResponseEntity.ok(param);
     }
+
+    @PostMapping("param/default")
+    public ResponseEntity<?> createDefaultParam() {
+        List<SystemDTO> params = systemService.createDefaultParam();
+        return ResponseEntity.ok(params);
+    }
 }

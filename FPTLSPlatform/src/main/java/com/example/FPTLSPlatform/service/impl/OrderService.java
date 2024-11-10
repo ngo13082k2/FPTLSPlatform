@@ -187,8 +187,13 @@ public class OrderService implements IOrderService {
 
 
             if (Objects.equals(order.getStatus(), OrderStatus.PENDING)) {
+                int defaultDay = 0;
+                System defaultDayBefore = systemRepository.findByName("day_check");
+                int subtractDay = defaultDayBefore != null
+                        ? Integer.parseInt(defaultDayBefore.getValue())
+                        : defaultDay;
                 LocalDate now = LocalDate.now();
-                LocalDate cancelDeadline = scheduledClass.getStartDate().minusDays(2);
+                LocalDate cancelDeadline = scheduledClass.getStartDate().minusDays(subtractDay);
 
                 if (now.isAfter(cancelDeadline)) {
                     return new ResponseDTO<>("ERROR", "Cannot cancel the order within 2 days before the class starts.", null);
@@ -381,7 +386,12 @@ public class OrderService implements IOrderService {
     @Scheduled(cron = "0 * * * * *")
     @Transactional
     public void checkAndActivateClasses() {
-        LocalDateTime twoDaysFromNow = LocalDateTime.now().plusDays(0);
+        int defaultDay = 0;
+        System defaultDayBefore = systemRepository.findByName("day_check");
+        int subtractDay = defaultDayBefore != null
+                ? Integer.parseInt(defaultDayBefore.getValue())
+                : defaultDay;
+        LocalDateTime twoDaysFromNow = LocalDateTime.now().plusDays(subtractDay);
         LocalDate dateToCheck = twoDaysFromNow.toLocalDate();
         int pageNumber = 0;
 
