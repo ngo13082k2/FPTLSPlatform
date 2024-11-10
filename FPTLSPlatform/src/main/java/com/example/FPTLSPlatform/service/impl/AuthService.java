@@ -149,7 +149,7 @@ public class AuthService {
             throw new RuntimeException("Phone number already exists");
         }
         if (teacherRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email number already exists");
+            throw new RuntimeException("Email already exists");
         }
         Wallet wallet = new Wallet();
         wallet.setBalance(0.0);
