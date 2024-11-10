@@ -65,6 +65,10 @@ public class AuthService {
     public UserResponse register(RegisterRequest request) throws MessagingException {
         Optional<User> existingUserByEmail = userRepository.findByEmail(request.getEmail());
         Optional<User> existingUserByPhone = userRepository.findByPhoneNumber(request.getPhoneNumber());
+        Optional<User> existingUserByUsername = userRepository.findByUserName(request.getUsername());
+        if (existingUserByUsername.isPresent()) {
+            throw new IllegalArgumentException("Username đã tồn tại.");
+        }
 
         if ((existingUserByEmail.isPresent() && "ACTIVE".equals(existingUserByEmail.get().getStatus())) ||
                 (existingUserByPhone.isPresent() && "ACTIVE".equals(existingUserByPhone.get().getStatus()))) {
@@ -281,5 +285,6 @@ public class AuthService {
                 .map(authority -> Role.valueOf(((GrantedAuthority) authority).getAuthority()))
                 .collect(Collectors.toSet());
     }
+
 
 }
