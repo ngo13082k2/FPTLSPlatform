@@ -281,8 +281,7 @@ public class OrderService implements IOrderService {
                 Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(scheduledClass.getClassId(), Pageable.unpaged());
                 for (OrderDetail orderDetail : orderDetails) {
                     Order order = orderDetail.getOrder();
-                    // Chuyển tất cả các đơn hàng có trạng thái không phải CANCELLED thành ONGOING
-                    if (order.getStatus().equals(OrderStatus.ACTIVE) || order.getStatus().equals(OrderStatus.PENDING)) {
+                    if (order.getStatus().equals(OrderStatus.ACTIVE)) {
                         order.setStatus(OrderStatus.ONGOING);
                         orderRepository.save(order);
                     }
@@ -391,8 +390,8 @@ public class OrderService implements IOrderService {
         int subtractDay = defaultDayBefore != null
                 ? Integer.parseInt(defaultDayBefore.getValue())
                 : defaultDay;
-        LocalDateTime twoDaysFromNow = LocalDateTime.now().plusDays(subtractDay);
-        LocalDate dateToCheck = twoDaysFromNow.toLocalDate();
+        LocalDateTime checkDay = LocalDateTime.now().plusDays(subtractDay);
+        LocalDate dateToCheck = checkDay.toLocalDate();
         int pageNumber = 0;
 
         while (true) {
@@ -406,15 +405,12 @@ public class OrderService implements IOrderService {
             for (Class scheduledClass : classesPage) {
                 try {
                     activateClassIfEligible(scheduledClass);
-                    log.info("Class with ID {} has been activated successfully.", scheduledClass.getClassId());
                 } catch (Exception e) {
                     log.error("Unexpected error occurred while activating class {}: {}", scheduledClass.getClassId(), e.getMessage());
                 }
             }
             pageNumber++;
         }
-
-        log.info("Finished checking and activating classes.");
     }
 
     @Transactional
@@ -423,10 +419,9 @@ public class OrderService implements IOrderService {
         double minimumPercentage = getMinimumPercentage();
         int minimumRequiredStudents = (int) Math.ceil(scheduledClass.getMaxStudents() * minimumPercentage);
 
+        List<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(scheduledClass.getClassId(), Pageable.unpaged()).getContent();
         if (registeredStudents >= minimumRequiredStudents) {
-            List<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(scheduledClass.getClassId(), Pageable.unpaged()).getContent();
 
-            // Cập nhật trạng thái của các Order
             orderDetails.forEach(orderDetail -> {
                 Order order = orderDetail.getOrder();
                 order.setStatus(OrderStatus.ACTIVE);
@@ -445,10 +440,22 @@ public class OrderService implements IOrderService {
                     "Active Class Notification", scheduledClass.getTeacher().getTeacherName()));
 
             sendActivationEmail(scheduledClass);
+            log.info("Class with ID {} has been activated successfully.", scheduledClass.getClassId());
         } else {
+
+            orderDetails.forEach(orderDetail -> {
+                Order order = orderDetail.getOrder();
+                order.setStatus(OrderStatus.CANCELLED);
+                notificationService.createNotification(buildNotificationDTO("Class " + scheduledClass.getCode() + " has been cancelled",
+                        "Class " + scheduledClass.getCode() + "has been cancelled",
+                        "Cancelled Order", order.getUser().getUserName()));
+            });
+            orderRepository.saveAll(orderDetails.stream().map(OrderDetail::getOrder).toList());
             scheduledClass.setStatus(ClassStatus.CANCELED);
             classRepository.save(scheduledClass);
+
             refundStudents(scheduledClass);
+            log.info("Class with ID {} has been cancelled.", scheduledClass.getClassId());
         }
     }
 
@@ -576,6 +583,6 @@ public class OrderService implements IOrderService {
         System minimumPercentageParam = systemRepository.findByName("minimum_required_percentage");
         return minimumPercentageParam != null
                 ? Double.parseDouble(minimumPercentageParam.getValue())
-                : 0.8; // Giá trị mặc định nếu không tìm thấy trong cơ sở dữ liệu
+                : 0.8;
     }
 }

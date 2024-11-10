@@ -21,13 +21,14 @@ public interface ClassRepository extends JpaRepository<Class, Long> {
     boolean existsBySlot_SlotIdAndDayOfWeek(Long slotId, String dayOfWeek);
 
     boolean existsByTeacher_TeacherNameAndSlot_SlotIdAndDayOfWeek(String teacherName, Long slotId, String dayOfWeek);
+
     boolean existsByTeacher_TeacherNameAndSlot_SlotIdAndDayOfWeekAndStartDate(
             String teacherName, Long slotId, String dayOfWeek, LocalDate startDate);
 
     Optional<Class> findById(Long classId);
 
-    @Query("SELECT c FROM Class c WHERE c.status = :status AND c.startDate <= :twoDaysFromNow")
-    Page<Class> findByStatusAndStartDateBefore(@Param("status") ClassStatus status, @Param("twoDaysFromNow") LocalDate twoDaysFromNow, Pageable pageable);
+    @Query("SELECT c FROM Class c WHERE c.status = :status AND c.startDate <= :checkDay")
+    Page<Class> findByStatusAndStartDateBefore(@Param("status") ClassStatus status, @Param("checkDay") LocalDate checkDay, Pageable pageable);
 
     List<Class> findByTeacherTeacherName(String teacherName);
 
