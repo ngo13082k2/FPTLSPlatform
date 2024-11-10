@@ -20,15 +20,12 @@ import java.nio.charset.StandardCharsets;
 public class EmailService implements IEmailService {
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
     private final JavaMailSender mailSender;
-    private final JavaMailSender emailSender;
     private final SpringTemplateEngine templateEngine;
 
     @Autowired
     public EmailService(JavaMailSender mailSender,
-                        JavaMailSender emailSender,
                         SpringTemplateEngine templateEngine) {
         this.mailSender = mailSender;
-        this.emailSender = emailSender;
         this.templateEngine = templateEngine;
     }
 
@@ -39,7 +36,7 @@ public class EmailService implements IEmailService {
         message.setTo(to);
         message.setSubject(subject);
         message.setText(text);
-        emailSender.send(message);
+        mailSender.send(message);
     }
 
     public void sendVerificationCode(String toEmail, String verificationCode) {
@@ -54,7 +51,7 @@ public class EmailService implements IEmailService {
     @Override
     public void sendEmail(String to, String subject, String templateName, Context context) {
         try {
-            MimeMessage message = emailSender.createMimeMessage();
+            MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED, StandardCharsets.UTF_8.name());
 
             String htmlContent = templateEngine.process(templateName, context);
@@ -63,9 +60,9 @@ public class EmailService implements IEmailService {
             helper.setSubject(subject);
             helper.setText(htmlContent, true);
 
-            emailSender.send(message);
+            mailSender.send(message);
         } catch (MessagingException e) {
-            log.error("Error sending email to {}: {}", to, e.getMessage());
+            log.warn("Error sending email to {}: {}", to, e.getMessage());
         }
     }
 
