@@ -148,6 +148,9 @@ public class AuthService {
         if (teacherRepository.existsByPhoneNumber(request.getPhoneNumber())) {
             throw new RuntimeException("Phone number already exists");
         }
+        if (teacherRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("Email number already exists");
+        }
         Wallet wallet = new Wallet();
         wallet.setBalance(0.0);
         walletRepository.save(wallet);
