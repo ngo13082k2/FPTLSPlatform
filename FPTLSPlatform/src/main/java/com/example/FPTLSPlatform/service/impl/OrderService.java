@@ -28,6 +28,7 @@ import org.thymeleaf.context.Context;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -53,13 +54,12 @@ public class OrderService implements IOrderService {
 
     private final ClassService classService;
 
-    private final WalletRepository walletRepository;
-
     private final SystemRepository systemRepository;
 
 //    private final ClassStatusController classStatusController;
 
     private static final Logger log = LoggerFactory.getLogger(OrderService.class);
+    private final WalletRepository walletRepository;
 
     @Autowired
     public OrderService(OrderRepository orderRepository,
@@ -72,10 +72,9 @@ public class OrderService implements IOrderService {
                         TransactionHistoryRepository transactionHistoryRepository,
                         SystemWalletRepository systemWalletRepository,
                         ClassService classService,
-                        WalletRepository walletRepository,
-                        SystemRepository systemRepository
+                        SystemRepository systemRepository,
 //                        ClassStatusController classStatusController
-    ) {
+                        WalletRepository walletRepository) {
         this.orderRepository = orderRepository;
         this.classRepository = classRepository;
         this.orderDetailRepository = orderDetailRepository;
@@ -87,9 +86,9 @@ public class OrderService implements IOrderService {
         this.systemWalletRepository = systemWalletRepository;
 
         this.classService = classService;
-        this.walletRepository = walletRepository;
         this.systemRepository = systemRepository;
 //        this.classStatusController = classStatusController;
+        this.walletRepository = walletRepository;
     }
 
     public Page<OrderDTO> getAllOrders(Pageable pageable) {
@@ -112,13 +111,11 @@ public class OrderService implements IOrderService {
 
         checkOrderAlreadyExists(username, classId);
 
-        SystemWallet systemWallet = systemWalletRepository.getReferenceById(1L);
         Wallet wallet = walletService.getWalletByUserName();
         checkSufficientBalance(wallet, scheduleClass.getPrice());
         checkClassCapacity(classId, scheduleClass.getMaxStudents());
 
         if (existingOrderDetail != null && existingOrderDetail.getOrder().getStatus().equals(OrderStatus.CANCELLED)) {
-            // Đơn hàng đã bị hủy và cần phục hồi
             order = existingOrderDetail.getOrder();
             order.setStatus(OrderStatus.PENDING);
             order.setCreateAt(LocalDateTime.now());
@@ -136,15 +133,10 @@ public class OrderService implements IOrderService {
         }
 
         wallet.setBalance(wallet.getBalance() - scheduleClass.getPrice());
-        systemWallet.setTotalAmount(systemWallet.getTotalAmount() + scheduleClass.getPrice());
-        systemWalletRepository.save(systemWallet);
-
-        // Lưu lịch sử giao dịch
-        TransactionHistory transactionHistory = saveTransactionHistory(order.getUser(), -order.getTotalPrice(), wallet);
+        TransactionHistory transactionHistory = saveTransactionHistory(user.getUserName(), -order.getTotalPrice(), wallet);
         transactionHistory.setNote("Order");
         userRepository.save(wallet.getUser());
 
-        // Gửi email xác nhận
         Context context = new Context();
         context.setVariable("username", username);
         context.setVariable("class", scheduleClass);
@@ -187,16 +179,16 @@ public class OrderService implements IOrderService {
 
 
             if (Objects.equals(order.getStatus(), OrderStatus.PENDING)) {
-                int defaultDay = 0;
-                System defaultDayBefore = systemRepository.findByName("day_check");
-                int subtractDay = defaultDayBefore != null
-                        ? Integer.parseInt(defaultDayBefore.getValue())
-                        : defaultDay;
-                LocalDate now = LocalDate.now();
-                LocalDate cancelDeadline = scheduledClass.getStartDate().minusDays(subtractDay);
+                int defaultTime = 1;
+                System checkTimeBeforeStart = systemRepository.findByName("check_time_before_start");
+                int checkTime = checkTimeBeforeStart != null
+                        ? Integer.parseInt(checkTimeBeforeStart.getValue())
+                        : defaultTime;
+                LocalDateTime now = LocalDateTime.now();
+                LocalDateTime cancelDeadline = scheduledClass.getStartDate().atTime(orderDetail.getClasses().getSlot().getStartTime()).minusMinutes(checkTime);
 
                 if (now.isAfter(cancelDeadline)) {
-                    return new ResponseDTO<>("ERROR", "Cannot cancel the order within 2 days before the class starts.", null);
+                    return new ResponseDTO<>("ERROR", "Cannot cancel the order within " + checkTime + " minutes before the class starts.", null);
                 }
 
                 // Refund and update order status
@@ -255,109 +247,18 @@ public class OrderService implements IOrderService {
                 .build());
     }
 
-    private void sendActivationEmail(Class scheduledClass) {
-        try {
-            Context context = new Context();
-            context.setVariable("teacherName", scheduledClass.getTeacher().getTeacherName());
-            context.setVariable("class", scheduledClass);
-            emailService.sendEmail(scheduledClass.getTeacher().getEmail(), "Class active", "active-email", context);
-        } catch (Exception ex) {
-            log.error(ex.getMessage());
-        }
-    }
-
-
-    @Scheduled(cron = "0 * * * * *")
-    @Transactional
-    public void updateClassesToOngoing() {
-        LocalDateTime now = LocalDateTime.now();
-
-        List<Class> classesToStart = classRepository.findByStartDateAndStatus(now.toLocalDate(), ClassStatus.ACTIVE);
-
-        for (Class scheduledClass : classesToStart) {
-            LocalDateTime startTime = scheduledClass.getStartDate().atTime(scheduledClass.getSlot().getStartTime());
-
-            if (now.isAfter(startTime) && scheduledClass.getStatus().equals(ClassStatus.ACTIVE)) {
-                Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(scheduledClass.getClassId(), Pageable.unpaged());
-                for (OrderDetail orderDetail : orderDetails) {
-                    Order order = orderDetail.getOrder();
-                    if (order.getStatus().equals(OrderStatus.ACTIVE)) {
-                        order.setStatus(OrderStatus.ONGOING);
-                        orderRepository.save(order);
-                    }
-                }
-
-                // Cập nhật trạng thái của lớp học thành ONGOING
-                scheduledClass.setStatus(ClassStatus.ONGOING);
-                classRepository.save(scheduledClass);
-                log.info("Class with ID {} has started and is now ONGOING.", scheduledClass.getClassId());
-            }
-        }
-    }
-
-
-    @Scheduled(cron = "0 * * * * *")
-    @Transactional
-    public void checkAndCompleteOrders() {
-        LocalDateTime now = LocalDateTime.now();
-
-        List<Class> classesToComplete = classRepository.findByStartDateAndStatus(now.toLocalDate(), ClassStatus.ONGOING);
-
-        for (Class scheduledClass : classesToComplete) {
-            LocalDateTime endTime = scheduledClass.getStartDate().atTime(scheduledClass.getSlot().getEndTime());
-
-            if (now.isAfter(endTime)) {
-                Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(scheduledClass.getClassId(), Pageable.unpaged());
-                for (OrderDetail orderDetail : orderDetails) {
-                    Order order = orderDetail.getOrder();
-                    if (order.getStatus().equals(OrderStatus.ONGOING) || order.getStatus().equals(OrderStatus.ACTIVE)) {
-                        order.setStatus(OrderStatus.COMPLETED);
-                        orderRepository.save(order);
-                        Wallet wallet = orderDetail.getClasses().getTeacher().getWallet();
-                        double defaultDiscount = 0.2;
-                        System discountPercentage = systemRepository.findByName("discount_percentage");
-                        double discountedPrice = discountPercentage != null
-                                ? orderDetail.getPrice() * (1 - Double.parseDouble(discountPercentage.getValue()))
-                                : defaultDiscount;
-                        wallet.setBalance(wallet.getBalance() + discountedPrice);
-                        saveTransactionHistory(order.getUser(), order.getTotalPrice(), wallet);
-                        walletRepository.save(wallet);
-                        SystemWallet systemWallet = systemWalletRepository.getReferenceById(1L);
-                        systemWallet.setTotalAmount(systemWallet.getTotalAmount() - discountedPrice);
-                        notificationService.createNotification(NotificationDTO.builder()
-                                .title("Order " + order.getOrderId() + " has been completed")
-                                .description("Order" + order.getOrderId() + "has been completed")
-                                .username(order.getUser().getUserName())
-                                .name("Notification")
-                                .type("Complete Order")
-                                .build());
-                    }
-                }
-                if (scheduledClass.getStatus().equals(ClassStatus.ONGOING)) {
-                    scheduledClass.setStatus(ClassStatus.COMPLETED);
-                }
-                classRepository.save(scheduledClass);
-                log.info("Class with ID {} has started and is now COMPLETED.", scheduledClass.getClassId());
-
-            }
-        }
-    }
 
     @Scheduled(cron = "0 0 * * * *") // Chạy mỗi giờ
     public void sendUpcomingClassReminders() {
-        // Lấy thời gian hiện tại và thời gian giới hạn cho lớp sắp bắt đầu (trong 24 giờ tới)
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime upcomingThreshold = now.plusHours(24);
 
-        // Lọc các lớp có trạng thái ACTIVE và bắt đầu trong khoảng 24 giờ tới
         List<Class> upcomingClasses = classRepository.findByStatusAndStartDateBetween(ClassStatus.ACTIVE, now.toLocalDate(), upcomingThreshold.toLocalDate());
 
         for (Class upcomingClass : upcomingClasses) {
-            // Thời gian bắt đầu và kết thúc theo slot của lớp học
             LocalTime startTime = upcomingClass.getSlot().getStartTime();
             LocalTime endTime = upcomingClass.getSlot().getEndTime();
 
-            // Gửi thông báo cho từng học viên đã đăng ký lớp
             Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(upcomingClass.getClassId(), Pageable.unpaged());
             for (OrderDetail orderDetail : orderDetails) {
                 notificationService.createNotification(NotificationDTO.builder()
@@ -370,7 +271,6 @@ public class OrderService implements IOrderService {
                         .build());
             }
 
-            // Gửi thông báo cho giáo viên phụ trách
             notificationService.createNotification(NotificationDTO.builder()
                     .title("Reminder: You have an upcoming class")
                     .description("Class " + upcomingClass.getName() + " (Code: " + upcomingClass.getCode() + ") will start on " +
@@ -382,95 +282,8 @@ public class OrderService implements IOrderService {
         }
     }
 
-    @Scheduled(cron = "0 * * * * *")
-    @Transactional
-    public void checkAndActivateClasses() {
-        int defaultDay = 0;
-        System defaultDayBefore = systemRepository.findByName("day_check");
-        int subtractDay = defaultDayBefore != null
-                ? Integer.parseInt(defaultDayBefore.getValue())
-                : defaultDay;
-        LocalDateTime checkDay = LocalDateTime.now().plusDays(subtractDay);
-        LocalDate dateToCheck = checkDay.toLocalDate();
-        int pageNumber = 0;
-
-        while (true) {
-            Pageable pageable = PageRequest.of(pageNumber, 50);
-            Page<Class> classesPage = classRepository.findByStatusAndStartDateBefore(ClassStatus.PENDING, dateToCheck, pageable);
-
-            if (classesPage.isEmpty()) {
-                break;
-            }
-
-            for (Class scheduledClass : classesPage) {
-                try {
-                    activateClassIfEligible(scheduledClass);
-                } catch (Exception e) {
-                    log.error("Unexpected error occurred while activating class {}: {}", scheduledClass.getClassId(), e.getMessage());
-                }
-            }
-            pageNumber++;
-        }
-    }
-
-    @Transactional
-    protected void activateClassIfEligible(Class scheduledClass) {
-        int registeredStudents = orderDetailRepository.countByClasses_ClassIdAndOrder_StatusNot(scheduledClass.getClassId(), OrderStatus.CANCELLED);
-        double minimumPercentage = getMinimumPercentage();
-        int minimumRequiredStudents = (int) Math.ceil(scheduledClass.getMaxStudents() * minimumPercentage);
-
-        List<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(scheduledClass.getClassId(), Pageable.unpaged()).getContent();
-        if (registeredStudents >= minimumRequiredStudents) {
-
-            orderDetails.forEach(orderDetail -> {
-                Order order = orderDetail.getOrder();
-                order.setStatus(OrderStatus.ACTIVE);
-                notificationService.createNotification(buildNotificationDTO("Class " + scheduledClass.getCode() + " has been activated",
-                        "Class " + scheduledClass.getCode() + " will start on " + scheduledClass.getStartDate() +
-                                " from " + scheduledClass.getSlot().getStartTime() + " to " + scheduledClass.getSlot().getEndTime(),
-                        "Active Order", order.getUser().getUserName()));
-            });
-
-            scheduledClass.setStatus(ClassStatus.ACTIVE);
-            classRepository.save(scheduledClass);
-            orderRepository.saveAll(orderDetails.stream().map(OrderDetail::getOrder).toList());
-
-            notificationService.createNotification(buildNotificationDTO("Your class " + scheduledClass.getCode() + " has been activated",
-                    "Class " + scheduledClass.getCode() + " is starting on " + scheduledClass.getStartDate(),
-                    "Active Class Notification", scheduledClass.getTeacher().getTeacherName()));
-
-            sendActivationEmail(scheduledClass);
-            log.info("Class with ID {} has been activated successfully.", scheduledClass.getClassId());
-        } else {
-
-            orderDetails.forEach(orderDetail -> {
-                Order order = orderDetail.getOrder();
-                order.setStatus(OrderStatus.CANCELLED);
-                notificationService.createNotification(buildNotificationDTO("Class " + scheduledClass.getCode() + " has been cancelled",
-                        "Class " + scheduledClass.getCode() + "has been cancelled",
-                        "Cancelled Order", order.getUser().getUserName()));
-            });
-            orderRepository.saveAll(orderDetails.stream().map(OrderDetail::getOrder).toList());
-            scheduledClass.setStatus(ClassStatus.CANCELED);
-            classRepository.save(scheduledClass);
-
-            refundStudents(scheduledClass);
-            log.info("Class with ID {} has been cancelled.", scheduledClass.getClassId());
-        }
-    }
-
-    private NotificationDTO buildNotificationDTO(String title, String description, String type, String username) {
-        return NotificationDTO.builder()
-                .title(title)
-                .description(description)
-                .type(type)
-                .username(username)
-                .name("Notification")
-                .build();
-    }
-
-
-    private void refundStudents(Class cancelledClass) {
+    @Override
+    public void refundStudents(Class cancelledClass) {
         Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(cancelledClass.getClassId(), Pageable.unpaged());
 
         for (OrderDetail orderDetail : orderDetails) {
@@ -482,12 +295,10 @@ public class OrderService implements IOrderService {
             }
 
             Wallet wallet = student.getWallet();
-            SystemWallet systemWallet = systemWalletRepository.getReferenceById(1L);
-
             wallet.setBalance(student.getWallet().getBalance() + (orderDetail.getPrice()));
-            systemWalletRepository.save(systemWallet);
             userRepository.save(student);
-            TransactionHistory transactionHistory = saveTransactionHistory(wallet.getUser(), orderDetail.getPrice(), wallet);
+
+            TransactionHistory transactionHistory = saveTransactionHistory(student.getUserName(), orderDetail.getPrice(), wallet);
             transactionHistory.setNote("Refunded");
             notificationService.createNotification(NotificationDTO.builder()
                     .title("Refund for Order " + order.getOrderId() + " has been processed")
@@ -502,12 +313,9 @@ public class OrderService implements IOrderService {
 
     private void checkOrderAlreadyExists(String username, Long classId) {
         OrderDetail orderDetail = orderDetailRepository.findByOrder_User_UserNameAndClasses_ClassId(username, classId);
-        // Chỉ ngăn chặn nếu đơn hàng đã tồn tại và không bị hủy
-        if (orderDetail != null && !orderDetail.getOrder().getStatus().equals(OrderStatus.CANCELLED)) {
+        if (orderDetail != null && !OrderStatus.CANCELLED.equals(orderDetail.getOrder().getStatus())) {
             throw new OrderAlreadyExistsException("User has already registered for this class.");
         }
-
-        // Kiểm tra trùng lặp lịch học dựa trên thời gian của `Class`
         if (hasDuplicateSchedule(username, classId)) {
             throw new IllegalStateException("User has already registered for this schedule.");
         }
@@ -541,17 +349,17 @@ public class OrderService implements IOrderService {
         return false;
     }
 
-    private TransactionHistory saveTransactionHistory(User user, Long amount, Wallet wallet) {
+    private TransactionHistory saveTransactionHistory(String username, double amount, Wallet wallet) {
         TransactionHistory transactionHistory = new TransactionHistory();
         transactionHistory.setAmount(amount);
         transactionHistory.setTransactionDate(LocalDateTime.now());
-        transactionHistory.setUser(user);
+        transactionHistory.setUser(wallet.getUser());
         transactionHistory.setTransactionBalance(wallet.getBalance());
 
         transactionHistoryRepository.save(transactionHistory);
         Context context = new Context();
         context.setVariable("transactionHistory", transactionHistory);
-        emailService.sendEmail(user.getEmail(), "Transaction", "transaction-email", context);
+        emailService.sendEmail(username, "Transaction", "transaction-email", context);
 
         return transactionHistory;
     }
@@ -573,11 +381,176 @@ public class OrderService implements IOrderService {
     }
 
     private void checkClassCapacity(Long classId, int maxStudents) throws Exception {
+        long activeRegistrations = orderDetailRepository.countByClasses_ClassIdAndOrder_StatusNot(classId, OrderStatus.CANCELLED);
 
-        if (orderDetailRepository.countByClasses_ClassIdAndOrder_StatusNot(classId, OrderStatus.CANCELLED) >= maxStudents) {
+        if (activeRegistrations >= maxStudents) {
             throw new Exception("Class is fully booked.");
         }
     }
+
+    @Override
+    public void sendActivationEmail(Class scheduledClass) {
+        try {
+            Context context = new Context();
+            context.setVariable("teacherName", scheduledClass.getTeacher().getTeacherName());
+            context.setVariable("class", scheduledClass);
+            emailService.sendEmail(scheduledClass.getTeacher().getEmail(), "Class active", "active-email", context);
+        } catch (Exception ex) {
+            log.error(ex.getMessage());
+        }
+    }
+
+
+    @Scheduled(cron = "0 * * * * *")
+    @Transactional
+    public void checkAndActivateClasses() {
+        int pageNumber = 0;
+        int defaultTime = 1;
+        System checkTimeBeforeStart = systemRepository.findByName("check_time_before_start");
+        int checkTime = checkTimeBeforeStart != null
+                ? Integer.parseInt(checkTimeBeforeStart.getValue())
+                : defaultTime;
+
+        while (true) {
+            Pageable pageable = PageRequest.of(pageNumber, 50);
+            Page<Class> classesPage = classRepository.findByStatusAndStartDate(ClassStatus.PENDING, LocalDate.now(), pageable);
+
+            if (classesPage.isEmpty()) {
+                break;
+            }
+
+            for (Class scheduledClass : classesPage) {
+                try {
+                    LocalDateTime classStartTime = scheduledClass.getStartDate()
+                            .atTime(scheduledClass.getSlot().getStartTime())
+                            .minusMinutes(checkTime);
+
+                    if (classStartTime.isBefore(LocalDateTime.now())) {
+                        Class clazz = activateClassIfEligible(scheduledClass);
+                        Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(clazz.getClassId(), Pageable.unpaged());
+                        handleOrderDetails(orderDetails, scheduledClass);
+                    }
+                } catch (Exception e) {
+                    log.error("Unexpected error occurred while activating class {}: {}", scheduledClass.getClassId(), e.getMessage());
+                }
+            }
+            pageNumber++;
+        }
+    }
+
+    @Transactional
+    protected Class activateClassIfEligible(Class scheduledClass) {
+        int registeredStudents = orderDetailRepository.countByClasses_ClassIdAndOrder_StatusNot(scheduledClass.getClassId(), OrderStatus.CANCELLED);
+        double minimumPercentage = getMinimumPercentage();
+        int minimumRequiredStudents = (int) Math.ceil(scheduledClass.getMaxStudents() * minimumPercentage);
+        log.info("register:{}, minimum: {}", registeredStudents, minimumRequiredStudents);
+
+        if (registeredStudents >= minimumRequiredStudents) {
+            scheduledClass.setStatus(ClassStatus.ACTIVE);
+            classRepository.save(scheduledClass);
+            notificationService.createNotification(buildNotificationDTO("Your class " + scheduledClass.getCode() + " has been activated",
+                    "Class " + scheduledClass.getCode() + " is starting on " + scheduledClass.getStartDate(),
+                    scheduledClass.getTeacher().getTeacherName()));
+
+            sendActivationEmail(scheduledClass);
+            log.info("Class with ID {} has been activated successfully.", scheduledClass.getClassId());
+        } else {
+            scheduledClass.setStatus(ClassStatus.CANCELED);
+            classRepository.save(scheduledClass);
+            notificationService.createNotification(buildNotificationDTO("Your class " + scheduledClass.getCode() + " has been cancelled",
+                    "Your class " + scheduledClass.getCode() + " has been cancelled",
+                    scheduledClass.getTeacher().getTeacherName()));
+            log.info("Class with ID {} has been cancelled.", scheduledClass.getClassId());
+        }
+        return scheduledClass;
+    }
+
+    @Transactional
+    protected void handleOrderDetails(Page<OrderDetail> orderDetails, Class scheduledClass) {
+        List<OrderDetail> updatedOrderDetails = new ArrayList<>();
+        for (OrderDetail orderDetail : orderDetails) {
+            if (scheduledClass.getStatus().equals(ClassStatus.ACTIVE)) {
+                orderDetail.getOrder().setStatus(OrderStatus.ACTIVE);
+            } else {
+                orderDetail.getOrder().setStatus(OrderStatus.CANCELLED);
+                refundStudents(scheduledClass);
+            }
+            updatedOrderDetails.add(orderDetail);
+
+            // Send Notification to Users
+            notificationService.createNotification(NotificationDTO.builder()
+                    .title("Class " + scheduledClass.getCode() + " has been " + (scheduledClass.getStatus().equals(ClassStatus.ACTIVE) ? "activated" : "cancelled"))
+                    .description("Class " + scheduledClass.getCode() + " has been " + (scheduledClass.getStatus().equals(ClassStatus.ACTIVE) ? "activated" : "cancelled"))
+                    .name("Notification")
+                    .type(scheduledClass.getStatus().equals(ClassStatus.ACTIVE) ? "Active Order" : "Cancelled Order")
+                    .username(orderDetail.getOrder().getUser().getUserName())
+                    .build());
+        }
+        orderDetailRepository.saveAll(updatedOrderDetails); // Bulk save the order details
+    }
+
+    @Scheduled(cron = "0 * * * * *")
+    @Transactional
+    public void updateClassesToOngoing() {
+        LocalDateTime now = LocalDateTime.now();
+
+        List<Class> classesToStart = classRepository.findByStartDateAndStatus(now.toLocalDate(), ClassStatus.ACTIVE);
+
+        for (Class scheduledClass : classesToStart) {
+            LocalDateTime startTime = scheduledClass.getStartDate().atTime(scheduledClass.getSlot().getStartTime());
+
+            if (now.isAfter(startTime) && scheduledClass.getStatus().equals(ClassStatus.ACTIVE)) {
+                scheduledClass.setStatus(ClassStatus.ONGOING);
+                classRepository.save(scheduledClass);
+                Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(scheduledClass.getClassId(), Pageable.unpaged());
+                for (OrderDetail orderDetail : orderDetails) {
+                    if (orderDetail.getOrder().getStatus().equals(OrderStatus.ACTIVE)) {
+                        orderDetail.getOrder().setStatus(OrderStatus.ONGOING);
+                        orderDetailRepository.save(orderDetail);
+                    }
+                }
+                log.info("Class with ID {} has started and is now ONGOING.", scheduledClass.getClassId());
+            }
+        }
+    }
+
+
+    @Scheduled(cron = "0 * * * * *")
+    @Transactional
+    public void checkAndCompleteOrders() {
+        LocalDateTime now = LocalDateTime.now();
+
+        List<Class> classesToComplete = classRepository.findByStartDateAndStatus(now.toLocalDate(), ClassStatus.ONGOING);
+
+        for (Class scheduledClass : classesToComplete) {
+            LocalDateTime endTime = scheduledClass.getStartDate().atTime(scheduledClass.getSlot().getEndTime());
+
+            if (now.isAfter(endTime)) {
+                scheduledClass.setStatus(ClassStatus.COMPLETED);
+                classRepository.save(scheduledClass);
+                Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(scheduledClass.getClassId(), Pageable.unpaged());
+                for (OrderDetail orderDetail : orderDetails) {
+                    if (orderDetail.getOrder().getStatus().equals(OrderStatus.ONGOING)) {
+                        orderDetail.getOrder().setStatus(OrderStatus.COMPLETED);
+                        orderDetailRepository.save(orderDetail);
+                    }
+                }
+                SystemWallet systemWallet = systemWalletRepository.getReferenceById(1L);
+                systemWallet.setTotalAmount(systemWallet.getTotalAmount() - scheduledClass.getPrice());
+                systemWalletRepository.save(systemWallet);
+
+                Wallet wallet = scheduledClass.getTeacher().getWallet();
+                wallet.setBalance(wallet.getBalance() + scheduledClass.getPrice());
+                walletRepository.save(wallet);
+                TransactionHistory transactionHistory = saveTransactionHistory(scheduledClass.getTeacher().getTeacherName(), scheduledClass.getPrice(), wallet);
+                transactionHistory.setNote("Salary");
+
+                log.info("Class with ID {} has started and is now COMPLETED.", scheduledClass.getClassId());
+
+            }
+        }
+    }
+
 
     private double getMinimumPercentage() {
         System minimumPercentageParam = systemRepository.findByName("minimum_required_percentage");
@@ -585,4 +558,16 @@ public class OrderService implements IOrderService {
                 ? Double.parseDouble(minimumPercentageParam.getValue())
                 : 0.8;
     }
+
+    private NotificationDTO buildNotificationDTO(String title, String description, String username) {
+        return NotificationDTO.builder()
+                .title(title)
+                .description(description)
+                .type("Active Class Notification")
+                .username(username)
+                .name("Notification")
+                .build();
+    }
+
+
 }

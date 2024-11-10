@@ -12,6 +12,9 @@ import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.*;
 import com.example.FPTLSPlatform.dto.ClassDTO;
 import com.example.FPTLSPlatform.service.IClassService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -36,7 +39,16 @@ public class ClassService implements IClassService {
     private final SlotRepository slotRepository;
     private final UserRepository userRepository;
 
-    public ClassService(ClassRepository classRepository, CourseRepository courseRepository, TeacherRepository teacherRepository, OrderDetailRepository orderDetailRepository, CloudinaryService cloudinaryService, SlotRepository slotRepository, UserRepository userRepository) {
+
+    @Autowired
+    public ClassService(ClassRepository classRepository,
+                        CourseRepository courseRepository,
+                        TeacherRepository teacherRepository,
+                        OrderDetailRepository orderDetailRepository,
+                        CloudinaryService cloudinaryService,
+                        SlotRepository slotRepository,
+                        UserRepository userRepository
+    ) {
         this.classRepository = classRepository;
         this.courseRepository = courseRepository;
         this.teacherRepository = teacherRepository;
@@ -44,9 +56,12 @@ public class ClassService implements IClassService {
         this.cloudinaryService = cloudinaryService;
         this.slotRepository = slotRepository;
         this.userRepository = userRepository;
+
     }
 
-    public ClassDTO createClass(ClassDTO classDTO, MultipartFile image) throws GeneralSecurityException, IOException {
+    private static final Logger log = LoggerFactory.getLogger(ClassService.class);
+
+    public ClassDTO createClass(ClassDTO classDTO, MultipartFile image) throws IOException {
         if (classDTO.getName() == null || classDTO.getCode() == null || classDTO.getDescription() == null ||
                 classDTO.getMaxStudents() == null || classDTO.getPrice() == null || classDTO.getCourseCode() == null) {
             throw new RuntimeException("All fields must be provided and cannot be null");
@@ -73,7 +88,7 @@ public class ClassService implements IClassService {
             throw new RuntimeException("Course with code " + classDTO.getCourseCode() + " not found");
         }
 
-        String imageUrl = null;
+        String imageUrl;
         if (image != null && !image.isEmpty()) {
             imageUrl = cloudinaryService.uploadImage(image);
             classDTO.setImageUrl(imageUrl);
@@ -112,7 +127,7 @@ public class ClassService implements IClassService {
                 .collect(Collectors.toList());
     }
 
-    private String createGoogleMeetLink(String className, LocalDateTime startDateTime, LocalDateTime endDateTime) throws IOException, GeneralSecurityException, GeneralSecurityException {
+    private String createGoogleMeetLink(String className, LocalDateTime startDateTime, LocalDateTime endDateTime) throws IOException, GeneralSecurityException {
         Calendar service = OAuth2Util.getCalendarService(); // Sử dụng OAuth2Util để khởi tạo Calendar service
 
         Event event = new Event()
@@ -175,7 +190,7 @@ public class ClassService implements IClassService {
         if (classDTO.getMaxStudents() != null) existingClass.setMaxStudents(classDTO.getMaxStudents());
         if (classDTO.getLocation() != null) existingClass.setLocation(classDTO.getLocation());
 
-        String imageUrl = null;
+        String imageUrl;
         if (image != null && !image.isEmpty()) {
             imageUrl = cloudinaryService.uploadImage(image);
             existingClass.setImage(imageUrl);
@@ -215,7 +230,7 @@ public class ClassService implements IClassService {
     }
 
     public List<ClassDTO> getClassesByTeacherName(String teacherName) {
-        Teacher teacher = teacherRepository.findByTeacherName(teacherName)
+        teacherRepository.findByTeacherName(teacherName)
                 .orElseThrow(() -> new IllegalArgumentException("Teacher with name '" + teacherName + "' not found."));
 
         List<Class> classes = classRepository.findByTeacherTeacherName(teacherName);
@@ -360,6 +375,4 @@ public class ClassService implements IClassService {
                 .map(this::mapEntityToDTO)
                 .collect(Collectors.toList());
     }
-
-
 }

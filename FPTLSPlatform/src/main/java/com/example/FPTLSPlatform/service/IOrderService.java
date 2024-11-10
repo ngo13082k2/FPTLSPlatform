@@ -1,6 +1,7 @@
 package com.example.FPTLSPlatform.service;
 
 import com.example.FPTLSPlatform.dto.*;
+import com.example.FPTLSPlatform.model.Class;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -18,4 +19,8 @@ public interface IOrderService {
     Page<OrderDTO> getAllOrders(Pageable pageable);
 
     Page<OrderDetailDTO> getClassesOrderedByUser(String username, Pageable pageable);
+
+    void refundStudents(Class cancelledClass);
+
+    void sendActivationEmail(Class scheduledClass);
 }

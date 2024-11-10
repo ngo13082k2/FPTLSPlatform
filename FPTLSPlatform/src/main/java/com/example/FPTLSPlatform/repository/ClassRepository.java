@@ -27,8 +27,7 @@ public interface ClassRepository extends JpaRepository<Class, Long> {
 
     Optional<Class> findById(Long classId);
 
-    @Query("SELECT c FROM Class c WHERE c.status = :status AND c.startDate <= :checkDay")
-    Page<Class> findByStatusAndStartDateBefore(@Param("status") ClassStatus status, @Param("checkDay") LocalDate checkDay, Pageable pageable);
+    Page<Class> findByStatusAndStartDate(ClassStatus status, LocalDate date, Pageable pageable);
 
     List<Class> findByTeacherTeacherName(String teacherName);
 

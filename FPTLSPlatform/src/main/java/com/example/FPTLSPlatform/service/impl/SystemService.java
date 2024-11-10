@@ -60,7 +60,7 @@ public class SystemService implements ISystemService {
     @Override
     public List<SystemDTO> createDefaultParam() {
         List<System> systems = new ArrayList<>();
-        systems.add(new System(1L, "day_check", "2"));
+        systems.add(new System(1L, "check_time_before_start", "30"));
         systems.add(new System(2L, "minimum_required_percentage", "0.8"));
         systems.add(new System(3L, "discount_percentage", "0.2"));
         systemRepository.saveAll(systems);
