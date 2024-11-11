@@ -1,5 +1,7 @@
 package com.example.FPTLSPlatform.controller;
 
+import com.example.FPTLSPlatform.dto.TeacherDTO;
+import com.example.FPTLSPlatform.model.Teacher;
 import com.example.FPTLSPlatform.model.enums.Role;
 import com.example.FPTLSPlatform.request.AuthenticationRequest;
 import com.example.FPTLSPlatform.request.RegisterRequest;
@@ -7,13 +9,16 @@ import com.example.FPTLSPlatform.response.AuthenticationResponse;
 import com.example.FPTLSPlatform.response.UserResponse;
 import com.example.FPTLSPlatform.service.impl.AuthService;
 import com.example.FPTLSPlatform.service.impl.EmailService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,6 +27,9 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     public AuthController(AuthService authService) {
         this.authService = authService;
@@ -83,6 +91,22 @@ public class AuthController {
     public ResponseEntity<UserResponse> updateCurrentUser(@RequestHeader("Authorization") String token, @RequestBody AuthenticationRequest request) {
         UserResponse updatedUser = authService.updateCurrentUser(token, request);
         return ResponseEntity.ok(updatedUser);
+    }
+    @PutMapping("/updateTeacher")
+    public ResponseEntity<Teacher> updateLoggedInTeacher(
+            @RequestParam("teacherDTO") String teacherDTOJson,
+            @RequestParam(value = "backgroundImage", required = false) MultipartFile backgroundImage,
+            @RequestParam(value = "avatarImage", required = false) MultipartFile avatarImage) {
+        try {
+            TeacherDTO teacherDTO = objectMapper.readValue(teacherDTOJson, TeacherDTO.class);
+
+            Teacher updatedTeacher = authService.updateLoggedInTeacher(teacherDTO, backgroundImage, avatarImage);
+            return ResponseEntity.ok(updatedTeacher);
+        } catch (IOException e) {
+            return ResponseEntity.status(500).body(null);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(null);
+        }
     }
 
     @GetMapping("/{id}")

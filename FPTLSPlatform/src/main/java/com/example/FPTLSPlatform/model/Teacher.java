@@ -64,5 +64,13 @@ public class Teacher {
     @Enumerated(EnumType.STRING)
     @Column(name = "role")
     private Role role;
+    @Column(name = "background_image")
+    private String backgroundImage;
+
+    @Column(name = "avatar_image")
+    private String avatarImage;
+
+    @Column(name = "description", length = 2000)
+    private String description;
 
 }

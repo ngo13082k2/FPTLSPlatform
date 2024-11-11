@@ -42,4 +42,8 @@ public interface ClassRepository extends JpaRepository<Class, Long> {
     List<Class> findByStatus(ClassStatus status);
 
     List<Class> findByStatusAndStartDateBetween(ClassStatus classStatus, LocalDate localDate, LocalDate localDate1);
+    List<Class> findByTeacher_TeacherName(String teacherName);
+    List<Class> findByTeacherTeacherNameAndStatus(String teacherName, ClassStatus status);
+
+
 }

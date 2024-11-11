@@ -6,6 +6,7 @@ import com.example.FPTLSPlatform.dto.FeedbackQuestionAnswerDTO;
 import com.example.FPTLSPlatform.dto.FeedbackSubmissionDTO;
 import com.example.FPTLSPlatform.model.*;
 import com.example.FPTLSPlatform.model.Class;
+import com.example.FPTLSPlatform.model.enums.ClassStatus;
 import com.example.FPTLSPlatform.model.enums.OrderStatus;
 import com.example.FPTLSPlatform.repository.*;
 import com.example.FPTLSPlatform.service.IFeedbackService;
@@ -33,6 +34,8 @@ public class FeedbackService implements IFeedbackService {
 
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private ClassRepository classRepository;
 
     public FeedbackSubmissionDTO submitFeedbackForOrder(Long orderId, FeedbackSubmissionDTO feedbackSubmission) {
         Page<OrderDetail> orderDetails = orderDetailRepository.findByOrderOrderId(orderId, Pageable.unpaged());
@@ -111,6 +114,47 @@ public class FeedbackService implements IFeedbackService {
 
         return resultList;
     }
+    public double getAverageOfAllFeedbackQuestionsInClass(Long classId) {
+        List<Map<String, Object>> feedbackSummary = getClassFeedbackSummary(classId);
+
+        double totalAverageRating = feedbackSummary.stream()
+                .mapToDouble(summary -> (double) summary.get("averageRating"))
+                .sum();
+
+        return feedbackSummary.isEmpty() ? 0 : totalAverageRating / feedbackSummary.size();
+    }
+    public double getAverageFeedbackForTeacher(String teacherName) {
+        List<Class> completedClasses = classRepository.findByTeacherTeacherNameAndStatus(teacherName, ClassStatus.COMPLETED);
+
+        if (completedClasses.isEmpty()) {
+            throw new RuntimeException("No completed classes found for teacher: " + teacherName);
+        }
+
+        double totalAverage = 0;
+        int classCount = 0;
+
+        for (Class clazz : completedClasses) {
+            List<Feedback> feedbacks = feedbackRepository.findByClassEntityClassId(clazz.getClassId());
+            if (!feedbacks.isEmpty()) {
+                double classAverage = feedbacks.stream()
+                        .mapToInt(Feedback::getRating)
+                        .average()
+                        .orElse(0);
+                totalAverage += classAverage;
+                classCount++;
+            }
+        }
+
+        if (classCount == 0) {
+            throw new RuntimeException("No feedback found for completed classes of teacher: " + teacherName);
+        }
+
+        return totalAverage / classCount;
+    }
+
+
+
+
 
     public List<FeedbackDTO> getAllFeedbackByClassId(Long classId) {
         List<Feedback> feedbacks = feedbackRepository.findByClassEntityClassId(classId);

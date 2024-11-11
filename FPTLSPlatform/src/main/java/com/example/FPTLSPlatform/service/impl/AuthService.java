@@ -1,6 +1,7 @@
 package com.example.FPTLSPlatform.service.impl;
 
 
+import com.example.FPTLSPlatform.dto.TeacherDTO;
 import com.example.FPTLSPlatform.model.Category;
 import com.example.FPTLSPlatform.model.Teacher;
 import com.example.FPTLSPlatform.model.User;
@@ -22,10 +23,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -44,11 +48,13 @@ public class AuthService {
     private final OTPGmailService otpGmailService;
     private final IEmailService emailService;
     private final CategoryRepository categoryRepository;
+    private final CloudinaryService cloudinaryService;
     @Autowired
     private HttpSession session;
+
     public AuthService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, JwtUtil jwtUtil,
-                       CustomUserDetailsService userDetailsService, TeacherRepository teacherRepository, WalletRepository walletRepository, OTPGmailService otpGmailService, IEmailService emailService, CategoryRepository categoryRepository) {
+                       CustomUserDetailsService userDetailsService, TeacherRepository teacherRepository, WalletRepository walletRepository, OTPGmailService otpGmailService, IEmailService emailService, CategoryRepository categoryRepository, CloudinaryService cloudinaryService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
@@ -60,6 +66,7 @@ public class AuthService {
         this.otpGmailService = otpGmailService;
         this.emailService = emailService;
         this.categoryRepository = categoryRepository;
+        this.cloudinaryService = cloudinaryService;
     }
 
     public UserResponse register(RegisterRequest request) throws MessagingException {
@@ -287,6 +294,52 @@ public class AuthService {
         return Arrays.stream(userDetails.getAuthorities().toArray())
                 .map(authority -> Role.valueOf(((GrantedAuthority) authority).getAuthority()))
                 .collect(Collectors.toSet());
+    }
+    private String getCurrentUsername() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof UserDetails) {
+            return ((UserDetails) principal).getUsername();
+        } else {
+            return principal.toString();
+        }
+    }
+
+    public Teacher updateLoggedInTeacher(TeacherDTO teacherDTO, MultipartFile backgroundImage, MultipartFile avatarImage) throws IOException {
+        String username = getCurrentUsername();
+        Teacher teacher = teacherRepository.findByTeacherName(username)
+                .orElseThrow(() -> new RuntimeException("Teacher not found"));
+
+        if (teacherDTO.getPhoneNumber() != null) {
+            teacher.setPhoneNumber(teacherDTO.getPhoneNumber());
+        }
+        if (teacherDTO.getAddress() != null) {
+            teacher.setAddress(teacherDTO.getAddress());
+        }
+        if (teacherDTO.getEmail() != null) {
+            teacher.setEmail(teacherDTO.getEmail());
+        }
+        if (teacherDTO.getFullName() != null) {
+            teacher.setFullName(teacherDTO.getFullName());
+        }
+        if (teacherDTO.getCertificate() != null) {
+            teacher.setCertificate(teacherDTO.getCertificate());
+        }
+        if (teacherDTO.getDescription() != null) {
+            teacher.setDescription(teacherDTO.getDescription());
+        }
+
+        if (backgroundImage != null && !backgroundImage.isEmpty()) {
+            String backgroundUrl = cloudinaryService.uploadImage(backgroundImage);
+            teacher.setBackgroundImage(backgroundUrl);
+        }
+        if (avatarImage != null && !avatarImage.isEmpty()) {
+            String avatarUrl = cloudinaryService.uploadImage(avatarImage);
+            teacher.setAvatarImage(avatarUrl);
+        }
+
+        teacher.setModifiedDate(LocalDateTime.now());
+
+        return teacherRepository.save(teacher);
     }
 
 
