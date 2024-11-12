@@ -209,7 +209,7 @@ public class AuthService {
             }
 
             String jwt = jwtUtil.generateToken(userDetails.getUsername(), extractRoles(userDetails));
-            return new AuthenticationResponse(user.getUserName(), user.getEmail(), user.getFullName(), user.getStatus(), jwt, user.getRole());
+            return new AuthenticationResponse(user.getUserName(), user.getEmail(), user.getFullName(), user.getStatus(), jwt, user.getRole(),user.getPhoneNumber());
 
         } else if (optionalTeacher.isPresent()) {
             Teacher teacher = optionalTeacher.get();
@@ -219,7 +219,7 @@ public class AuthService {
             }
 
             String jwt = jwtUtil.generateToken(userDetails.getUsername(), extractRoles(userDetails));
-            return new AuthenticationResponse(teacher.getTeacherName(), null, teacher.getFullName(), teacher.getStatus(), jwt, teacher.getRole());
+            return new AuthenticationResponse(teacher.getTeacherName(), null, teacher.getFullName(), teacher.getStatus(), jwt, teacher.getRole(),teacher.getPhoneNumber());
 
         } else {
             throw new RuntimeException("User not found");
@@ -252,6 +252,9 @@ public class AuthService {
         user.setFullName(request.getFullName());
         user.setAddress(request.getAddress());
         user.setModifiedDate(LocalDateTime.now());
+        List<Category> selectedCategoriesList = categoryRepository.findAllById(request.getCategoryIds());
+        Set<Category> selectedCategories = new HashSet<>(selectedCategoriesList);
+        user.setMajor(selectedCategories);
 
         if (request.getPassword() != null && !request.getPassword().isEmpty()) {
             user.setPassword(passwordEncoder.encode(request.getPassword()));
@@ -340,6 +343,22 @@ public class AuthService {
         teacher.setModifiedDate(LocalDateTime.now());
 
         return teacherRepository.save(teacher);
+    }
+    public TeacherDTO getTeacherByTeacherName(String teacherName) {
+        Teacher teacher = teacherRepository.findByTeacherName(teacherName)
+                .orElseThrow(() -> new RuntimeException("Teacher not found"));
+
+        return TeacherDTO.builder()
+                .avatarImage(teacher.getAvatarImage())
+                .address(teacher.getAddress())
+                .fullName(teacher.getFullName())
+                .description(teacher.getDescription())
+                .phoneNumber(teacher.getPhoneNumber())
+                .email(teacher.getEmail())
+                .major(teacher.getMajor().stream()
+                        .map(Category::getName)
+                        .collect(Collectors.toSet()))
+                .build();
     }
 
 
