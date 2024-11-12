@@ -1,6 +1,8 @@
 package com.example.FPTLSPlatform.dto;
 
+import com.example.FPTLSPlatform.model.Class;
 import com.example.FPTLSPlatform.model.Slot;
+import com.example.FPTLSPlatform.model.Teacher;
 import com.example.FPTLSPlatform.model.enums.ClassStatus;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.Column;
@@ -51,4 +53,5 @@ public class ClassDTO {
     private LocalDate endDate;
 
     private String dayOfWeek;
+    private String imageTeacher;
 }

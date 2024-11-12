@@ -1,5 +1,6 @@
 package com.example.FPTLSPlatform.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -16,10 +17,12 @@ public class TeacherCategory {
     private Long id;
 
     @ManyToOne
+    @JsonIgnore
     @JoinColumn(name = "teacher_name")
     private Teacher teacher;
 
     @ManyToOne
+    @JsonIgnore
     @JoinColumn(name = "category_id")
     private Category category;
 }

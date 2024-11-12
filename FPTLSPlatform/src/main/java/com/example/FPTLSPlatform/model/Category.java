@@ -1,5 +1,6 @@
 package com.example.FPTLSPlatform.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -22,9 +23,11 @@ public class Category {
     @Column(nullable = false)
     private String name;
     @ManyToMany(mappedBy = "major")
+    @JsonIgnore
     private List<User> users;
 
     @ManyToMany(mappedBy = "major")
+    @JsonIgnore
     private List<Teacher> teachers;
 
 }

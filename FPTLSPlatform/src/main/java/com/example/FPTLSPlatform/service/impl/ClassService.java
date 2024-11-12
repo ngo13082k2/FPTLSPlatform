@@ -345,6 +345,7 @@ public class ClassService implements IClassService {
                 .slotId(clazz.getSlot() != null ? clazz.getSlot().getSlotId() : null)
                 .dayOfWeek(clazz.getDayOfWeek())
                 .students(studentDTOList)
+                .imageTeacher(clazz.getTeacher().getAvatarImage())
                 .build();
     }
 
