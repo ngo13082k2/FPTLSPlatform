@@ -8,7 +8,7 @@ import org.springframework.data.domain.Pageable;
 import java.time.LocalDateTime;
 
 public interface IOrderService {
-    TotalOrderDTO getTotalOrders(LocalDateTime startDate, LocalDateTime endDate);
+    ListTotalOrderDTO getTotalOrders(LocalDateTime startDate, LocalDateTime endDate);
 
     OrderDTO createOrder(Long classId, String username) throws Exception;
 

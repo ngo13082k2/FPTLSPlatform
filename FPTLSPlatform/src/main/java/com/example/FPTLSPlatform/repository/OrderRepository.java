@@ -22,4 +22,8 @@ public interface OrderRepository extends JpaRepository<Order, String> {
             "FROM Order o WHERE o.createAt BETWEEN :startDate AND :endDate")
     TotalOrderDTO getTotalOrdersAndAmountByDateRange(@Param("startDate") LocalDateTime startDate,
                                                      @Param("endDate") LocalDateTime endDate);
+
+    @Query("SELECT od FROM OrderDetail od WHERE od.order.createAt BETWEEN :startDate AND :endDate")
+    List<OrderDetail> getOrderDetailsByDateRange(@Param("startDate") LocalDateTime startDate,
+                                                 @Param("endDate") LocalDateTime endDate);
 }

@@ -97,8 +97,24 @@ public class OrderService implements IOrderService {
     }
 
     @Override
-    public TotalOrderDTO getTotalOrders(LocalDateTime startDate, LocalDateTime endDate) {
-        return orderRepository.getTotalOrdersAndAmountByDateRange(startDate, endDate);
+    public ListTotalOrderDTO getTotalOrders(LocalDateTime startDate, LocalDateTime endDate) {
+        TotalOrderDTO totalOrderDTO = orderRepository.getTotalOrdersAndAmountByDateRange(startDate, endDate);
+        List<OrderDetail> orderDetails = orderRepository.getOrderDetailsByDateRange(startDate, endDate);
+        ListTotalOrderDTO listTotalOrderDTO = new ListTotalOrderDTO();
+        listTotalOrderDTO.setTotalOrderDTO(totalOrderDTO);
+        listTotalOrderDTO.setOrderDetails(orderDetails.stream().map(orderDetail -> OrderDetailDTO.builder()
+                .orderDetailId(orderDetail.getOrderDetailId())
+                .orderDTO(OrderDTO.builder()
+                        .orderId(orderDetail.getOrder().getOrderId())
+                        .totalPrice(orderDetail.getOrder().getTotalPrice())
+                        .username(orderDetail.getOrder().getUser().getUserName())
+                        .createAt(orderDetail.getOrder().getCreateAt())
+                        .status(orderDetail.getOrder().getStatus())
+                        .build())
+                .classDTO(classService.mapEntityToDTO(orderDetail.getClasses()))
+                .price(orderDetail.getPrice())
+                .build()).toList());
+        return listTotalOrderDTO;
     }
 
     @Override

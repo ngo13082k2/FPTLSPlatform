@@ -1,6 +1,7 @@
 package com.example.FPTLSPlatform.controller;
 
 import com.example.FPTLSPlatform.dto.ClassDTO;
+import com.example.FPTLSPlatform.dto.ListTotalOrderDTO;
 import com.example.FPTLSPlatform.dto.TotalOrderDTO;
 import com.example.FPTLSPlatform.dto.WalletStatisticDTO;
 import com.example.FPTLSPlatform.model.SystemTransactionHistory;
@@ -61,7 +62,7 @@ public class AdminController {
     }
 
     @GetMapping("/total")
-    public TotalOrderDTO getTotalOrdersAndAmount(
+    public ListTotalOrderDTO getTotalOrdersAndAmount(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
         return orderService.getTotalOrders(startDate, endDate);
