@@ -2,9 +2,11 @@ package com.example.FPTLSPlatform.service.impl;
 
 import com.example.FPTLSPlatform.dto.TransactionHistoryDTO;
 import com.example.FPTLSPlatform.dto.WalletStatisticDTO;
+import com.example.FPTLSPlatform.model.Teacher;
 import com.example.FPTLSPlatform.model.TransactionHistory;
 import com.example.FPTLSPlatform.model.User;
 import com.example.FPTLSPlatform.model.Wallet;
+import com.example.FPTLSPlatform.repository.TeacherRepository;
 import com.example.FPTLSPlatform.repository.TransactionHistoryRepository;
 import com.example.FPTLSPlatform.repository.UserRepository;
 import com.example.FPTLSPlatform.repository.WalletRepository;
@@ -23,11 +25,13 @@ public class WalletService implements IWalletService {
     private final UserRepository userRepository;
     private final TransactionHistoryRepository transactionHistoryRepository;
     private final WalletRepository walletRepository;
+    private final TeacherRepository teacherRepository;
 
-    public WalletService(UserRepository userRepository, TransactionHistoryRepository transactionHistoryRepository, WalletRepository walletRepository) {
+    public WalletService(UserRepository userRepository, TransactionHistoryRepository transactionHistoryRepository, WalletRepository walletRepository, TeacherRepository teacherRepository) {
         this.userRepository = userRepository;
         this.transactionHistoryRepository = transactionHistoryRepository;
         this.walletRepository = walletRepository;
+        this.teacherRepository = teacherRepository;
     }
 
     public Wallet getWalletByUserName() throws Exception {
@@ -47,6 +51,22 @@ public class WalletService implements IWalletService {
             throw new Exception("Không tìm thấy người dùng: " + username);
         }
     }
+    public Wallet getWalletByTeacherName(String teacherName) throws Exception {
+        Optional<Teacher> optionalTeacher = teacherRepository.findById(teacherName);
+
+        if (optionalTeacher.isPresent()) {
+            Teacher teacher = optionalTeacher.get();
+
+            if (teacher.getWallet() != null) {
+                return teacher.getWallet();
+            } else {
+                throw new Exception("Giáo viên không có ví.");
+            }
+        } else {
+            throw new Exception("Không tìm thấy giáo viên: " + teacherName);
+        }
+    }
+
 
     public List<TransactionHistoryDTO> getTransactionHistory() throws Exception {
         String username = getCurrentUsername();

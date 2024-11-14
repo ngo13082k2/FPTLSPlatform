@@ -32,18 +32,22 @@ public class AdminController {
     private final IClassService classService;
 
     private final IWalletService walletService;
+    private final ICategoryService categoryService;
+    private final ICourseService courseService;
 
     @Autowired
     public AdminController(IUserService userService,
                            ISystemWalletService systemWalletService,
                            IOrderService orderService,
                            IClassService classService,
-                           IWalletService walletService) {
+                           IWalletService walletService, ICategoryService categoryService, ICourseService courseService) {
         this.userService = userService;
         this.systemWalletService = systemWalletService;
         this.orderService = orderService;
         this.classService = classService;
         this.walletService = walletService;
+        this.categoryService = categoryService;
+        this.courseService = courseService;
     }
 
     @GetMapping("/system-wallet/balance")
@@ -91,6 +95,12 @@ public class AdminController {
         Map<YearMonth, Long> statistics = classService.getClassesByStatusAndMonth(ClassStatus.COMPLETED, year);
         return ResponseEntity.ok(statistics);
     }
+    @GetMapping("/statistics/completed")
+    public ResponseEntity<Map<YearMonth, Long>> getCanceledClassesByMonth(@RequestParam(required = false) Integer year) {
+        Map<YearMonth, Long> statistics = classService.getClassesByStatusAndMonth(ClassStatus.CANCELED, year);
+        return ResponseEntity.ok(statistics);
+    }
+
 
     @GetMapping("/details/active")
     public ResponseEntity<List<ClassDTO>> getActiveClassesByMonthDetailed(
@@ -112,6 +122,12 @@ public class AdminController {
         List<ClassDTO> classes = classService.getClassesByStatusAndMonthDetailed(ClassStatus.COMPLETED, year, month);
         return ResponseEntity.ok(classes);
     }
+    @GetMapping("/details/completed")
+    public ResponseEntity<List<ClassDTO>> getCanceledClassesByMonthDetailed(
+            @RequestParam int year, @RequestParam(required = false) Integer month) {
+        List<ClassDTO> classes = classService.getClassesByStatusAndMonthDetailed(ClassStatus.CANCELED, year, month);
+        return ResponseEntity.ok(classes);
+    }
 
     @GetMapping("statistics/deposit")
     public ResponseEntity<?> getDepositsByMonth(@RequestParam(required = false) Integer year) {
@@ -121,6 +137,16 @@ public class AdminController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
+    }
+    @GetMapping("/total-categories")
+    public ResponseEntity<Long> getTotalCategories() {
+        long totalCategories = categoryService.getTotalCategories();
+        return ResponseEntity.ok(totalCategories);
+    }
+    @GetMapping("/total-courses")
+    public ResponseEntity<Long> getTotalCourses() {
+        long totalCourses = courseService.getTotalCourses();
+        return ResponseEntity.ok(totalCourses);
     }
 
 }

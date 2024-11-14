@@ -12,4 +12,6 @@ public interface ICourseService {
     CourseDTO createCourse(CourseDTO courseDTO, MultipartFile image) throws IOException;
     void deleteCourse(String courseCode);
     List<CourseDTO> getAllCourses();
-    List<CourseDTO> getCourseOfTeacher();}
+    List<CourseDTO> getCourseOfTeacher();
+    long getTotalCourses();
+}
