@@ -51,8 +51,9 @@ public class WalletService implements IWalletService {
             throw new Exception("Không tìm thấy người dùng: " + username);
         }
     }
-    public Wallet getWalletByTeacherName(String teacherName) throws Exception {
-        Optional<Teacher> optionalTeacher = teacherRepository.findById(teacherName);
+    public Wallet getWalletByTeacherName() throws Exception {
+        String username = getCurrentUsername();
+        Optional<Teacher> optionalTeacher = teacherRepository.findById(username);
 
         if (optionalTeacher.isPresent()) {
             Teacher teacher = optionalTeacher.get();
@@ -63,7 +64,7 @@ public class WalletService implements IWalletService {
                 throw new Exception("Giáo viên không có ví.");
             }
         } else {
-            throw new Exception("Không tìm thấy giáo viên: " + teacherName);
+            throw new Exception("Không tìm thấy giáo viên: " + username);
         }
     }
 

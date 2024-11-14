@@ -31,10 +31,10 @@ public class WalletController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Lỗi: " + e.getMessage());
         }
     }
-    @GetMapping("/{teacherName}/wallet")
-    public ResponseEntity<?> getWalletByTeacherName(@PathVariable String teacherName) {
+    @GetMapping("/Teacher/wallet")
+    public ResponseEntity<?> getWalletByTeacherName() {
         try {
-            Wallet wallet = walletService.getWalletByTeacherName(teacherName);
+            Wallet wallet = walletService.getWalletByTeacherName();
             return ResponseEntity.ok(wallet);
         } catch (Exception e) {
             return ResponseEntity.status(404).body(e.getMessage());
