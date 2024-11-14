@@ -95,7 +95,7 @@ public class AdminController {
         Map<YearMonth, Long> statistics = classService.getClassesByStatusAndMonth(ClassStatus.COMPLETED, year);
         return ResponseEntity.ok(statistics);
     }
-    @GetMapping("/statistics/completed")
+    @GetMapping("/statistics/canceled")
     public ResponseEntity<Map<YearMonth, Long>> getCanceledClassesByMonth(@RequestParam(required = false) Integer year) {
         Map<YearMonth, Long> statistics = classService.getClassesByStatusAndMonth(ClassStatus.CANCELED, year);
         return ResponseEntity.ok(statistics);
@@ -122,7 +122,7 @@ public class AdminController {
         List<ClassDTO> classes = classService.getClassesByStatusAndMonthDetailed(ClassStatus.COMPLETED, year, month);
         return ResponseEntity.ok(classes);
     }
-    @GetMapping("/details/completed")
+    @GetMapping("/details/canceled")
     public ResponseEntity<List<ClassDTO>> getCanceledClassesByMonthDetailed(
             @RequestParam int year, @RequestParam(required = false) Integer month) {
         List<ClassDTO> classes = classService.getClassesByStatusAndMonthDetailed(ClassStatus.CANCELED, year, month);
