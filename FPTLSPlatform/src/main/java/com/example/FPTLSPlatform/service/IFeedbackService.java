@@ -9,8 +9,14 @@ import java.util.Map;
 
 public interface IFeedbackService {
     FeedbackSubmissionDTO submitFeedbackForOrder(Long orderId, FeedbackSubmissionDTO feedbackSubmission);
+
     List<Map<String, Object>> getClassFeedbackSummary(Long classId);
+
     List<FeedbackDTO> getAllFeedbackByClassId(Long classId);
+
     double getAverageOfAllFeedbackQuestionsInClass(Long classId);
+
     double getAverageFeedbackForTeacher(String teacherName);
+
+    void sendFeedbackForClass(Long classId);
 }

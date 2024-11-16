@@ -44,7 +44,7 @@ public class NotificationController {
         return ResponseEntity.ok("Notification deleted successfully");
     }
 
-    @GetMapping("/{username}")
+    @GetMapping("/user/{username}")
     public List<NotificationDTO> getNotifications(@PathVariable String username) {
         List<Notification> notifications = notificationService.getNotificationByUsername(username);
         return notifications.stream().map(NotificationDTO::fromEntity).collect(Collectors.toList());

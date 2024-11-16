@@ -9,11 +9,13 @@ import com.example.FPTLSPlatform.model.Class;
 import com.example.FPTLSPlatform.model.enums.ClassStatus;
 import com.example.FPTLSPlatform.model.enums.OrderStatus;
 import com.example.FPTLSPlatform.repository.*;
+import com.example.FPTLSPlatform.service.IEmailService;
 import com.example.FPTLSPlatform.service.IFeedbackService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.context.Context;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,18 +26,24 @@ import java.util.stream.Collectors;
 @Service
 public class FeedbackService implements IFeedbackService {
 
-    @Autowired
-    private FeedbackRepository feedbackRepository;
+    private final FeedbackRepository feedbackRepository;
+
+    private final FeedbackQuestionRepository feedbackQuestionRepository;
+
+    private final OrderDetailRepository orderDetailRepository;
+
+    private final ClassRepository classRepository;
+
+    private final IEmailService emailService;
 
     @Autowired
-    private FeedbackQuestionRepository feedbackQuestionRepository;
-    @Autowired
-    private OrderDetailRepository orderDetailRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private ClassRepository classRepository;
+    public FeedbackService(FeedbackRepository feedbackRepository, FeedbackQuestionRepository feedbackQuestionRepository, OrderDetailRepository orderDetailRepository, ClassRepository classRepository, IEmailService emailService) {
+        this.feedbackRepository = feedbackRepository;
+        this.feedbackQuestionRepository = feedbackQuestionRepository;
+        this.orderDetailRepository = orderDetailRepository;
+        this.classRepository = classRepository;
+        this.emailService = emailService;
+    }
 
     public FeedbackSubmissionDTO submitFeedbackForOrder(Long orderId, FeedbackSubmissionDTO feedbackSubmission) {
         Page<OrderDetail> orderDetails = orderDetailRepository.findByOrderOrderId(orderId, Pageable.unpaged());
@@ -114,6 +122,7 @@ public class FeedbackService implements IFeedbackService {
 
         return resultList;
     }
+
     public double getAverageOfAllFeedbackQuestionsInClass(Long classId) {
         List<Map<String, Object>> feedbackSummary = getClassFeedbackSummary(classId);
 
@@ -123,6 +132,7 @@ public class FeedbackService implements IFeedbackService {
 
         return feedbackSummary.isEmpty() ? 0 : totalAverageRating / feedbackSummary.size();
     }
+
     public double getAverageFeedbackForTeacher(String teacherName) {
         List<Class> completedClasses = classRepository.findByTeacherTeacherNameAndStatus(teacherName, ClassStatus.COMPLETED);
 
@@ -152,8 +162,21 @@ public class FeedbackService implements IFeedbackService {
         return totalAverage / classCount;
     }
 
+    @Override
+    public void sendFeedbackForClass(Long classId) {
+        List<Map<String, Object>> feedbackSummary = getClassFeedbackSummary(classId);
+        Class clazz = classRepository.getReferenceById(classId);
 
+        double totalAverageRating = feedbackSummary.stream()
+                .mapToDouble(summary -> (double) summary.get("averageRating"))
+                .sum();
+        double averageRating = feedbackSummary.isEmpty() ? 0 : totalAverageRating / feedbackSummary.size();
+        Context context = new Context();
+        context.setVariable("teacherName", clazz.getTeacher().getTeacherName());
+        context.setVariable("feedbackSummary", averageRating);
+        emailService.sendEmail(clazz.getTeacher().getTeacherName(), "Send feedback for teacher's class successful", "feedback-email", context);
 
+    }
 
 
     public List<FeedbackDTO> getAllFeedbackByClassId(Long classId) {

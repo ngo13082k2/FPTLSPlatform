@@ -33,11 +33,13 @@ public class FeedbackController {
         List<Map<String, Object>> summary = feedbackService.getClassFeedbackSummary(classId);
         return ResponseEntity.ok(summary);
     }
+
     @GetMapping("/class/{classId}")
     public ResponseEntity<List<FeedbackDTO>> getAllFeedbackByClassId(@PathVariable Long classId) {
         List<FeedbackDTO> feedbacks = feedbackService.getAllFeedbackByClassId(classId);
         return ResponseEntity.ok(feedbacks);
     }
+
     @GetMapping("/average-feedback/class/{classId}")
     public ResponseEntity<Double> getAverageFeedbackForClass(@PathVariable Long classId) {
         double average = feedbackService.getAverageOfAllFeedbackQuestionsInClass(classId);
@@ -57,6 +59,9 @@ public class FeedbackController {
         }
     }
 
-
-
+    @GetMapping("/send-email/{classId}")
+    public ResponseEntity<?> sendFeedbackForClass(@PathVariable Long classId) {
+        feedbackService.sendFeedbackForClass(classId);
+        return ResponseEntity.ok("Send mail for teacher's class successfull");
+    }
 }
