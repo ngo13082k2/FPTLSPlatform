@@ -25,4 +25,8 @@ public class Wallet {
     @JsonIgnore
 
     private User user;
+    @OneToOne(mappedBy = "wallet", cascade = CascadeType.ALL)
+    @JsonIgnore
+
+    private Teacher teacherName;
 }

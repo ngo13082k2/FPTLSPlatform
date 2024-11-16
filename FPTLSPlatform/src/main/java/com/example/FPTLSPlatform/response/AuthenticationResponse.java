@@ -23,4 +23,7 @@ public class AuthenticationResponse {
     private String phoneNumber;
     private String address;
     private Set<Category> major;
+    private String description;
+    private String avatarImage;
+
 }

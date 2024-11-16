@@ -209,7 +209,7 @@ public class AuthService {
             }
 
             String jwt = jwtUtil.generateToken(userDetails.getUsername(), extractRoles(userDetails));
-            return new AuthenticationResponse(user.getUserName(), user.getEmail(), user.getFullName(), user.getStatus(), jwt, user.getRole(),user.getPhoneNumber(),user.getAddress(),user.getMajor());
+            return new AuthenticationResponse(user.getUserName(), user.getEmail(), user.getFullName(), user.getStatus(), jwt, user.getRole(),user.getPhoneNumber(),user.getAddress(),user.getMajor(),null,null);
 
         } else if (optionalTeacher.isPresent()) {
             Teacher teacher = optionalTeacher.get();
@@ -219,7 +219,7 @@ public class AuthService {
             }
 
             String jwt = jwtUtil.generateToken(userDetails.getUsername(), extractRoles(userDetails));
-            return new AuthenticationResponse(teacher.getTeacherName(), teacher.getEmail(), teacher.getFullName(), teacher.getStatus(), jwt, teacher.getRole(),teacher.getPhoneNumber(),teacher.getAddress(),teacher.getMajor());
+            return new AuthenticationResponse(teacher.getTeacherName(), teacher.getEmail(), teacher.getFullName(), teacher.getStatus(), jwt, teacher.getRole(),teacher.getPhoneNumber(),teacher.getAddress(),teacher.getMajor(),teacher.getDescription(),teacher.getAvatarImage());
 
         } else {
             throw new RuntimeException("User not found");

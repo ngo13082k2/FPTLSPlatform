@@ -119,6 +119,9 @@ public class CourseService implements ICourseService {
                 .categories(category)
                 .build();
     }
+    public long getTotalCourses() {
+        return courseRepository.count();
+    }
 
     private CourseDTO mapEntityToDTO(Course course) {
         return CourseDTO.builder()

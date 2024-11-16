@@ -2,9 +2,11 @@ package com.example.FPTLSPlatform.service.impl;
 
 import com.example.FPTLSPlatform.dto.TransactionHistoryDTO;
 import com.example.FPTLSPlatform.dto.WalletStatisticDTO;
+import com.example.FPTLSPlatform.model.Teacher;
 import com.example.FPTLSPlatform.model.TransactionHistory;
 import com.example.FPTLSPlatform.model.User;
 import com.example.FPTLSPlatform.model.Wallet;
+import com.example.FPTLSPlatform.repository.TeacherRepository;
 import com.example.FPTLSPlatform.repository.TransactionHistoryRepository;
 import com.example.FPTLSPlatform.repository.UserRepository;
 import com.example.FPTLSPlatform.repository.WalletRepository;
@@ -23,11 +25,13 @@ public class WalletService implements IWalletService {
     private final UserRepository userRepository;
     private final TransactionHistoryRepository transactionHistoryRepository;
     private final WalletRepository walletRepository;
+    private final TeacherRepository teacherRepository;
 
-    public WalletService(UserRepository userRepository, TransactionHistoryRepository transactionHistoryRepository, WalletRepository walletRepository) {
+    public WalletService(UserRepository userRepository, TransactionHistoryRepository transactionHistoryRepository, WalletRepository walletRepository, TeacherRepository teacherRepository) {
         this.userRepository = userRepository;
         this.transactionHistoryRepository = transactionHistoryRepository;
         this.walletRepository = walletRepository;
+        this.teacherRepository = teacherRepository;
     }
 
     public Wallet getWalletByUserName() throws Exception {
@@ -47,24 +51,67 @@ public class WalletService implements IWalletService {
             throw new Exception("Không tìm thấy người dùng: " + username);
         }
     }
+    public Wallet getWalletByTeacherName() throws Exception {
+        String username = getCurrentUsername();
+        Optional<Teacher> optionalTeacher = teacherRepository.findById(username);
+
+        if (optionalTeacher.isPresent()) {
+            Teacher teacher = optionalTeacher.get();
+
+            if (teacher.getWallet() != null) {
+                return teacher.getWallet();
+            } else {
+                throw new Exception("Giáo viên không có ví.");
+            }
+        } else {
+            throw new Exception("Không tìm thấy giáo viên: " + username);
+        }
+    }
 
     public List<TransactionHistoryDTO> getTransactionHistory() throws Exception {
         String username = getCurrentUsername();
 
-        User user = userRepository.findByUserName(username)
-                .orElseThrow(() -> new Exception("Không tìm thấy người dùng"));
+        // Kiểm tra xem username có phải là User hay không
+        User user = userRepository.findByUserName(username).orElse(null);
 
-        List<TransactionHistory> histories = transactionHistoryRepository.findByUser(user);
-        return histories.stream().map(this::mapToDTO).collect(Collectors.toList());
+        if (user != null) {
+            List<TransactionHistory> histories = transactionHistoryRepository.findByUser(user);
+            return histories.stream().map(this::mapToDTOUser).collect(Collectors.toList());
+        } else {
+            // Nếu không là User, kiểm tra xem username có phải là Teacher không
+            Teacher teacher = teacherRepository.findByTeacherName(username)
+                    .orElseThrow(() -> new Exception("Không tìm thấy người dùng hoặc giáo viên"));
+
+            List<TransactionHistory> histories = transactionHistoryRepository.findByTeacher(teacher);
+            return histories.stream().map(this::mapToDTOTeacher).collect(Collectors.toList());
+        }
     }
 
-    private TransactionHistoryDTO mapToDTO(TransactionHistory history) {
+    private TransactionHistoryDTO mapToDTOUser(TransactionHistory history) {
+
+
         return new TransactionHistoryDTO(
                 history.getId(),
                 history.getAmount(),
                 history.getTransactionDate(),
                 history.getTransactionBalance(),
                 history.getUser().getUserName(),
+                null,
+                history.getNote()
+
+        );
+    }
+
+    private TransactionHistoryDTO mapToDTOTeacher(TransactionHistory history) {
+
+
+        return new TransactionHistoryDTO(
+                history.getId(),
+                history.getAmount(),
+                history.getTransactionDate(),
+                history.getTransactionBalance(),
+               null,
+                history.getTeacher().getTeacherName(),
                 history.getNote()
 
         );

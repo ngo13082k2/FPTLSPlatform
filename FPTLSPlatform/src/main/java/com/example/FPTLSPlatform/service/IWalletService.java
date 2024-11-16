@@ -15,4 +15,5 @@ public interface IWalletService {
     void refundToWallet(Long amount) throws Exception;
 
     List<WalletStatisticDTO> getWalletStatistic(Integer year);
+    Wallet getWalletByTeacherName() throws Exception;
 }

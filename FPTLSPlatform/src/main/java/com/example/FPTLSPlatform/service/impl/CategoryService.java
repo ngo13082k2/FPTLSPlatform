@@ -41,6 +41,9 @@ public class CategoryService implements ICategoryService {
         List<Category> categories = categoryRepository.findAll();
         return categories.stream().map(this::mapToDto).collect(Collectors.toList());
     }
+    public long getTotalCategories() {
+        return categoryRepository.count();
+    }
     private CategoryDTO mapToDto(Category category) {
         return new CategoryDTO(
                 category.getCategoryId(),

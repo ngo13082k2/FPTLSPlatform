@@ -370,6 +370,7 @@ public class OrderService implements IOrderService {
         transactionHistory.setAmount(amount);
         transactionHistory.setTransactionDate(LocalDateTime.now());
         transactionHistory.setUser(wallet.getUser());
+        transactionHistory.setTeacher(wallet.getTeacherName());
         transactionHistory.setTransactionBalance(wallet.getBalance());
 
         transactionHistoryRepository.save(transactionHistory);

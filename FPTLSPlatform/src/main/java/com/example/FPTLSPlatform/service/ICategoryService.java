@@ -9,4 +9,5 @@ public interface ICategoryService {
     CategoryDTO createCategory(CategoryDTO categoryDTO);
     CategoryDTO updateCategory(Long id, CategoryDTO categoryDTO);
     List<CategoryDTO> getAllCategories();
+    long getTotalCategories();
 }
