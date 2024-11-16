@@ -5,6 +5,8 @@ import com.example.FPTLSPlatform.dto.ListTotalOrderDTO;
 import com.example.FPTLSPlatform.dto.TotalOrderDTO;
 import com.example.FPTLSPlatform.dto.WalletStatisticDTO;
 import com.example.FPTLSPlatform.model.SystemTransactionHistory;
+import com.example.FPTLSPlatform.model.Teacher;
+import com.example.FPTLSPlatform.model.User;
 import com.example.FPTLSPlatform.model.enums.ClassStatus;
 import com.example.FPTLSPlatform.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -147,6 +149,34 @@ public class AdminController {
     public ResponseEntity<Long> getTotalCourses() {
         long totalCourses = courseService.getTotalCourses();
         return ResponseEntity.ok(totalCourses);
+    }
+    @GetMapping("/students")
+    public ResponseEntity<List<User>> getStudents() {
+        List<User> students = userService.getUsersByRoleStudent();
+        return ResponseEntity.ok(students);
+    }
+
+    @PutMapping("/{username}/deactivate")
+    public ResponseEntity<User> deactivateUser(@PathVariable String username) {
+        User updatedUser = userService.deactivateUser(username);
+        return ResponseEntity.ok(updatedUser);
+    }
+
+    @PostMapping("/staff")
+    public ResponseEntity<User> createStaff(@RequestBody User user) {
+        User createdUser = userService.createStaffUser(user);
+        return ResponseEntity.ok(createdUser);
+    }
+    @GetMapping("/{teacherName}")
+    public ResponseEntity<Teacher> getTeacher(@PathVariable String teacherName) {
+        Teacher teacher = userService.getTeacher(teacherName);
+        return ResponseEntity.ok(teacher);
+    }
+
+    @PutMapping("/{teacherName}/deactivate")
+    public ResponseEntity<Teacher> deactivateTeacher(@PathVariable String teacherName) {
+        Teacher updatedTeacher = userService.deactivateTeacher(teacherName);
+        return ResponseEntity.ok(updatedTeacher);
     }
 
 }

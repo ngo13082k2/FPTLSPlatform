@@ -1,6 +1,7 @@
 package com.example.FPTLSPlatform.service.impl;
 
 import com.example.FPTLSPlatform.model.SystemWallet;
+import com.example.FPTLSPlatform.model.Teacher;
 import com.example.FPTLSPlatform.model.User;
 import com.example.FPTLSPlatform.model.enums.Role;
 import com.example.FPTLSPlatform.repository.SystemWalletRepository;
@@ -10,8 +11,11 @@ import com.example.FPTLSPlatform.service.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 
@@ -49,6 +53,44 @@ public class UserService implements IUserService {
         userCountByRole.put("TOTAL_USERS", totalUsers);
 
         return userCountByRole;
+    }
+    public List<User> getUsersByRoleStudent() {
+        return userRepository.findByRole(Role.STUDENT).stream()
+                .map(user -> {
+                    User response = new User();
+                    response.setUserName(user.getUserName());
+                    response.setStatus(user.getStatus());
+                    response.setRole(user.getRole());
+                    return response;
+                }).collect(Collectors.toList());
+    }
+    public User deactivateUser(String username) {
+        User user = userRepository.findByUserName(username)
+                .orElseThrow(() -> new RuntimeException("User not found: " + username));
+        user.setStatus("DEACTIVATED");
+        return userRepository.save(user);
+    }
+    public User createStaffUser(User user) {
+        if (userRepository.existsByUserName(user.getUserName())) {
+            throw new RuntimeException("Username already exists");
+        }
+        user.setRole(Role.STAFF);
+        user.setCreatedDate(LocalDateTime.now());
+        user.setStatus("ACTIVE");
+        return userRepository.save(user);
+    }
+    public Teacher getTeacher(String teacherName) {
+        return teacherRepository.findByTeacherName(teacherName)
+                .orElseThrow(() -> new RuntimeException("Teacher not found with name: " + teacherName));
+    }
+
+
+    public Teacher deactivateTeacher(String teacherName) {
+        Teacher teacher = teacherRepository.findByTeacherName(teacherName)
+                .orElseThrow(() -> new RuntimeException("Teacher not found with name: " + teacherName));
+        teacher.setStatus("DEACTIVATED");
+        teacher.setModifiedDate(LocalDateTime.now());
+        return teacherRepository.save(teacher);
     }
 
 }
