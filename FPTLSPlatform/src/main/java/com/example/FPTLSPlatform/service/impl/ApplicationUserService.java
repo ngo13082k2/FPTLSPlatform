@@ -88,13 +88,14 @@ public class ApplicationUserService implements IApplicationUserService {
                 .note("WithdrawalRequest")
                 .build();
         transactionHistoryRepository.save(transactionHistory);
+        ApplicationUser applicationUser = mapWithdrawalDtoToEntity(withdrawalRequestDto, applicationType, userOrTeacher);
         notificationService.createNotification(NotificationDTO.builder()
                 .title("Create withdraw application successful")
                 .description("Create withdraw application successful")
                 .name("Application Notification")
+                .username(applicationUser.getUser().getUserName())
                 .type("Send application successful")
                 .build());
-        ApplicationUser applicationUser = mapWithdrawalDtoToEntity(withdrawalRequestDto, applicationType, userOrTeacher);
         applicationUserRepository.save(applicationUser);
     }
 
@@ -139,6 +140,7 @@ public class ApplicationUserService implements IApplicationUserService {
                 .title("Cancel withdraw application")
                 .description("Your withdraw application cancelled")
                 .name("Application Notification")
+                .username(applicationUser.getUser().getUserName())
                 .type("Cancel application")
                 .build());
         applicationUser.setStatus("Canceled");
@@ -157,6 +159,7 @@ public class ApplicationUserService implements IApplicationUserService {
                 .title("Application approved")
                 .description("Your application has been approved")
                 .name("Notification")
+                .username(applicationUser.getUser().getUserName())
                 .type("Approve application")
                 .build());
         sendEmail(applicationUser);
@@ -185,6 +188,7 @@ public class ApplicationUserService implements IApplicationUserService {
                 .title("Application rejected")
                 .description("Your application has been rejected")
                 .name("Notification")
+                .username(applicationUser.getUser().getUserName())
                 .type("Rejected application")
                 .build());
         sendEmail(applicationUser);
@@ -234,6 +238,7 @@ public class ApplicationUserService implements IApplicationUserService {
         notificationService.createNotification(NotificationDTO.builder()
                 .title("Withdraw successful")
                 .description("Rút tiền thành công")
+                .username(applicationUser.getUser().getUserName())
                 .name("Notification")
                 .type("Withdraw successful")
                 .build());
@@ -260,6 +265,7 @@ public class ApplicationUserService implements IApplicationUserService {
                 .title("Create application successful")
                 .description("Create application successful")
                 .name("Application Notification")
+                .username(applicationUser.getUser().getUserName())
                 .type("Send application successful")
                 .build());
         applicationUserRepository.save(applicationUser);
