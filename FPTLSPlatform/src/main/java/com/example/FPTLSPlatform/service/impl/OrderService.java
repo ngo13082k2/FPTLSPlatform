@@ -161,8 +161,8 @@ public class OrderService implements IOrderService {
 
         // Tạo thông báo
         notificationService.createNotification(NotificationDTO.builder()
-                .title("Order " + order.getOrderId() + " has been booked")
-                .description("Your class " + scheduleClass.getName() + " has been successfully booked")
+                .title("Class " + scheduleClass.getName() + " has been booked.")
+                .description("Class " + scheduleClass.getName() + " has been successfully booked. Your new balance " + wallet.getBalance() + "( - " + order.getTotalPrice() + ")")
                 .username(order.getUser().getUserName())
                 .type("Create Order")
                 .name("Order Notification")
@@ -211,13 +211,14 @@ public class OrderService implements IOrderService {
                 walletService.refundToWallet(order.getTotalPrice());
                 order.setStatus(OrderStatus.CANCELLED);
                 orderRepository.save(order);
+                Wallet wallet = walletService.getWalletByUserName();
                 Context context = new Context();
                 context.setVariable("username", order.getUser().getUserName());
                 context.setVariable("class", scheduledClass);
                 emailService.sendEmail(order.getUser().getEmail(), "Cancelled booking successful", "cancel-email", context);
                 notificationService.createNotification(NotificationDTO.builder()
-                        .title("Order " + order.getOrderId() + " has been cancelled")
-                        .description("Your class " + scheduledClass.getName() + " has been cancelled")
+                        .title("Class " + scheduledClass.getName() + " has been cancelled")
+                        .description("Class " + scheduledClass.getName() + " has been cancelled and had refunded. Your new balance " + wallet.getBalance() + "( + " + order.getTotalPrice() + ")")
                         .name("Notification")
                         .type("Cancel Order")
                         .username(order.getUser().getUserName())
@@ -318,7 +319,7 @@ public class OrderService implements IOrderService {
             transactionHistory.setNote("Refunded");
             notificationService.createNotification(NotificationDTO.builder()
                     .title("Refund for Order " + order.getOrderId() + " has been processed")
-                    .description("Your class " + cancelledClass.getName() + " has been canceled, and a refund has been initiated.")
+                    .description("Your class " + cancelledClass.getName() + " has been canceled, and a refund has been initiated. Your new balance " + wallet.getBalance() + "( + " + order.getTotalPrice() + ")")
                     .name("Notification")
                     .type("Refund Notification")
                     .username(order.getUser().getUserName())

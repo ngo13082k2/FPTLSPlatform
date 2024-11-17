@@ -21,35 +21,39 @@ import java.util.Optional;
 @Service
 public class ApplicationUserService implements IApplicationUserService {
 
-    @Autowired
-    private ApplicationUserRepository applicationUserRepository;
+    private final ApplicationUserRepository applicationUserRepository;
+
+    private final ApplicationTypeRepository applicationTypeRepository;
+
+    private final UserRepository userRepository;
+
+    private final WalletRepository walletRepository;
+
+    private final SystemTransactionHistoryRepository systemTransactionHistoryRepository;
+
+    private final SystemWalletRepository systemWalletRepository;
+
+    private final TransactionHistoryRepository transactionHistoryRepository;
+
+    private final TeacherRepository teacherRepository;
+
+    private final NotificationService notificationService;
+
+    private final IEmailService emailService;
 
     @Autowired
-    private ApplicationTypeRepository applicationTypeRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private WalletRepository walletRepository;
-
-    @Autowired
-    private SystemTransactionHistoryRepository systemTransactionHistoryRepository;
-
-    @Autowired
-    private SystemWalletRepository systemWalletRepository;
-
-    @Autowired
-    private TransactionHistoryRepository transactionHistoryRepository;
-
-    @Autowired
-    private TeacherRepository teacherRepository;
-
-    @Autowired
-    private NotificationService notificationService;
-
-    @Autowired
-    private IEmailService emailService;
+    public ApplicationUserService(ApplicationUserRepository applicationUserRepository, ApplicationTypeRepository applicationTypeRepository, UserRepository userRepository, WalletRepository walletRepository, SystemTransactionHistoryRepository systemTransactionHistoryRepository, SystemWalletRepository systemWalletRepository, TransactionHistoryRepository transactionHistoryRepository, TeacherRepository teacherRepository, NotificationService notificationService, IEmailService emailService) {
+        this.applicationUserRepository = applicationUserRepository;
+        this.applicationTypeRepository = applicationTypeRepository;
+        this.userRepository = userRepository;
+        this.walletRepository = walletRepository;
+        this.systemTransactionHistoryRepository = systemTransactionHistoryRepository;
+        this.systemWalletRepository = systemWalletRepository;
+        this.transactionHistoryRepository = transactionHistoryRepository;
+        this.teacherRepository = teacherRepository;
+        this.notificationService = notificationService;
+        this.emailService = emailService;
+    }
 
     public void processWithdrawalRequest(WithdrawalRequestDTO withdrawalRequestDto) {
         ApplicationType applicationType = applicationTypeRepository.findById(withdrawalRequestDto.getApplicationTypeId())
@@ -89,13 +93,23 @@ public class ApplicationUserService implements IApplicationUserService {
                 .build();
         transactionHistoryRepository.save(transactionHistory);
         ApplicationUser applicationUser = mapWithdrawalDtoToEntity(withdrawalRequestDto, applicationType, userOrTeacher);
-        notificationService.createNotification(NotificationDTO.builder()
-                .title("Create withdraw application successful")
-                .description("Create withdraw application successful")
-                .name("Application Notification")
-                .username(applicationUser.getUser().getUserName())
-                .type("Send application successful")
-                .build());
+        if (applicationUser.getUser() != null) {
+            notificationService.createNotification(NotificationDTO.builder()
+                    .title("Create withdraw application successful")
+                    .description("Create withdraw " + transactionHistory.getAmount() + " successful. Remaining account" + transactionHistory.getTransactionBalance())
+                    .name("Application Notification")
+                    .username(applicationUser.getUser().getUserName())
+                    .type("Withdraw application")
+                    .build());
+        } else {
+            notificationService.createNotification(NotificationDTO.builder()
+                    .title("Create withdraw application successful")
+                    .description("Create withdraw " + transactionHistory.getAmount() + " successful. Remaining account" + transactionHistory.getTransactionBalance())
+                    .name("Application Notification")
+                    .username(applicationUser.getTeacher().getTeacherName())
+                    .type("Withdraw application")
+                    .build());
+        }
         applicationUserRepository.save(applicationUser);
     }
 
@@ -136,13 +150,23 @@ public class ApplicationUserService implements IApplicationUserService {
                 .note("WithdrawalRequest Canceled")
                 .build();
         transactionHistoryRepository.save(transactionHistory);
-        notificationService.createNotification(NotificationDTO.builder()
-                .title("Cancel withdraw application")
-                .description("Your withdraw application cancelled")
-                .name("Application Notification")
-                .username(applicationUser.getUser().getUserName())
-                .type("Cancel application")
-                .build());
+        if (applicationUser.getUser() != null) {
+            notificationService.createNotification(NotificationDTO.builder()
+                    .title("Cancel withdraw application successful")
+                    .description("Cancel withdraw " + transactionHistory.getAmount() + " successful. Remaining account" + transactionHistory.getTransactionBalance())
+                    .name("Application Notification")
+                    .username(applicationUser.getUser().getUserName())
+                    .type("Withdraw application")
+                    .build());
+        } else {
+            notificationService.createNotification(NotificationDTO.builder()
+                    .title("Cancel withdraw application successful")
+                    .description("Cancel withdraw " + transactionHistory.getAmount() + " successful. Remaining account" + transactionHistory.getTransactionBalance())
+                    .name("Application Notification")
+                    .username(applicationUser.getTeacher().getTeacherName())
+                    .type("Withdraw application")
+                    .build());
+        }
         applicationUser.setStatus("Canceled");
         applicationUserRepository.save(applicationUser);
     }
@@ -157,10 +181,10 @@ public class ApplicationUserService implements IApplicationUserService {
         applicationUserRepository.save(applicationUser);
         notificationService.createNotification(NotificationDTO.builder()
                 .title("Application approved")
-                .description("Your application has been approved")
+                .description("Your application " + applicationUser.getName() + " has been approved.")
                 .name("Notification")
                 .username(applicationUser.getUser().getUserName())
-                .type("Approve application")
+                .type("Other application")
                 .build());
         sendEmail(applicationUser);
         return "Your application has been approved.";
@@ -186,10 +210,10 @@ public class ApplicationUserService implements IApplicationUserService {
         applicationUserRepository.save(applicationUser);
         notificationService.createNotification(NotificationDTO.builder()
                 .title("Application rejected")
-                .description("Your application has been rejected")
+                .description("Your application " + applicationUser.getName() + " has been rejected")
                 .name("Notification")
                 .username(applicationUser.getUser().getUserName())
-                .type("Rejected application")
+                .type("Other application")
                 .build());
         sendEmail(applicationUser);
         return "Your application has been rejected.";
@@ -237,10 +261,10 @@ public class ApplicationUserService implements IApplicationUserService {
         applicationUserRepository.save(applicationUser);
         notificationService.createNotification(NotificationDTO.builder()
                 .title("Withdraw successful")
-                .description("Rút tiền thành công")
+                .description("Withdraw successfully. Your bank account added" + applicationUser.getAmountFromDescription())
                 .username(applicationUser.getUser().getUserName())
                 .name("Notification")
-                .type("Withdraw successful")
+                .type("Withdraw application")
                 .build());
         Context context = new Context();
         context.setVariable("systemTransactionHistory", systemTransactionHistory);
@@ -266,7 +290,7 @@ public class ApplicationUserService implements IApplicationUserService {
                 .description("Create application successful")
                 .name("Application Notification")
                 .username(applicationUser.getUser().getUserName())
-                .type("Send application successful")
+                .type("Send application")
                 .build());
         applicationUserRepository.save(applicationUser);
     }
