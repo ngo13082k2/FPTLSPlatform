@@ -20,6 +20,8 @@ public interface IApplicationUserService {
     String rejectApplication(Long applicationId);
 
     String completeWithdrawalRequest(Long applicationUserId);
+
     void cancelWithdrawalRequest(Long withdrawalRequestId);
+
     List<ApplicationUser> getApplicationUserByUserName();
 }

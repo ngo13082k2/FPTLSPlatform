@@ -11,6 +11,8 @@ import java.time.LocalDateTime;
 @Setter
 @Builder
 public class NotificationDTO {
+    private Long id;
+
     private String name;
 
     private String title;
@@ -27,6 +29,7 @@ public class NotificationDTO {
 
     public static NotificationDTO fromEntity(Notification notification) {
         return NotificationDTO.builder()
+                .id(notification.getNotificationId())
                 .name(notification.getName())
                 .title(notification.getTitle())
                 .description(notification.getDescription())

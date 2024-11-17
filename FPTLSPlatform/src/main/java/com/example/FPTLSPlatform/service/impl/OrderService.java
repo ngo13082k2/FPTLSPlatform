@@ -162,7 +162,7 @@ public class OrderService implements IOrderService {
         // Tạo thông báo
         notificationService.createNotification(NotificationDTO.builder()
                 .title("Order " + order.getOrderId() + " has been booked")
-                .description("Your order " + order.getOrderId() + " has been successfully booked")
+                .description("Your class " + scheduleClass.getName() + " has been successfully booked")
                 .username(order.getUser().getUserName())
                 .type("Create Order")
                 .name("Order Notification")
@@ -217,7 +217,7 @@ public class OrderService implements IOrderService {
                 emailService.sendEmail(order.getUser().getEmail(), "Cancelled booking successful", "cancel-email", context);
                 notificationService.createNotification(NotificationDTO.builder()
                         .title("Order " + order.getOrderId() + " has been cancelled")
-                        .description("Order" + order.getOrderId() + "has been cancelled")
+                        .description("Your class " + scheduledClass.getName() + " has been cancelled")
                         .name("Notification")
                         .type("Cancel Order")
                         .username(order.getUser().getUserName())
@@ -318,7 +318,7 @@ public class OrderService implements IOrderService {
             transactionHistory.setNote("Refunded");
             notificationService.createNotification(NotificationDTO.builder()
                     .title("Refund for Order " + order.getOrderId() + " has been processed")
-                    .description("Your order with ID " + order.getOrderId() + " has been canceled, and a refund has been initiated.")
+                    .description("Your class " + cancelledClass.getName() + " has been canceled, and a refund has been initiated.")
                     .name("Notification")
                     .type("Refund Notification")
                     .username(order.getUser().getUserName())
@@ -376,6 +376,7 @@ public class OrderService implements IOrderService {
         transactionHistoryRepository.save(transactionHistory);
         Context context = new Context();
         context.setVariable("transactionHistory", transactionHistory);
+        context.setVariable("teacherName", wallet.getTeacherName());
         emailService.sendEmail(username, "Transaction", "transaction-email", context);
 
         return transactionHistory;

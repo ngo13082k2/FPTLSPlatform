@@ -88,7 +88,12 @@ public class ApplicationUserService implements IApplicationUserService {
                 .note("WithdrawalRequest")
                 .build();
         transactionHistoryRepository.save(transactionHistory);
-
+        notificationService.createNotification(NotificationDTO.builder()
+                .title("Create withdraw application successful")
+                .description("Create withdraw application successful")
+                .name("Application Notification")
+                .type("Send application successful")
+                .build());
         ApplicationUser applicationUser = mapWithdrawalDtoToEntity(withdrawalRequestDto, applicationType, userOrTeacher);
         applicationUserRepository.save(applicationUser);
     }
@@ -130,7 +135,12 @@ public class ApplicationUserService implements IApplicationUserService {
                 .note("WithdrawalRequest Canceled")
                 .build();
         transactionHistoryRepository.save(transactionHistory);
-
+        notificationService.createNotification(NotificationDTO.builder()
+                .title("Cancel withdraw application")
+                .description("Your withdraw application cancelled")
+                .name("Application Notification")
+                .type("Cancel application")
+                .build());
         applicationUser.setStatus("Canceled");
         applicationUserRepository.save(applicationUser);
     }
@@ -246,6 +256,12 @@ public class ApplicationUserService implements IApplicationUserService {
         Object userOrTeacher = getLoggedInUserOrTeacher();
 
         ApplicationUser applicationUser = mapOtherDtoToEntity(otherRequestDto, applicationType, userOrTeacher);
+        notificationService.createNotification(NotificationDTO.builder()
+                .title("Create application successful")
+                .description("Create application successful")
+                .name("Application Notification")
+                .type("Send application successful")
+                .build());
         applicationUserRepository.save(applicationUser);
     }
 

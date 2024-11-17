@@ -5,6 +5,8 @@ import com.example.FPTLSPlatform.model.Notification;
 import com.example.FPTLSPlatform.service.INotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,6 +20,15 @@ public class NotificationController {
     @Autowired
     public NotificationController(INotificationService notificationService) {
         this.notificationService = notificationService;
+    }
+
+    private String getCurrentUsername() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof UserDetails) {
+            return ((UserDetails) principal).getUsername();
+        } else {
+            return principal.toString();
+        }
     }
 
     @PostMapping("/create")
@@ -44,8 +55,9 @@ public class NotificationController {
         return ResponseEntity.ok("Notification deleted successfully");
     }
 
-    @GetMapping("/user/{username}")
-    public List<NotificationDTO> getNotifications(@PathVariable String username) {
+    @GetMapping("/user/")
+    public List<NotificationDTO> getNotifications() {
+        String username = getCurrentUsername();
         List<Notification> notifications = notificationService.getNotificationByUsername(username);
         return notifications.stream().map(NotificationDTO::fromEntity).collect(Collectors.toList());
     }
