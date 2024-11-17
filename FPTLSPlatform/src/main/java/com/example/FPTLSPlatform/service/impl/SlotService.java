@@ -71,4 +71,5 @@ public class SlotService implements ISlotService {
                 .end(slot.getEndTime())
                 .build();
     }
+    
 }

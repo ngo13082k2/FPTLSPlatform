@@ -1,5 +1,6 @@
 package com.example.FPTLSPlatform.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,10 +21,11 @@ public class Slot {
 
     private String period;
 
+    @JsonFormat(pattern = "HH:mm")
     private LocalTime startTime;
 
+    @JsonFormat(pattern = "HH:mm")
     private LocalTime endTime;
-
 }
 
 
