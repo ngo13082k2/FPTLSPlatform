@@ -171,9 +171,25 @@ public class FeedbackService implements IFeedbackService {
                 .mapToDouble(summary -> (double) summary.get("averageRating"))
                 .sum();
         double averageRating = feedbackSummary.isEmpty() ? 0 : totalAverageRating / feedbackSummary.size();
+        List<Feedback> feedbacks = feedbackRepository.findByClassEntityClassId(classId);
+
+        if (feedbacks.isEmpty()) {
+            throw new IllegalArgumentException("No feedback found for class ID: " + classId);
+        }
+
+        List<FeedbackDTO> feedbackDTOS = feedbacks.stream().map(feedback -> {
+            FeedbackDTO responseDTO = new FeedbackDTO();
+            responseDTO.setStudentUsername(feedback.getStudent().getUserName());
+            responseDTO.setQuestionId(feedback.getFeedbackQuestion().getId());
+            responseDTO.setRating(feedback.getRating());
+            responseDTO.setComment(feedback.getComment());
+            return responseDTO;
+        }).toList();
+
         Context context = new Context();
         context.setVariable("teacherName", clazz.getTeacher().getTeacherName());
         context.setVariable("feedbackSummary", averageRating);
+        context.setVariable("feedbacks", feedbackDTOS);
         emailService.sendEmail(clazz.getTeacher().getTeacherName(), "Send feedback for teacher's class successful", "feedback-email", context);
 
     }

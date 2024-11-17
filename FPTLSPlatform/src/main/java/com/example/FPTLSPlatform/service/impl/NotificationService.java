@@ -5,7 +5,6 @@ import com.example.FPTLSPlatform.dto.NotificationDTO;
 import com.example.FPTLSPlatform.model.Notification;
 import com.example.FPTLSPlatform.repository.NotificationRepository;
 import com.example.FPTLSPlatform.service.INotificationService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -58,5 +57,14 @@ public class NotificationService implements INotificationService {
         Notification notification = getNotificationById(notificationId);
         notification.setReadStatus(true);
         notificationRepository.save(notification);
+    }
+
+    @Override
+    public void markAllAsRead(String username) {
+        List<Notification> notifications = getNotificationByUsername(username);
+        for (Notification notification : notifications) {
+            notification.setReadStatus(true);
+        }
+        notificationRepository.saveAll(notifications);
     }
 }

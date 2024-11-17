@@ -38,8 +38,25 @@
 </head>
 <body>
 <h3>Dear <span th:text="${teacherName}">User</span>,</h3>
-<p>This is your class's feedback:</p>
-<p th:text="${feedbackSummary}">0.0</p>
+<p>The feedback for your class is summarized as follows:</p>
+<p th:text="${feedbackSummary}"><strong>Average Rating:</strong> 0.0</p>
+<h2>Feedback Details:</h2>
+<table>
+    <thead>
+    <tr>
+        <th>Student</th>
+        <th>Rating</th>
+        <th>Comment</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="feedback : ${feedbacks}">
+        <td th:text="${feedback.getStudentUsername()}">Student Name</td>
+        <td th:text="${feedback.getRating()}">Rating</td>
+        <td th:text="${feedback.getComment()}">Comment</td>
+    </tr>
+    </tbody>
+</table>
 <p>Thank you for choosing our platform!</p>
 <p>Best regards,</p>
 <p>FPT Learning Support</p>

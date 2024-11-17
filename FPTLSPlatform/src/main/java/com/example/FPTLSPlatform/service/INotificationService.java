@@ -17,4 +17,6 @@ public interface INotificationService {
     List<Notification> getNotificationByUsername(String username);
 
     void markAsRead(Long notificationId);
+
+    void markAllAsRead(String username);
 }
