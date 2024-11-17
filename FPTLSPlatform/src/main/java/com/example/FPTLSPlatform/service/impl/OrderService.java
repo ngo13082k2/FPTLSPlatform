@@ -162,7 +162,7 @@ public class OrderService implements IOrderService {
         // Tạo thông báo
         notificationService.createNotification(NotificationDTO.builder()
                 .title("Class " + scheduleClass.getName() + " has been booked.")
-                .description("Class " + scheduleClass.getName() + " has been successfully booked. Your new balance " + wallet.getBalance() + "( - " + order.getTotalPrice() + ")")
+                .description("Class " + scheduleClass.getName() + " has been successfully booked. Your new balance " + String.format("%.2f", Math.abs(wallet.getBalance())) + "(-" + order.getTotalPrice() + ")")
                 .username(order.getUser().getUserName())
                 .type("Create Order")
                 .name("Order Notification")
@@ -218,7 +218,7 @@ public class OrderService implements IOrderService {
                 emailService.sendEmail(order.getUser().getEmail(), "Cancelled booking successful", "cancel-email", context);
                 notificationService.createNotification(NotificationDTO.builder()
                         .title("Class " + scheduledClass.getName() + " has been cancelled")
-                        .description("Class " + scheduledClass.getName() + " has been cancelled and had refunded. Your new balance " + wallet.getBalance() + "( + " + order.getTotalPrice() + ")")
+                        .description("Class " + scheduledClass.getName() + " has been cancelled and had refunded. Your new balance " + String.format("%.2f", Math.abs(wallet.getBalance())) + "(+" + order.getTotalPrice() + ")")
                         .name("Notification")
                         .type("Cancel Order")
                         .username(order.getUser().getUserName())
@@ -319,7 +319,7 @@ public class OrderService implements IOrderService {
             transactionHistory.setNote("Refunded");
             notificationService.createNotification(NotificationDTO.builder()
                     .title("Refund for Order " + order.getOrderId() + " has been processed")
-                    .description("Your class " + cancelledClass.getName() + " has been canceled, and a refund has been initiated. Your new balance " + wallet.getBalance() + "( + " + order.getTotalPrice() + ")")
+                    .description("Your class " + cancelledClass.getName() + " has been canceled, and a refund has been initiated. Your new balance " + String.format("%.2f", Math.abs(wallet.getBalance())) + "( + " + order.getTotalPrice() + ")")
                     .name("Notification")
                     .type("Refund Notification")
                     .username(order.getUser().getUserName())

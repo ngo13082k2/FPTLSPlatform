@@ -96,7 +96,7 @@ public class ApplicationUserService implements IApplicationUserService {
         if (applicationUser.getUser() != null) {
             notificationService.createNotification(NotificationDTO.builder()
                     .title("Create withdraw application successful")
-                    .description("Create withdraw " + transactionHistory.getAmount() + " successful. Remaining account" + transactionHistory.getTransactionBalance())
+                    .description("Create withdraw " + String.format("%.2f", Math.abs(transactionHistory.getAmount())) + " successful. Remaining account " + String.format("%.2f", Math.abs(transactionHistory.getTransactionBalance())))
                     .name("Application Notification")
                     .username(applicationUser.getUser().getUserName())
                     .type("Withdraw application")
@@ -104,7 +104,7 @@ public class ApplicationUserService implements IApplicationUserService {
         } else {
             notificationService.createNotification(NotificationDTO.builder()
                     .title("Create withdraw application successful")
-                    .description("Create withdraw " + transactionHistory.getAmount() + " successful. Remaining account" + transactionHistory.getTransactionBalance())
+                    .description("Create withdraw " + String.format("%.2f", Math.abs(transactionHistory.getAmount())) + " successful. Remaining account " + String.format("%.2f", Math.abs(transactionHistory.getTransactionBalance())))
                     .name("Application Notification")
                     .username(applicationUser.getTeacher().getTeacherName())
                     .type("Withdraw application")
@@ -153,7 +153,10 @@ public class ApplicationUserService implements IApplicationUserService {
         if (applicationUser.getUser() != null) {
             notificationService.createNotification(NotificationDTO.builder()
                     .title("Cancel withdraw application successful")
-                    .description("Cancel withdraw " + transactionHistory.getAmount() + " successful. Remaining account" + transactionHistory.getTransactionBalance())
+                    .description("Cancel withdraw " +
+                            String.format("%.2f", Math.abs(transactionHistory.getAmount())) +
+                            " successful. Remaining account " +
+                            String.format("%.2f", Math.abs(transactionHistory.getTransactionBalance())))
                     .name("Application Notification")
                     .username(applicationUser.getUser().getUserName())
                     .type("Withdraw application")
@@ -161,7 +164,10 @@ public class ApplicationUserService implements IApplicationUserService {
         } else {
             notificationService.createNotification(NotificationDTO.builder()
                     .title("Cancel withdraw application successful")
-                    .description("Cancel withdraw " + transactionHistory.getAmount() + " successful. Remaining account" + transactionHistory.getTransactionBalance())
+                    .description("Cancel withdraw " +
+                            String.format("%.2f", Math.abs(transactionHistory.getAmount())) +
+                            " successful. Remaining account " +
+                            transactionHistory.getTransactionBalance())
                     .name("Application Notification")
                     .username(applicationUser.getTeacher().getTeacherName())
                     .type("Withdraw application")
@@ -261,7 +267,7 @@ public class ApplicationUserService implements IApplicationUserService {
         applicationUserRepository.save(applicationUser);
         notificationService.createNotification(NotificationDTO.builder()
                 .title("Withdraw successful")
-                .description("Withdraw successfully. Your bank account added" + applicationUser.getAmountFromDescription())
+                .description("Withdraw successfully. Your bank account added " + String.format("%.2f", Math.abs(applicationUser.getAmountFromDescription())))
                 .username(applicationUser.getUser().getUserName())
                 .name("Notification")
                 .type("Withdraw application")
@@ -285,13 +291,6 @@ public class ApplicationUserService implements IApplicationUserService {
         Object userOrTeacher = getLoggedInUserOrTeacher();
 
         ApplicationUser applicationUser = mapOtherDtoToEntity(otherRequestDto, applicationType, userOrTeacher);
-        notificationService.createNotification(NotificationDTO.builder()
-                .title("Create application successful")
-                .description("Create application successful")
-                .name("Application Notification")
-                .username(applicationUser.getUser().getUserName())
-                .type("Send application")
-                .build());
         applicationUserRepository.save(applicationUser);
     }
 
