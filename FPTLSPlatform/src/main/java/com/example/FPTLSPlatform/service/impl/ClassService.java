@@ -21,6 +21,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import java.util.Random;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -62,14 +63,19 @@ public class ClassService implements IClassService {
     private static final Logger log = LoggerFactory.getLogger(ClassService.class);
 
     public ClassDTO createClass(ClassDTO classDTO, MultipartFile image) throws IOException {
-        if (classDTO.getName() == null || classDTO.getCode() == null || classDTO.getDescription() == null ||
+        if (classDTO.getName() == null || classDTO.getDescription() == null ||
                 classDTO.getMaxStudents() == null || classDTO.getPrice() == null || classDTO.getCourseCode() == null) {
             throw new RuntimeException("All fields must be provided and cannot be null");
+        }
+
+        if (classDTO.getCode() == null || classDTO.getCode().isEmpty()) {
+            classDTO.setCode(generateUniqueCode());
         }
 
         String teacherName = getCurrentUsername();
         Teacher teacher = teacherRepository.findByTeacherName(teacherName)
                 .orElseThrow(() -> new RuntimeException("Teacher not found"));
+
         if (classDTO.getStartDate() != null && classDTO.getSlotId() != null && classDTO.getDayOfWeek() != null) {
             boolean isDuplicateClass = classRepository.existsByTeacher_TeacherNameAndSlot_SlotIdAndDayOfWeekAndStartDate(
                     teacherName, classDTO.getSlotId(), classDTO.getDayOfWeek(), classDTO.getStartDate());
@@ -97,6 +103,28 @@ public class ClassService implements IClassService {
         Class newClass = mapDTOToEntity(classDTO, course.get(), teacher);
         Class savedClass = classRepository.save(newClass);
         return mapEntityToDTO(savedClass);
+    }
+
+
+    public String generateUniqueCode() {
+        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        StringBuilder code = new StringBuilder();
+        Random random = new Random();
+
+        for (int i = 0; i < 8; i++) {
+            int index = random.nextInt(characters.length());
+            code.append(characters.charAt(index));
+        }
+
+        while (classRepository.existsByCode(code.toString())) {
+            code.setLength(0);
+            for (int i = 0; i < 8; i++) {
+                int index = random.nextInt(characters.length());
+                code.append(characters.charAt(index));
+            }
+        }
+
+        return code.toString();
     }
 
 

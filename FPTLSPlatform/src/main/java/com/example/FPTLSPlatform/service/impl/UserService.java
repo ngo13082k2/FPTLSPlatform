@@ -67,7 +67,15 @@ public class UserService implements IUserService {
     public User deactivateUser(String username) {
         User user = userRepository.findByUserName(username)
                 .orElseThrow(() -> new RuntimeException("User not found: " + username));
-        user.setStatus("DEACTIVATED");
+
+        if ("ACTIVE".equals(user.getStatus())) {
+            user.setStatus("DEACTIVATED");
+        } else if ("DEACTIVATED".equals(user.getStatus())) {
+            user.setStatus("ACTIVE");
+        } else {
+            throw new RuntimeException("User status is neither ACTIVE nor DEACTIVATED: " + user.getStatus());
+        }
+
         return userRepository.save(user);
     }
     public User createStaffUser(User user) {
@@ -88,7 +96,15 @@ public class UserService implements IUserService {
     public Teacher deactivateTeacher(String teacherName) {
         Teacher teacher = teacherRepository.findByTeacherName(teacherName)
                 .orElseThrow(() -> new RuntimeException("Teacher not found with name: " + teacherName));
-        teacher.setStatus("DEACTIVATED");
+
+        if ("ACTIVE".equals(teacher.getStatus())) {
+            teacher.setStatus("DEACTIVATED");
+        } else if ("DEACTIVATED".equals(teacher.getStatus())) {
+            teacher.setStatus("ACTIVE");
+        } else {
+            throw new RuntimeException("Teacher status is neither ACTIVE nor DEACTIVATED: " + teacher.getStatus());
+        }
+
         teacher.setModifiedDate(LocalDateTime.now());
         return teacherRepository.save(teacher);
     }
