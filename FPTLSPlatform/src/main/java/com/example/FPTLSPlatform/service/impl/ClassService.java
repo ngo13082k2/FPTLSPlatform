@@ -111,14 +111,14 @@ public class ClassService implements IClassService {
         StringBuilder code = new StringBuilder();
         Random random = new Random();
 
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < 6; i++) {
             int index = random.nextInt(characters.length());
             code.append(characters.charAt(index));
         }
 
         while (classRepository.existsByCode(code.toString())) {
             code.setLength(0);
-            for (int i = 0; i < 8; i++) {
+            for (int i = 0; i < 6; i++) {
                 int index = random.nextInt(characters.length());
                 code.append(characters.charAt(index));
             }

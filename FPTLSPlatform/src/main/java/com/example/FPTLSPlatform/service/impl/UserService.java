@@ -3,12 +3,16 @@ package com.example.FPTLSPlatform.service.impl;
 import com.example.FPTLSPlatform.model.SystemWallet;
 import com.example.FPTLSPlatform.model.Teacher;
 import com.example.FPTLSPlatform.model.User;
+import com.example.FPTLSPlatform.model.Wallet;
 import com.example.FPTLSPlatform.model.enums.Role;
 import com.example.FPTLSPlatform.repository.SystemWalletRepository;
 import com.example.FPTLSPlatform.repository.TeacherRepository;
 import com.example.FPTLSPlatform.repository.UserRepository;
+import com.example.FPTLSPlatform.repository.WalletRepository;
+import com.example.FPTLSPlatform.request.RegisterRequest;
 import com.example.FPTLSPlatform.service.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -27,6 +31,14 @@ public class UserService implements IUserService {
     private SystemWalletRepository systemWalletRepository;
     @Autowired
     private TeacherRepository  teacherRepository;
+    private final PasswordEncoder passwordEncoder;
+    @Autowired
+    private WalletRepository walletRepository;
+
+    public UserService(PasswordEncoder passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
+    }
+
     public void updateWalletBalance(String username, Double amount) {
         User user = userRepository.findByUserName(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -55,7 +67,9 @@ public class UserService implements IUserService {
         return userCountByRole;
     }
     public List<User> getUsersByRoleStudent() {
-        return userRepository.findByRole(Role.STUDENT).stream()
+        return userRepository.findAll().stream()
+                .filter(user -> user.getRole() == Role.STUDENT)
+                .filter(user -> "ACTIVE".equals(user.getStatus()) || "DEACTIVATED".equals(user.getStatus()))
                 .map(user -> {
                     User response = new User();
                     response.setUserName(user.getUserName());
@@ -64,6 +78,8 @@ public class UserService implements IUserService {
                     return response;
                 }).collect(Collectors.toList());
     }
+
+
     public User deactivateUser(String username) {
         User user = userRepository.findByUserName(username)
                 .orElseThrow(() -> new RuntimeException("User not found: " + username));
@@ -78,19 +94,43 @@ public class UserService implements IUserService {
 
         return userRepository.save(user);
     }
-    public User createStaffUser(User user) {
-        if (userRepository.existsByUserName(user.getUserName())) {
+    public User createStaffUser(RegisterRequest request) {
+        if (userRepository.existsByUserName(request.getUsername())) {
             throw new RuntimeException("Username already exists");
         }
-        user.setRole(Role.STAFF);
-        user.setCreatedDate(LocalDateTime.now());
-        user.setStatus("ACTIVE");
-        return userRepository.save(user);
+
+        Wallet wallet = Wallet.builder()
+                .balance(0.0)
+                .build();
+        walletRepository.save(wallet);
+
+
+        User user = User.builder()
+                .userName(request.getUsername())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword())) // Mã hóa mật khẩu
+                .fullName(request.getFullName())
+                .phoneNumber(request.getPhoneNumber())
+                .createdDate(LocalDateTime.now())
+                .modifiedDate(LocalDateTime.now())
+                .wallet(wallet)
+                .role(Role.STAFF)
+                .status("ACTIVE")
+                .build();
+
+        return userRepository.save(user); // Lưu User cùng Wallet
     }
     public Teacher getTeacher(String teacherName) {
         return teacherRepository.findByTeacherName(teacherName)
                 .orElseThrow(() -> new RuntimeException("Teacher not found with name: " + teacherName));
     }
+    public Map<String, List<Teacher>> getTeachersByStatus() {
+        Map<String, List<Teacher>> result = new HashMap<>();
+        result.put("ACTIVE", teacherRepository.findByStatus("ACTIVE"));
+        result.put("DEACTIVATED", teacherRepository.findByStatus("DEACTIVATED"));
+        return result;
+    }
+
 
 
     public Teacher deactivateTeacher(String teacherName) {

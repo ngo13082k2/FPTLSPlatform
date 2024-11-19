@@ -8,7 +8,9 @@ import com.example.FPTLSPlatform.model.SystemTransactionHistory;
 import com.example.FPTLSPlatform.model.Teacher;
 import com.example.FPTLSPlatform.model.User;
 import com.example.FPTLSPlatform.model.enums.ClassStatus;
+import com.example.FPTLSPlatform.request.RegisterRequest;
 import com.example.FPTLSPlatform.service.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -156,22 +158,35 @@ public class AdminController {
         return ResponseEntity.ok(students);
     }
 
-    @PutMapping("/{username}/deactivate")
+    @PutMapping("/{username}/UserNamedeactivate")
     public ResponseEntity<User> deactivateUser(@PathVariable String username) {
         User updatedUser = userService.deactivateUser(username);
         return ResponseEntity.ok(updatedUser);
     }
 
-    @PostMapping("/staff")
-    public ResponseEntity<User> createStaff(@RequestBody User user) {
-        User createdUser = userService.createStaffUser(user);
-        return ResponseEntity.ok(createdUser);
+
+
+    @PostMapping("/register-staff")
+    public ResponseEntity<User> registerStaff(@RequestBody RegisterRequest request) {
+        try {
+            User newStaff = userService.createStaffUser(request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(newStaff);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
     }
+
     @GetMapping("/{teacherName}")
     public ResponseEntity<Teacher> getTeacher(@PathVariable String teacherName) {
         Teacher teacher = userService.getTeacher(teacherName);
         return ResponseEntity.ok(teacher);
     }
+    @GetMapping
+    public ResponseEntity<Map<String, List<Teacher>>> getTeachersByStatus() {
+        Map<String, List<Teacher>> teachersByStatus = userService.getTeachersByStatus();
+        return ResponseEntity.ok(teachersByStatus);
+    }
+
 
     @PutMapping("/{teacherName}/deactivate")
     public ResponseEntity<Teacher> deactivateTeacher(@PathVariable String teacherName) {

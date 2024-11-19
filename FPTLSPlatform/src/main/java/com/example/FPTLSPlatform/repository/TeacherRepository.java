@@ -4,6 +4,7 @@ import com.example.FPTLSPlatform.model.Teacher;
 import com.example.FPTLSPlatform.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface TeacherRepository extends JpaRepository<Teacher, String> {
@@ -16,4 +17,6 @@ public interface TeacherRepository extends JpaRepository<Teacher, String> {
 
     Teacher getTeacherByTeacherName(String teacherName);
     long count();
+    List<Teacher> findByStatus(String status);
+
 }
