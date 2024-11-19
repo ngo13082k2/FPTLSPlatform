@@ -2,6 +2,7 @@ package com.example.FPTLSPlatform.service.impl;
 
 
 import com.example.FPTLSPlatform.dto.NotificationDTO;
+import com.example.FPTLSPlatform.exception.ResourceNotFoundException;
 import com.example.FPTLSPlatform.model.Notification;
 import com.example.FPTLSPlatform.repository.NotificationRepository;
 import com.example.FPTLSPlatform.service.INotificationService;
@@ -55,16 +56,17 @@ public class NotificationService implements INotificationService {
     @Override
     public void markAsRead(Long notificationId) {
         Notification notification = getNotificationById(notificationId);
+        if (notification == null) {
+            throw new ResourceNotFoundException("Notification not found");
+        }
         notification.setReadStatus(true);
         notificationRepository.save(notification);
     }
 
+
     @Override
     public void markAllAsRead(String username) {
-        List<Notification> notifications = getNotificationByUsername(username);
-        for (Notification notification : notifications) {
-            notification.setReadStatus(true);
-        }
-        notificationRepository.saveAll(notifications);
+        notificationRepository.markAllAsReadByUsername(username);
     }
+
 }

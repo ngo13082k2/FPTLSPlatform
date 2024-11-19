@@ -187,7 +187,7 @@ public class FeedbackService implements IFeedbackService {
         }).toList();
 
         Context context = new Context();
-        context.setVariable("teacherName", clazz.getTeacher().getTeacherName());
+        context.setVariable("class", clazz);
         context.setVariable("feedbackSummary", averageRating);
         context.setVariable("feedbacks", feedbackDTOS);
         emailService.sendEmail(clazz.getTeacher().getTeacherName(), "Send feedback for teacher's class successful", "feedback-email", context);

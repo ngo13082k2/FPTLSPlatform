@@ -5,6 +5,7 @@ import com.example.FPTLSPlatform.model.Notification;
 import com.example.FPTLSPlatform.service.INotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -16,10 +17,12 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/notifications")
 public class NotificationController {
     private final INotificationService notificationService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Autowired
-    public NotificationController(INotificationService notificationService) {
+    public NotificationController(INotificationService notificationService, SimpMessagingTemplate messagingTemplate) {
         this.notificationService = notificationService;
+        this.messagingTemplate = messagingTemplate;
     }
 
     private String getCurrentUsername() {
@@ -65,6 +68,8 @@ public class NotificationController {
     @PutMapping("/{notificationId}/read")
     public ResponseEntity<String> markNotificationAsRead(@PathVariable Long notificationId) {
         notificationService.markAsRead(notificationId);
+        
+        messagingTemplate.convertAndSend("/topic/notifications", "Notification " + notificationId + " marked as read");
         return ResponseEntity.ok("Notification marked as read.");
     }
 
@@ -72,6 +77,8 @@ public class NotificationController {
     public ResponseEntity<String> markAllNotificationAsRead() {
         String username = getCurrentUsername();
         notificationService.markAllAsRead(username);
+
+        messagingTemplate.convertAndSend("/topic/notifications", "All notifications for " + username + " marked as read");
         return ResponseEntity.ok("All notification marked as read.");
     }
 }

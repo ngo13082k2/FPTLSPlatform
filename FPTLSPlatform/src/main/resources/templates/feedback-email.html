@@ -37,8 +37,8 @@
     </style>
 </head>
 <body>
-<h3>Dear <span th:text="${teacherName}">User</span>,</h3>
-<p>The feedback for your class is summarized as follows:</p>
+<h3>Dear <span th:text="${class.getTeacher().getTeacherName()}">User</span>,</h3>
+<p>The feedback for your class <a th:text="${class.getName()}">A</a> is summarized as follows:</p>
 <p th:text="${feedbackSummary}"><strong>Average Rating:</strong> 0.0</p>
 <h2>Feedback Details:</h2>
 <table>
