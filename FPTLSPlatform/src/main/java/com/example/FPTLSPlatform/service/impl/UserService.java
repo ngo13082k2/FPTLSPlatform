@@ -30,7 +30,7 @@ public class UserService implements IUserService {
     @Autowired
     private SystemWalletRepository systemWalletRepository;
     @Autowired
-    private TeacherRepository  teacherRepository;
+    private TeacherRepository teacherRepository;
     private final PasswordEncoder passwordEncoder;
     @Autowired
     private WalletRepository walletRepository;
@@ -46,11 +46,13 @@ public class UserService implements IUserService {
         user.getWallet().setBalance(user.getWallet().getBalance() + amount);
         userRepository.save(user);
     }
+
     public Double getSystemWalletBalance() {
         SystemWallet systemWallet = systemWalletRepository.findById(1L)
                 .orElse(new SystemWallet(1L, 0.0));
         return systemWallet.getTotalAmount();
     }
+
     public Map<String, Long> getUserCountByRole() {
         Map<String, Long> userCountByRole = new HashMap<>();
 
@@ -66,9 +68,10 @@ public class UserService implements IUserService {
 
         return userCountByRole;
     }
-    public List<User> getUsersByRoleStudent() {
+
+    public List<User> getUsersByRoleStudentAndStaff() {
         return userRepository.findAll().stream()
-                .filter(user -> user.getRole() == Role.STUDENT)
+                .filter(user -> user.getRole() == Role.STUDENT || user.getRole() == Role.STAFF)
                 .filter(user -> "ACTIVE".equals(user.getStatus()) || "DEACTIVATED".equals(user.getStatus()))
                 .map(user -> {
                     User response = new User();
@@ -94,6 +97,7 @@ public class UserService implements IUserService {
 
         return userRepository.save(user);
     }
+
     public User createStaffUser(RegisterRequest request) {
         if (userRepository.existsByUserName(request.getUsername())) {
             throw new RuntimeException("Username already exists");
@@ -120,17 +124,18 @@ public class UserService implements IUserService {
 
         return userRepository.save(user); // Lưu User cùng Wallet
     }
+
     public Teacher getTeacher(String teacherName) {
         return teacherRepository.findByTeacherName(teacherName)
                 .orElseThrow(() -> new RuntimeException("Teacher not found with name: " + teacherName));
     }
+
     public Map<String, List<Teacher>> getTeachersByStatus() {
         Map<String, List<Teacher>> result = new HashMap<>();
         result.put("ACTIVE", teacherRepository.findByStatus("ACTIVE"));
         result.put("DEACTIVATED", teacherRepository.findByStatus("DEACTIVATED"));
         return result;
     }
-
 
 
     public Teacher deactivateTeacher(String teacherName) {

@@ -99,6 +99,7 @@ public class AdminController {
         Map<YearMonth, Long> statistics = classService.getClassesByStatusAndMonth(ClassStatus.COMPLETED, year);
         return ResponseEntity.ok(statistics);
     }
+
     @GetMapping("/statistics/canceled")
     public ResponseEntity<Map<YearMonth, Long>> getCanceledClassesByMonth(@RequestParam(required = false) Integer year) {
         Map<YearMonth, Long> statistics = classService.getClassesByStatusAndMonth(ClassStatus.CANCELED, year);
@@ -126,6 +127,7 @@ public class AdminController {
         List<ClassDTO> classes = classService.getClassesByStatusAndMonthDetailed(ClassStatus.COMPLETED, year, month);
         return ResponseEntity.ok(classes);
     }
+
     @GetMapping("/details/canceled")
     public ResponseEntity<List<ClassDTO>> getCanceledClassesByMonthDetailed(
             @RequestParam int year, @RequestParam(required = false) Integer month) {
@@ -142,19 +144,22 @@ public class AdminController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
+
     @GetMapping("/total-categories")
     public ResponseEntity<Long> getTotalCategories() {
         long totalCategories = categoryService.getTotalCategories();
         return ResponseEntity.ok(totalCategories);
     }
+
     @GetMapping("/total-courses")
     public ResponseEntity<Long> getTotalCourses() {
         long totalCourses = courseService.getTotalCourses();
         return ResponseEntity.ok(totalCourses);
     }
-    @GetMapping("/students")
+
+    @GetMapping("/user")
     public ResponseEntity<List<User>> getStudents() {
-        List<User> students = userService.getUsersByRoleStudent();
+        List<User> students = userService.getUsersByRoleStudentAndStaff();
         return ResponseEntity.ok(students);
     }
 
@@ -163,7 +168,6 @@ public class AdminController {
         User updatedUser = userService.deactivateUser(username);
         return ResponseEntity.ok(updatedUser);
     }
-
 
 
     @PostMapping("/register-staff")
@@ -181,6 +185,7 @@ public class AdminController {
         Teacher teacher = userService.getTeacher(teacherName);
         return ResponseEntity.ok(teacher);
     }
+
     @GetMapping
     public ResponseEntity<Map<String, List<Teacher>>> getTeachersByStatus() {
         Map<String, List<Teacher>> teachersByStatus = userService.getTeachersByStatus();

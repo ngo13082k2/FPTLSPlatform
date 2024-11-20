@@ -9,13 +9,20 @@ import java.util.Map;
 
 public interface IUserService {
     void updateWalletBalance(String username, Double amount);
+
     Double getSystemWalletBalance();
+
     Map<String, Long> getUserCountByRole();
-    List<User> getUsersByRoleStudent();
+
     User deactivateUser(String username);
+
     User createStaffUser(RegisterRequest request);
+
     Teacher getTeacher(String teacherName);
+
     Teacher deactivateTeacher(String teacherName);
+
     Map<String, List<Teacher>> getTeachersByStatus();
 
+    List<User> getUsersByRoleStudentAndStaff();
 }
