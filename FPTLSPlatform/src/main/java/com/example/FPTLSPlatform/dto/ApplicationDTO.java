@@ -17,8 +17,6 @@ public class ApplicationDTO {
 
     private String status;
 
-    private String title;
-
     private List<CertificateDTO> certificate;
 
     private String description;

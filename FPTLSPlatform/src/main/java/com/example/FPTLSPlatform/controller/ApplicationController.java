@@ -4,7 +4,6 @@ import com.example.FPTLSPlatform.dto.ApplicationDTO;
 import com.example.FPTLSPlatform.exception.ApplicationAlreadyApprovedException;
 import com.example.FPTLSPlatform.exception.ResourceNotFoundException;
 import com.example.FPTLSPlatform.model.Application;
-import com.example.FPTLSPlatform.model.Certificate;
 import com.example.FPTLSPlatform.service.IApplicationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpSession;
@@ -118,7 +117,6 @@ public class ApplicationController {
         Application application = applicationService.assignApplicationToStaff(applicationId, staffUsername);
         ApplicationDTO applicationDTO = ApplicationDTO.builder()
                 .applicationId(application.getApplicationId())
-                .title(application.getTitle())
                 .description(application.getDescription())
                 .status(application.getStatus())
                 .teacherName(application.getTeacher().getTeacherName())

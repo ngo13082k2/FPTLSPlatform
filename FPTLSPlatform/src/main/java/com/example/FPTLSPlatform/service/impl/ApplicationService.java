@@ -61,7 +61,6 @@ public class ApplicationService implements IApplicationService {
             throw new ApplicationAlreadyApprovedException("Application has already been approved and cannot be modified.");
         }
         Application application = Application.builder()
-                .title(applicationDTO.getTitle())
                 .description(applicationDTO.getDescription())
                 .teacher(teacherRepository.getTeacherByTeacherName(teacher.getTeacherName()))
                 .status("PENDING")
@@ -126,7 +125,6 @@ public class ApplicationService implements IApplicationService {
                 application.setStatus("APPROVED");
                 applicationRepository.save(application);
 
-                context.setVariable("applicationTitle", application.getTitle());
                 context.setVariable("teacherName", application.getTeacher().getTeacherName());
                 emailService.sendEmail(application.getTeacher().getEmail(), "Application Approved", "approval-email", context);
 
@@ -157,7 +155,6 @@ public class ApplicationService implements IApplicationService {
 
         return ApplicationDTO.builder()
                 .applicationId(application.getApplicationId())
-                .title(application.getTitle())
                 .description(application.getDescription())
                 .certificate(certificateDTOList)
                 .status(application.getStatus())
@@ -250,7 +247,6 @@ public class ApplicationService implements IApplicationService {
             teacherRepository.save(teacher);
         }
 
-        context.setVariable("applicationTitle", application.getTitle());
         context.setVariable("teacherName", application.getTeacher().getTeacherName());
         context.setVariable("rejectionReason", rejectionReason);
         emailService.sendEmail(application.getTeacher().getEmail(), "Application Rejected", "reject-email", context);
