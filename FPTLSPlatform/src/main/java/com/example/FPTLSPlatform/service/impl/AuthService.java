@@ -149,19 +149,21 @@ public class AuthService {
     }
 
     public UserResponse registerTeacher(RegisterRequest request, HttpSession session) {
-        if (teacherRepository.existsByTeacherName(request.getUsername())) {
+        if (teacherRepository.existsByTeacherNameAndStatus(request.getUsername(), "ACTIVE")) {
             throw new RuntimeException("Username already exists");
         }
-        if (teacherRepository.existsByPhoneNumber(request.getPhoneNumber())) {
+        if (teacherRepository.existsByPhoneNumberAndStatus(request.getPhoneNumber(), "ACTIVE")) {
             throw new RuntimeException("Phone number already exists");
         }
-        if (teacherRepository.existsByEmail(request.getEmail())) {
+        if (teacherRepository.existsByEmailAndStatus(request.getEmail(), "ACTIVE")) {
             throw new RuntimeException("Email already exists");
         }
+
         Wallet wallet = new Wallet();
         wallet.setBalance(0.0);
         walletRepository.save(wallet);
 
+        // Tạo đối tượng Teacher
         Teacher teacher = Teacher.builder()
                 .teacherName(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
@@ -173,15 +175,27 @@ public class AuthService {
                 .wallet(wallet)
                 .status("PENDING")
                 .build();
+
         List<Category> selectedCategoriesList = categoryRepository.findAllById(request.getCategoryIds());
         Set<Category> selectedCategories = new HashSet<>(selectedCategoriesList);
         teacher.setMajor(selectedCategories);
         teacherRepository.save(teacher);
+
         Set<String> categoryNames = selectedCategories.stream()
                 .map(Category::getName)
                 .collect(Collectors.toSet());
+
         session.setAttribute("teacher", teacher);
-        return new UserResponse(teacher.getTeacherName(), teacher.getEmail(), teacher.getFullName(), teacher.getStatus(), teacher.getPhoneNumber(), teacher.getRole(), categoryNames);
+
+        return new UserResponse(
+                teacher.getTeacherName(),
+                teacher.getEmail(),
+                teacher.getFullName(),
+                teacher.getStatus(),
+                teacher.getPhoneNumber(),
+                teacher.getRole(),
+                categoryNames
+        );
     }
 
 
