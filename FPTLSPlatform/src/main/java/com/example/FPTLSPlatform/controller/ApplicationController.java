@@ -79,7 +79,7 @@ public class ApplicationController {
     @GetMapping("/all")
     public ResponseEntity<Page<ApplicationDTO>> getAllApplications(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "100") int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<ApplicationDTO> applications = applicationService.getAllApplications(pageable);
         return ResponseEntity.ok().body(applications);
@@ -97,7 +97,7 @@ public class ApplicationController {
     @GetMapping("/staff")
     public ResponseEntity<Page<ApplicationDTO>> getApplicationsByStaff(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "100") int size
     ) {
         String staffUsername = getCurrentUsername();
         Pageable pageable = PageRequest.of(page, size);
@@ -124,7 +124,7 @@ public class ApplicationController {
     @GetMapping("/admin/applications/pending")
     public ResponseEntity<Page<ApplicationDTO>> getPendingApplications(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "100") int size
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<ApplicationDTO> pendingApplications = applicationService.getPendingApplications(pageable);
