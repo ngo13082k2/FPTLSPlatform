@@ -38,7 +38,7 @@ public class OrderController {
     @GetMapping()
     public ResponseEntity<ResponseDTO<Page<OrderDTO>>> getAllOrders(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "100") int size) {
         Page<OrderDTO> orders = orderService.getAllOrders(PageRequest.of(page, size));
         ResponseDTO<Page<OrderDTO>> response = new ResponseDTO<>("SUCCESS", "Orders retrieves successfully", orders);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
@@ -63,7 +63,7 @@ public class OrderController {
     @GetMapping("/user")
     public ResponseEntity<ResponseDTO<Page<OrderDTO>>> getOrdersByUser(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "100") int size
     ) throws Exception {
         String username = getCurrentUsername();
         Page<OrderDTO> orders = orderService.getOrdersByUser(username, PageRequest.of(page, size));
@@ -85,7 +85,7 @@ public class OrderController {
     @GetMapping("/classes")
     public ResponseEntity<ResponseDTO<Page<OrderDetailDTO>>> getOrderedClasses(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "100") int size) {
         String username = getCurrentUsername();
         Pageable pageable = PageRequest.of(page, size);
         Page<OrderDetailDTO> classDTOS = orderService.getClassesOrderedByUser(username, pageable);
@@ -96,7 +96,7 @@ public class OrderController {
     @GetMapping("/{username}")
     public ResponseEntity<ResponseDTO<Page<OrderDTO>>> getOrdersByUserId(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "100") int size,
             @PathVariable String username
     ) throws Exception {
         Page<OrderDTO> orders = orderService.getOrdersByUser(username, PageRequest.of(page, size));

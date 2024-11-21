@@ -43,6 +43,8 @@ public class NotificationController {
     @GetMapping
     public ResponseEntity<List<Notification>> getAllNotifications() {
         List<Notification> notifications = notificationService.getAllNotifications();
+        messagingTemplate.convertAndSend("/topic/notifications", notifications);
+
         return ResponseEntity.ok(notifications);
     }
 
@@ -62,13 +64,15 @@ public class NotificationController {
     public List<NotificationDTO> getNotifications() {
         String username = getCurrentUsername();
         List<Notification> notifications = notificationService.getNotificationByUsername(username);
+        messagingTemplate.convertAndSend("/topic/notifications", notifications);
+
         return notifications.stream().map(NotificationDTO::fromEntity).collect(Collectors.toList());
     }
 
     @PutMapping("/{notificationId}/read")
     public ResponseEntity<String> markNotificationAsRead(@PathVariable Long notificationId) {
         notificationService.markAsRead(notificationId);
-        
+
         messagingTemplate.convertAndSend("/topic/notifications", "Notification " + notificationId + " marked as read");
         return ResponseEntity.ok("Notification marked as read.");
     }

@@ -8,9 +8,11 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 
-public interface ApplicationRepository extends JpaRepository<Application,Long> {
-    @Query("SELECT a FROM Application a WHERE a.assignedStaff.userName = :staffUsername")
+public interface ApplicationRepository extends JpaRepository<Application, Long> {
+    @Query("SELECT a FROM Application a WHERE a.assignedStaff.userName = :staffUsername ORDER BY a.applicationId DESC")
     Page<Application> findByAssignedStaffUserName(String staffUsername, Pageable pageable);
+
     Page<Application> findByStatusAndAssignedStaffIsNull(String status, Pageable pageable);
+
     List<Application> findByStatus(String status);
 }
