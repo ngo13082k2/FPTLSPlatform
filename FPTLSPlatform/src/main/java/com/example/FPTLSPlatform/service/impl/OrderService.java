@@ -150,7 +150,7 @@ public class OrderService implements IOrderService {
         }
 
         wallet.setBalance(wallet.getBalance() - scheduleClass.getPrice());
-        TransactionHistory transactionHistory = saveTransactionHistory(user.getUserName(), -order.getTotalPrice(), wallet);
+        TransactionHistory transactionHistory = saveTransactionHistory(user.getEmail(), -order.getTotalPrice(), wallet);
         transactionHistory.setNote("Order");
         userRepository.save(wallet.getUser());
 
@@ -316,7 +316,7 @@ public class OrderService implements IOrderService {
             wallet.setBalance(student.getWallet().getBalance() + (orderDetail.getPrice()));
             userRepository.save(student);
 
-            TransactionHistory transactionHistory = saveTransactionHistory(student.getUserName(), orderDetail.getPrice(), wallet);
+            TransactionHistory transactionHistory = saveTransactionHistory(student.getEmail(), orderDetail.getPrice(), wallet);
             transactionHistory.setNote("Refunded");
             notificationService.createNotification(NotificationDTO.builder()
                     .title("Refund for Order " + order.getOrderId() + " has been processed")
@@ -367,7 +367,7 @@ public class OrderService implements IOrderService {
         return false;
     }
 
-    private TransactionHistory saveTransactionHistory(String username, double amount, Wallet wallet) {
+    private TransactionHistory saveTransactionHistory(String email, double amount, Wallet wallet) {
         TransactionHistory transactionHistory = new TransactionHistory();
         transactionHistory.setAmount(amount);
         transactionHistory.setTransactionDate(LocalDateTime.now());
@@ -379,7 +379,7 @@ public class OrderService implements IOrderService {
         Context context = new Context();
         context.setVariable("transactionHistory", transactionHistory);
         context.setVariable("teacherName", wallet.getTeacherName());
-        emailService.sendEmail(username, "Transaction", "transaction-email", context);
+        emailService.sendEmail(email, "Transaction", "transaction-email", context);
 
         return transactionHistory;
     }
@@ -562,7 +562,7 @@ public class OrderService implements IOrderService {
                 Wallet wallet = scheduledClass.getTeacher().getWallet();
                 wallet.setBalance(wallet.getBalance() + scheduledClass.getPrice());
                 walletRepository.save(wallet);
-                TransactionHistory transactionHistory = saveTransactionHistory(scheduledClass.getTeacher().getTeacherName(), scheduledClass.getPrice(), wallet);
+                TransactionHistory transactionHistory = saveTransactionHistory(scheduledClass.getTeacher().getEmail(), scheduledClass.getPrice(), wallet);
                 transactionHistory.setNote("Salary");
 
                 log.info("Class with ID {} has started and is now COMPLETED.", scheduledClass.getClassId());

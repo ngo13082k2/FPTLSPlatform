@@ -105,7 +105,7 @@ public class ApplicationService implements IApplicationService {
 
                 context.setVariable("applicationTitle", application.getTitle());
                 context.setVariable("teacherName", application.getTeacher().getTeacherName());
-                emailService.sendEmail(application.getTeacher().getTeacherName(), "Application Approved", "approval-email", context);
+                emailService.sendEmail(application.getTeacher().getEmail(), "Application Approved", "approval-email", context);
 
                 return convertToDTO(application);
             } else {
@@ -221,7 +221,7 @@ public class ApplicationService implements IApplicationService {
         context.setVariable("applicationTitle", application.getTitle());
         context.setVariable("teacherName", application.getTeacher().getTeacherName());
         context.setVariable("rejectionReason", rejectionReason);
-        emailService.sendEmail(application.getTeacher().getTeacherName(), "Application Rejected", "reject-email", context);
+        emailService.sendEmail(application.getTeacher().getEmail(), "Application Rejected", "reject-email", context);
 
         return convertToDTO(application);
 
