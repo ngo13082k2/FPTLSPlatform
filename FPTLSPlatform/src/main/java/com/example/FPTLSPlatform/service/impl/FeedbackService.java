@@ -1,11 +1,11 @@
 package com.example.FPTLSPlatform.service.impl;
 
-import com.example.FPTLSPlatform.dto.FeedbackCategoryDTO;
 import com.example.FPTLSPlatform.dto.FeedbackDTO;
 import com.example.FPTLSPlatform.dto.FeedbackQuestionAnswerDTO;
 import com.example.FPTLSPlatform.dto.FeedbackSubmissionDTO;
 import com.example.FPTLSPlatform.model.*;
 import com.example.FPTLSPlatform.model.Class;
+import com.example.FPTLSPlatform.model.System;
 import com.example.FPTLSPlatform.model.enums.ClassStatus;
 import com.example.FPTLSPlatform.model.enums.OrderStatus;
 import com.example.FPTLSPlatform.repository.*;
@@ -17,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,16 +37,20 @@ public class FeedbackService implements IFeedbackService {
 
     private final IEmailService emailService;
 
+    private final SystemRepository systemRepository;
+
     @Autowired
-    public FeedbackService(FeedbackRepository feedbackRepository, FeedbackQuestionRepository feedbackQuestionRepository, OrderDetailRepository orderDetailRepository, ClassRepository classRepository, IEmailService emailService) {
+    public FeedbackService(FeedbackRepository feedbackRepository, FeedbackQuestionRepository feedbackQuestionRepository, OrderDetailRepository orderDetailRepository, ClassRepository classRepository, IEmailService emailService, SystemRepository systemRepository) {
         this.feedbackRepository = feedbackRepository;
         this.feedbackQuestionRepository = feedbackQuestionRepository;
         this.orderDetailRepository = orderDetailRepository;
         this.classRepository = classRepository;
         this.emailService = emailService;
+        this.systemRepository = systemRepository;
     }
 
     public FeedbackSubmissionDTO submitFeedbackForOrder(Long orderId, FeedbackSubmissionDTO feedbackSubmission) {
+        // Fetch order details based on order ID
         Page<OrderDetail> orderDetails = orderDetailRepository.findByOrderOrderId(orderId, Pageable.unpaged());
 
         if (orderDetails.isEmpty()) {
@@ -55,8 +60,27 @@ public class FeedbackService implements IFeedbackService {
         Order order = orderDetails.getContent().get(0).getOrder();
         User student = order.getUser();
 
+        // Check if the order status is "COMPLETED" to allow feedback submission
         if (!order.getStatus().equals(OrderStatus.COMPLETED)) {
             throw new IllegalArgumentException("Order must be complete to submit feedback for order ID: " + orderId);
+        }
+
+        // Get the class entity related to this order detail
+        Class classEntity = orderDetails.getContent().get(0).getClasses();
+        LocalDate classEndDate = classEntity.getEndDate();
+
+        // Define the maximum number of days allowed for feedback submission (e.g., 7 days)
+        int feedbackDeadlineInDays = 7;
+        System checkTimeBeforeStart = systemRepository.findByName("feedback_deadline");
+        int checkTime = checkTimeBeforeStart != null
+                ? Integer.parseInt(checkTimeBeforeStart.getValue())
+                : feedbackDeadlineInDays;
+        // Calculate the deadline date for feedback submission
+        LocalDate feedbackDeadline = classEndDate.plusDays(feedbackDeadlineInDays);
+
+        // Check if the current date is after the feedback deadline
+        if (LocalDate.now().isAfter(feedbackDeadline)) {
+            throw new IllegalArgumentException("Feedback submission deadline has passed for order ID: " + orderId);
         }
 
         String commonComment = feedbackSubmission.getComment();
@@ -64,12 +88,12 @@ public class FeedbackService implements IFeedbackService {
             FeedbackQuestion question = feedbackQuestionRepository.findById(feedbackAnswer.getQuestionId())
                     .orElseThrow(() -> new IllegalArgumentException("Invalid question ID: " + feedbackAnswer.getQuestionId()));
 
-            Class classEntity = orderDetails.getContent().get(0).getClasses();
             boolean feedbackExists = feedbackRepository.existsByStudentAndClassEntityAndFeedbackQuestionAndIsFeedbackTrue(student, classEntity, question);
             if (feedbackExists) {
                 throw new IllegalArgumentException("You have already provided feedback for question ID: " + feedbackAnswer.getQuestionId());
-
             }
+
+            // Create and save the feedback
             Feedback feedback = Feedback.builder()
                     .student(student)
                     .classEntity(classEntity)
@@ -82,9 +106,10 @@ public class FeedbackService implements IFeedbackService {
             feedbackRepository.save(feedback);
         }
 
+        // Prepare response DTO
         FeedbackSubmissionDTO response = new FeedbackSubmissionDTO();
         response.setUsername(student.getUserName());
-        response.setClassId(orderDetails.getContent().get(0).getClasses().getClassId());
+        response.setClassId(classEntity.getClassId());
         response.setComment(commonComment);
         response.setFeedbackAnswers(feedbackSubmission.getFeedbackAnswers());
 

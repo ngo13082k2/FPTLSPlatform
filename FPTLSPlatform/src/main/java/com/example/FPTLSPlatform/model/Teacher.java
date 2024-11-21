@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -32,7 +33,6 @@ public class Teacher {
     )
     private Set<Category> major;
 
-
     @Column(name = "phone_number")
     private String phoneNumber;
 
@@ -50,9 +50,9 @@ public class Teacher {
 
     @Column(name = "fullname", nullable = false)
     private String fullName;
-    
-    @Column(name = "certificate")
-    private String certificate;
+
+    @OneToMany(mappedBy = "teacher", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Certificate> certificates = new ArrayList<>();
 
     @Column(name = "status")
     private String status;
@@ -64,6 +64,7 @@ public class Teacher {
     @Enumerated(EnumType.STRING)
     @Column(name = "role")
     private Role role;
+
     @Column(name = "background_image")
     private String backgroundImage;
 

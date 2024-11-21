@@ -36,7 +36,9 @@ public class AdminController {
     private final IClassService classService;
 
     private final IWalletService walletService;
+
     private final ICategoryService categoryService;
+
     private final ICourseService courseService;
 
     @Autowired

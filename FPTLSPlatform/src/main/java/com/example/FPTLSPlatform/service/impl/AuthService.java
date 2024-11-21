@@ -199,8 +199,6 @@ public class AuthService {
     }
 
 
-
-
     public AuthenticationResponse login(AuthenticationRequest request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
@@ -223,7 +221,7 @@ public class AuthService {
             }
 
             String jwt = jwtUtil.generateToken(userDetails.getUsername(), extractRoles(userDetails));
-            return new AuthenticationResponse(user.getUserName(), user.getEmail(), user.getFullName(), user.getStatus(), jwt, user.getRole(),user.getPhoneNumber(),user.getAddress(),user.getMajor(),null,null);
+            return new AuthenticationResponse(user.getUserName(), user.getEmail(), user.getFullName(), user.getStatus(), jwt, user.getRole(), user.getPhoneNumber(), user.getAddress(), user.getMajor(), null, null);
 
         } else if (optionalTeacher.isPresent()) {
             Teacher teacher = optionalTeacher.get();
@@ -233,7 +231,7 @@ public class AuthService {
             }
 
             String jwt = jwtUtil.generateToken(userDetails.getUsername(), extractRoles(userDetails));
-            return new AuthenticationResponse(teacher.getTeacherName(), teacher.getEmail(), teacher.getFullName(), teacher.getStatus(), jwt, teacher.getRole(),teacher.getPhoneNumber(),teacher.getAddress(),teacher.getMajor(),teacher.getDescription(),teacher.getAvatarImage());
+            return new AuthenticationResponse(teacher.getTeacherName(), teacher.getEmail(), teacher.getFullName(), teacher.getStatus(), jwt, teacher.getRole(), teacher.getPhoneNumber(), teacher.getAddress(), teacher.getMajor(), teacher.getDescription(), teacher.getAvatarImage());
 
         } else {
             throw new RuntimeException("User not found");
@@ -258,6 +256,7 @@ public class AuthService {
 
         );
     }
+
     public UserResponse updateCurrentUser(String token, AuthenticationRequest request) {
         String username = jwtUtil.extractUsername(token.substring(7));
         User user = userRepository.findByUserName(username)
@@ -288,6 +287,7 @@ public class AuthService {
 
         );
     }
+
     public UserResponse getUserByUserName(String username) {
         User user = userRepository.findByUserName(username)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + username));
@@ -301,10 +301,8 @@ public class AuthService {
                 user.getCreatedDate(),
                 user.getModifiedDate(),
                 user.getPhoneNumber()
-     );
+        );
     }
-
-
 
 
     private Set<Role> extractRoles(UserDetails userDetails) {
@@ -312,6 +310,7 @@ public class AuthService {
                 .map(authority -> Role.valueOf(((GrantedAuthority) authority).getAuthority()))
                 .collect(Collectors.toSet());
     }
+
     private String getCurrentUsername() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (principal instanceof UserDetails) {
@@ -339,12 +338,11 @@ public class AuthService {
             teacher.setFullName(teacherDTO.getFullName());
         }
         if (teacherDTO.getCertificate() != null) {
-            teacher.setCertificate(teacherDTO.getCertificate());
+            teacher.setCertificates(teacherDTO.getCertificate());
         }
         if (teacherDTO.getDescription() != null) {
             teacher.setDescription(teacherDTO.getDescription());
         }
-
         if (backgroundImage != null && !backgroundImage.isEmpty()) {
             String backgroundUrl = cloudinaryService.uploadImage(backgroundImage);
             teacher.setBackgroundImage(backgroundUrl);
@@ -358,6 +356,7 @@ public class AuthService {
 
         return teacherRepository.save(teacher);
     }
+
     public TeacherDTO getTeacherByTeacherName(String teacherName) {
         Teacher teacher = teacherRepository.findByTeacherName(teacherName)
                 .orElseThrow(() -> new RuntimeException("Teacher not found"));

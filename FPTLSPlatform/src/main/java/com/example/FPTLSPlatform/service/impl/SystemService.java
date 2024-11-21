@@ -42,10 +42,9 @@ public class SystemService implements ISystemService {
     }
 
     @Override
-    public SystemDTO updateParam(Long id, SystemDTO systemDTO) {
+    public SystemDTO updateParam(Long id, String value) {
         System system = systemRepository.getReferenceById(id);
-        system.setName(systemDTO.getName());
-        system.setValue(systemDTO.getValue());
+        system.setValue(value);
         systemRepository.save(system);
         return convertToDTO(system);
     }
@@ -63,6 +62,7 @@ public class SystemService implements ISystemService {
         systems.add(new System(1L, "check_time_before_start", "30"));
         systems.add(new System(2L, "minimum_required_percentage", "0.8"));
         systems.add(new System(3L, "discount_percentage", "0.2"));
+        systems.add(new System(4L, "feedback_deadline", "7"));
         systemRepository.saveAll(systems);
         return systems.stream().map(this::convertToDTO).collect(Collectors.toList());
     }

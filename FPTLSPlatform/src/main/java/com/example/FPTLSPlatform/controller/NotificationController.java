@@ -4,6 +4,7 @@ import com.example.FPTLSPlatform.dto.NotificationDTO;
 import com.example.FPTLSPlatform.model.Notification;
 import com.example.FPTLSPlatform.service.INotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -71,18 +72,26 @@ public class NotificationController {
 
     @PutMapping("/{notificationId}/read")
     public ResponseEntity<String> markNotificationAsRead(@PathVariable Long notificationId) {
-        notificationService.markAsRead(notificationId);
+        try {
+            notificationService.markAsRead(notificationId);
 
-        messagingTemplate.convertAndSend("/topic/notifications", "Notification " + notificationId + " marked as read");
-        return ResponseEntity.ok("Notification marked as read.");
+            messagingTemplate.convertAndSend("/topic/notifications", "Notification " + notificationId + " marked as read");
+            return ResponseEntity.ok("Notification marked as read.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error marking notifications as read.");
+        }
     }
 
     @PutMapping("/readAll")
     public ResponseEntity<String> markAllNotificationAsRead() {
         String username = getCurrentUsername();
-        notificationService.markAllAsRead(username);
-
-        messagingTemplate.convertAndSend("/topic/notifications", "All notifications for " + username + " marked as read");
-        return ResponseEntity.ok("All notification marked as read.");
+        try {
+            notificationService.markAllAsRead(username);
+            messagingTemplate.convertAndSend("/topic/notifications", "All notifications for " + username + " marked as read");
+            return ResponseEntity.ok("All notifications marked as read.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error marking notifications as read.");
+        }
     }
+
 }

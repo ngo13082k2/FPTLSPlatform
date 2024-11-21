@@ -1,6 +1,7 @@
 package com.example.FPTLSPlatform.service.impl;
 
 import com.example.FPTLSPlatform.dto.ApplicationDTO;
+import com.example.FPTLSPlatform.dto.CertificateDTO;
 import com.example.FPTLSPlatform.exception.ApplicationAlreadyApprovedException;
 import com.example.FPTLSPlatform.exception.ResourceNotFoundException;
 import com.example.FPTLSPlatform.model.*;
@@ -18,6 +19,7 @@ import org.thymeleaf.context.Context;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ApplicationService implements IApplicationService {
@@ -26,53 +28,74 @@ public class ApplicationService implements IApplicationService {
     private final IEmailService emailService;
     private final TeacherRepository teacherRepository;
     private final UserRepository userRepository;
-
+    private final CertificateRepository certificateRepository;
     private final CloudinaryService cloudinaryService;
 
     public ApplicationService(ApplicationRepository applicationRepository,
                               IEmailService emailService,
                               TeacherRepository teacherRepository,
-                              UserRepository userRepository,
+                              UserRepository userRepository, CertificateRepository certificateRepository,
                               CloudinaryService cloudinaryService) {
         this.applicationRepository = applicationRepository;
         this.emailService = emailService;
         this.teacherRepository = teacherRepository;
         this.userRepository = userRepository;
+        this.certificateRepository = certificateRepository;
         this.cloudinaryService = cloudinaryService;
     }
 
     @Override
-    public ApplicationDTO createApplication(ApplicationDTO applicationDTO, MultipartFile certificate, HttpSession session) throws IOException {
+    public ApplicationDTO createApplication(
+            ApplicationDTO applicationDTO,
+            List<MultipartFile> certificateFiles,
+            List<String> certificateNames,
+            HttpSession session) throws IOException {
         Teacher teacher = (Teacher) session.getAttribute("teacher");
-        applicationDTO.setStatus("PENDING");
         if (teacher == null) {
             throw new ResourceNotFoundException("Teacher not found");
         }
-
+        if (applicationDTO.getStatus() == null) {
+            applicationDTO.setStatus("PENDING");
+        }
         if (applicationDTO.getStatus().equalsIgnoreCase("APPROVED")) {
             throw new ApplicationAlreadyApprovedException("Application has already been approved and cannot be modified.");
         }
-
         Application application = Application.builder()
                 .title(applicationDTO.getTitle())
                 .description(applicationDTO.getDescription())
                 .teacher(teacherRepository.getTeacherByTeacherName(teacher.getTeacherName()))
-                .status(applicationDTO.getStatus())
+                .status("PENDING")
                 .build();
+        application = applicationRepository.save(application);
 
-
-        String certificateUrl = null;
-        if (certificate != null && !certificate.isEmpty()) {
-            certificateUrl = cloudinaryService.uploadImage(certificate);
-            applicationDTO.setCertificate(certificateUrl);
-            application.setCertificate(certificateUrl);
+        List<Certificate> certificates = teacher.getCertificates();
+        if (certificates == null) {
+            certificates = new ArrayList<>();
+            teacher.setCertificates(certificates);
         }
 
+        for (int i = 0; i < certificateFiles.size(); i++) {
+            MultipartFile file = certificateFiles.get(i);
+            String name = certificateNames.get(i);
 
-        applicationRepository.save(application);
-        applicationDTO.setTeacherName(teacher.getTeacherName());
-        session.invalidate();
-        return applicationDTO;
+            if (!file.isEmpty()) {
+                String uploadedUrl = cloudinaryService.uploadImage(file);
+
+                Certificate certificate = Certificate.builder()
+                        .name(name)
+                        .fileUrl(uploadedUrl)
+                        .application(application)
+                        .teacher(teacher) // Gắn lại teacher
+                        .build();
+
+                certificates.add(certificate);
+            }
+        }
+        application.setCertificates(certificates);
+        application.setTeacher(teacher);
+        application = applicationRepository.save(application);
+
+        return convertToDTO(application);
     }
 
 
@@ -96,7 +119,7 @@ public class ApplicationService implements IApplicationService {
                     Teacher teacher = optionalTeacher.get();
 
                     teacher.setStatus("ACTIVE");
-                    teacher.setCertificate(application.getCertificate());
+                    teacher.setCertificates(application.getCertificates());
                     teacherRepository.save(teacher);
                 }
 
@@ -123,17 +146,26 @@ public class ApplicationService implements IApplicationService {
         return applications.map(this::convertToDTO);
     }
 
-    private ApplicationDTO convertToDTO(Application app) {
+    private ApplicationDTO convertToDTO(Application application) {
+        List<CertificateDTO> certificateDTOList = new ArrayList<>();
+
+        if (application.getCertificates() != null) {
+            certificateDTOList = application.getCertificates().stream()
+                    .map(cert -> new CertificateDTO(cert.getId(), cert.getName(), cert.getFileUrl(), cert.getApplication().getApplicationId(), cert.getTeacher().getTeacherName()))
+                    .collect(Collectors.toList());
+        }
+
         return ApplicationDTO.builder()
-                .applicationId(app.getApplicationId())
-                .title(app.getTitle())
-                .description(app.getDescription())
-                .certificate(app.getCertificate())
-                .status(app.getStatus())
-                .rejectionReason(app.getRejectionReason())
-                .teacherName(app.getTeacher().getTeacherName())
+                .applicationId(application.getApplicationId())
+                .title(application.getTitle())
+                .description(application.getDescription())
+                .certificate(certificateDTOList)
+                .status(application.getStatus())
+                .teacherName(application.getTeacher().getTeacherName())
+                .rejectionReason(application.getRejectionReason() == null ? "" : application.getRejectionReason())
                 .build();
     }
+
 
     @Override
     public Page<ApplicationDTO> getApplicationsByStaff(String staffUsername, Pageable pageable) {

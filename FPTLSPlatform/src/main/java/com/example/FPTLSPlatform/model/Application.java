@@ -3,7 +3,8 @@ package com.example.FPTLSPlatform.model;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 @Builder
 @Getter
@@ -28,8 +29,8 @@ public class Application {
     @Column(name = "description")
     private String description;
 
-    @Column(name = "certificate")
-    private String certificate;
+    @OneToMany(mappedBy = "application", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Certificate> certificates = new ArrayList<>();
 
     private String rejectionReason;
 

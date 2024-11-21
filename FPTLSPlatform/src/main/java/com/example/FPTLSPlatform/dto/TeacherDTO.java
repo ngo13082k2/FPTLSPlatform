@@ -1,7 +1,9 @@
 package com.example.FPTLSPlatform.dto;
 
+import com.example.FPTLSPlatform.model.Certificate;
 import lombok.*;
 
+import java.util.List;
 import java.util.Set;
 
 @Getter
@@ -14,7 +16,7 @@ public class TeacherDTO {
     private String address;
     private String email;
     private String fullName;
-    private String certificate;
+    private List<Certificate> certificate;
     private String description;
     private String avatarImage;
     private Set<String> major;

@@ -13,7 +13,7 @@ public interface ISystemService {
 
     SystemDTO createParam(SystemDTO systemDTO);
 
-    SystemDTO updateParam(Long id, SystemDTO systemDTO);
+    SystemDTO updateParam(Long id, String value);
 
     String deleteParam(Long id);
 

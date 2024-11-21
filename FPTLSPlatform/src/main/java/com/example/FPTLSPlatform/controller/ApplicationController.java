@@ -4,6 +4,7 @@ import com.example.FPTLSPlatform.dto.ApplicationDTO;
 import com.example.FPTLSPlatform.exception.ApplicationAlreadyApprovedException;
 import com.example.FPTLSPlatform.exception.ResourceNotFoundException;
 import com.example.FPTLSPlatform.model.Application;
+import com.example.FPTLSPlatform.model.Certificate;
 import com.example.FPTLSPlatform.service.IApplicationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpSession;
@@ -16,6 +17,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/applications")
@@ -60,12 +63,14 @@ public class ApplicationController {
 
 
     @PostMapping("/create-application")
-    public ResponseEntity<?> createApplication(@RequestPart("applicationDTO") String classDTOJson,
-                                               @RequestParam(value = "certificate", required = false) MultipartFile certificate,
-                                               HttpSession session) {
+    public ResponseEntity<?> createApplication(
+            @RequestParam("applicationDTO") String applicationDTOJson,
+            @RequestPart("certificates") List<MultipartFile> certificateFiles,
+            @RequestParam("certificateNames") List<String> certificateNames,
+            HttpSession session) {
         try {
-            ApplicationDTO dto = objectMapper.readValue(classDTOJson, ApplicationDTO.class);
-            ApplicationDTO application = applicationService.createApplication(dto, certificate, session);
+            ApplicationDTO applicationDTO = objectMapper.readValue(applicationDTOJson, ApplicationDTO.class);
+            ApplicationDTO application = applicationService.createApplication(applicationDTO, certificateFiles, certificateNames, session);
             return ResponseEntity.ok(application);
         } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
@@ -75,6 +80,7 @@ public class ApplicationController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
+
 
     @GetMapping("/all")
     public ResponseEntity<Page<ApplicationDTO>> getAllApplications(
