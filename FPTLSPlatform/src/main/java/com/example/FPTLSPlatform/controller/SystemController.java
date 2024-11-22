@@ -37,9 +37,9 @@ public class SystemController {
         return ResponseEntity.ok(param);
     }
 
-    @PutMapping("/param/{id}")
-    public ResponseEntity<SystemDTO> updateParam(@PathVariable Long id, @RequestBody String value) {
-        SystemDTO param = systemService.updateParam(id, value);
+    @PutMapping("/param")
+    public ResponseEntity<List<SystemDTO>> updateParam(@RequestBody List<SystemDTO> systemDTOS) {
+        List<SystemDTO> param = systemService.updateParam(systemDTOS);
         return ResponseEntity.ok(param);
     }
 

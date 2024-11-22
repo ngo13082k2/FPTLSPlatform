@@ -42,11 +42,13 @@ public class SystemService implements ISystemService {
     }
 
     @Override
-    public SystemDTO updateParam(Long id, String value) {
-        System system = systemRepository.getReferenceById(id);
-        system.setValue(value);
-        systemRepository.save(system);
-        return convertToDTO(system);
+    public List<SystemDTO> updateParam(List<SystemDTO> systemDTOS) {
+        for (SystemDTO systemDTO : systemDTOS) {
+            System system = systemRepository.findByName(systemDTO.getName());
+            system.setValue(systemDTO.getValue());
+            systemRepository.save(system);
+        }
+        return systemDTOS;
     }
 
     @Override
