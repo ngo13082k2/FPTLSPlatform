@@ -436,7 +436,7 @@ public class OrderService implements IOrderService {
         System demoMode = systemRepository.findByName("demo_mode");
         boolean isDemoMode = demoMode != null && Boolean.parseBoolean(demoMode.getValue());
 
-        System demoAdjustTime = systemRepository.findByName("demo_adjust_time");
+        System demoAdjustTime = systemRepository.findByName("demo_adjust_active_time");
         int demoTimeAdjustment = demoAdjustTime != null
                 ? Integer.parseInt(demoAdjustTime.getValue())
                 : 0;
@@ -630,4 +630,45 @@ public class OrderService implements IOrderService {
         return df.format(Math.abs(amount)) + " VND";
     }
 
+    @Transactional
+    public void completeClassImmediately(Long classId) {
+        // Tìm lớp học theo ID
+        Class scheduledClass = classRepository.findById(classId)
+                .orElseThrow(() -> new RuntimeException("Class not found"));
+
+        // Cập nhật trạng thái lớp học thành COMPLETED
+        scheduledClass.setStatus(ClassStatus.COMPLETED);
+        classRepository.save(scheduledClass);
+
+        // Lấy tất cả các OrderDetail liên quan đến lớp
+        Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(classId, Pageable.unpaged());
+
+        // Cập nhật trạng thái đơn hàng liên quan
+        for (OrderDetail orderDetail : orderDetails) {
+            orderDetail.getOrder().setStatus(OrderStatus.COMPLETED);
+            orderDetailRepository.save(orderDetail);
+        }
+
+        // Xử lý thanh toán: trừ tiền từ SystemWallet và thêm vào ví của giáo viên
+        SystemWallet systemWallet = systemWalletRepository.getReferenceById(1L);
+        systemWallet.setTotalAmount(systemWallet.getTotalAmount() - scheduledClass.getPrice());
+        systemWalletRepository.save(systemWallet);
+
+        Wallet teacherWallet = scheduledClass.getTeacher().getWallet();
+        teacherWallet.setBalance(teacherWallet.getBalance() + scheduledClass.getPrice());
+        walletRepository.save(teacherWallet);
+        TransactionHistory transactionHistory = saveTransactionHistory(scheduledClass.getTeacher().getEmail(), scheduledClass.getPrice(), teacherWallet);
+        transactionHistory.setNote("Salary");
+        // Gửi thông báo cho giáo viên
+        notificationService.createNotification(NotificationDTO.builder()
+                .title("Class " + scheduledClass.getCode() + " has been completed")
+                .name("Notification")
+                .description("Your class " + scheduledClass.getCode() + " has been successfully completed.")
+                .type("Class Completed")
+                .username(scheduledClass.getTeacher().getTeacherName())
+                .build());
+
+        // Log kết quả
+        log.info("Class with ID {} has been completed immediately by admin.", classId);
+    }
 }

@@ -200,5 +200,16 @@ public class AdminController {
         Teacher updatedTeacher = userService.deactivateTeacher(teacherName);
         return ResponseEntity.ok(updatedTeacher);
     }
-
+    
+    @PutMapping("/{classId}/complete")
+    public ResponseEntity<String> completeClassImmediately(@PathVariable Long classId) {
+        try {
+            orderService.completeClassImmediately(classId);
+            return ResponseEntity.ok("Class completed successfully.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while completing the class.");
+        }
+    }
 }

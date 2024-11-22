@@ -23,4 +23,6 @@ public interface IOrderService {
     void refundStudents(Class cancelledClass);
 
     void sendActivationEmail(Class scheduledClass);
+
+    void completeClassImmediately(Long classId);
 }

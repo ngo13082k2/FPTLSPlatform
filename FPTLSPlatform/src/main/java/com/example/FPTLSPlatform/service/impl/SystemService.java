@@ -69,8 +69,9 @@ public class SystemService implements ISystemService {
                 new System(3L, "discount_percentage", "0.2"),
                 new System(4L, "feedback_deadline", "7"),
                 new System(5L, "demo_mode", "false"),
-                new System(6L, "demo_adjust_start_time", "0"),
-                new System(7L, "demo_adjust_end_time", "0")
+                new System(6L, "demo_adjust_active_time", "0"),
+                new System(7L, "demo_adjust_start_time", "0"),
+                new System(8L, "demo_adjust_end_time", "0")
         );
 
         // Lấy tất cả các tham số hiện có từ database
