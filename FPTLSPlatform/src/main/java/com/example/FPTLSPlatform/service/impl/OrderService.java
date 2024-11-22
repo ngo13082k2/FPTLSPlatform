@@ -426,10 +426,20 @@ public class OrderService implements IOrderService {
     public void checkAndActivateClasses() {
         int pageNumber = 0;
         int defaultTime = 1;
+
+        // Lấy giá trị cấu hình từ hệ thống
         System checkTimeBeforeStart = systemRepository.findByName("check_time_before_start");
         int checkTime = checkTimeBeforeStart != null
                 ? Integer.parseInt(checkTimeBeforeStart.getValue())
                 : defaultTime;
+
+        System demoMode = systemRepository.findByName("demo_mode");
+        boolean isDemoMode = demoMode != null && Boolean.parseBoolean(demoMode.getValue());
+
+        System demoAdjustTime = systemRepository.findByName("demo_adjust_time");
+        int demoTimeAdjustment = demoAdjustTime != null
+                ? Integer.parseInt(demoAdjustTime.getValue())
+                : 0;
 
         while (true) {
             Pageable pageable = PageRequest.of(pageNumber, 50);
@@ -441,9 +451,15 @@ public class OrderService implements IOrderService {
 
             for (Class scheduledClass : classesPage) {
                 try {
+                    // Tính toán thời gian bắt đầu lớp
                     LocalDateTime classStartTime = scheduledClass.getStartDate()
                             .atTime(scheduledClass.getSlot().getStartTime())
                             .minusMinutes(checkTime);
+
+                    // Điều chỉnh thời gian nếu demo_mode được bật
+                    if (isDemoMode) {
+                        classStartTime = classStartTime.minusMinutes(demoTimeAdjustment);
+                    }
 
                     if (classStartTime.isBefore(LocalDateTime.now())) {
                         Class clazz = activateClassIfEligible(scheduledClass);
@@ -514,10 +530,21 @@ public class OrderService implements IOrderService {
     public void updateClassesToOngoing() {
         LocalDateTime now = LocalDateTime.now();
 
+        // Lấy cấu hình demo_mode
+        System demoMode = systemRepository.findByName("demo_mode");
+        boolean isDemoMode = demoMode != null && Boolean.parseBoolean(demoMode.getValue());
+
+        System demoAdjustStartTime = systemRepository.findByName("demo_adjust_start_time");
+        int adjustStartTime = demoAdjustStartTime != null ? Integer.parseInt(demoAdjustStartTime.getValue()) : 0;
+
         List<Class> classesToStart = classRepository.findByStartDateAndStatus(now.toLocalDate(), ClassStatus.ACTIVE);
 
         for (Class scheduledClass : classesToStart) {
             LocalDateTime startTime = scheduledClass.getStartDate().atTime(scheduledClass.getSlot().getStartTime());
+
+            if (isDemoMode) {
+                startTime = startTime.minusMinutes(adjustStartTime);
+            }
 
             if (now.isAfter(startTime) && scheduledClass.getStatus().equals(ClassStatus.ACTIVE)) {
                 scheduledClass.setStatus(ClassStatus.ONGOING);
@@ -540,10 +567,20 @@ public class OrderService implements IOrderService {
     public void checkAndCompleteOrders() {
         LocalDateTime now = LocalDateTime.now();
 
+        System demoMode = systemRepository.findByName("demo_mode");
+        boolean isDemoMode = demoMode != null && Boolean.parseBoolean(demoMode.getValue());
+
+        System demoAdjustEndTime = systemRepository.findByName("demo_adjust_end_time");
+        int adjustEndTime = demoAdjustEndTime != null ? Integer.parseInt(demoAdjustEndTime.getValue()) : 0;
+
         List<Class> classesToComplete = classRepository.findByStartDateAndStatus(now.toLocalDate(), ClassStatus.ONGOING);
 
         for (Class scheduledClass : classesToComplete) {
             LocalDateTime endTime = scheduledClass.getStartDate().atTime(scheduledClass.getSlot().getEndTime());
+
+            if (isDemoMode) {
+                endTime = endTime.minusMinutes(adjustEndTime);
+            }
 
             if (now.isAfter(endTime)) {
                 scheduledClass.setStatus(ClassStatus.COMPLETED);
@@ -566,7 +603,6 @@ public class OrderService implements IOrderService {
                 transactionHistory.setNote("Salary");
 
                 log.info("Class with ID {} has started and is now COMPLETED.", scheduledClass.getClassId());
-
             }
         }
     }
