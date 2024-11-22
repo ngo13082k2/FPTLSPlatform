@@ -13,8 +13,4 @@ public class CertificateDTO {
     private String name;
 
     private String fileUrl;
-
-    private Long applicationId;
-
-    private String teacherName;
 }

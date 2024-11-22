@@ -28,19 +28,17 @@ public class ApplicationService implements IApplicationService {
     private final IEmailService emailService;
     private final TeacherRepository teacherRepository;
     private final UserRepository userRepository;
-    private final CertificateRepository certificateRepository;
     private final CloudinaryService cloudinaryService;
 
     public ApplicationService(ApplicationRepository applicationRepository,
                               IEmailService emailService,
                               TeacherRepository teacherRepository,
-                              UserRepository userRepository, CertificateRepository certificateRepository,
+                              UserRepository userRepository,
                               CloudinaryService cloudinaryService) {
         this.applicationRepository = applicationRepository;
         this.emailService = emailService;
         this.teacherRepository = teacherRepository;
         this.userRepository = userRepository;
-        this.certificateRepository = certificateRepository;
         this.cloudinaryService = cloudinaryService;
     }
 
@@ -149,7 +147,7 @@ public class ApplicationService implements IApplicationService {
 
         if (application.getCertificates() != null) {
             certificateDTOList = application.getCertificates().stream()
-                    .map(cert -> new CertificateDTO(cert.getId(), cert.getName(), cert.getFileUrl(), cert.getApplication().getApplicationId(), cert.getTeacher().getTeacherName()))
+                    .map(cert -> new CertificateDTO(cert.getId(), cert.getName(), cert.getFileUrl()))
                     .collect(Collectors.toList());
         }
 

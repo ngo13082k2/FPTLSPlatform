@@ -1,11 +1,9 @@
 package com.example.FPTLSPlatform.service.impl;
 
 
+import com.example.FPTLSPlatform.dto.CertificateDTO;
 import com.example.FPTLSPlatform.dto.TeacherDTO;
-import com.example.FPTLSPlatform.model.Category;
-import com.example.FPTLSPlatform.model.Teacher;
-import com.example.FPTLSPlatform.model.User;
-import com.example.FPTLSPlatform.model.Wallet;
+import com.example.FPTLSPlatform.model.*;
 import com.example.FPTLSPlatform.model.enums.Role;
 import com.example.FPTLSPlatform.repository.CategoryRepository;
 import com.example.FPTLSPlatform.repository.TeacherRepository;
@@ -338,7 +336,13 @@ public class AuthService {
             teacher.setFullName(teacherDTO.getFullName());
         }
         if (teacherDTO.getCertificate() != null) {
-            teacher.setCertificates(teacherDTO.getCertificate());
+            teacher.setCertificates(teacherDTO.getCertificate().stream()
+                    .map(certificate -> Certificate.builder()
+                            .id(certificate.getId())
+                            .name(certificate.getName())
+                            .fileUrl(certificate.getFileUrl())
+                            .build())
+                    .collect(Collectors.toList()));
         }
         if (teacherDTO.getDescription() != null) {
             teacher.setDescription(teacherDTO.getDescription());
@@ -366,6 +370,13 @@ public class AuthService {
                 .address(teacher.getAddress())
                 .fullName(teacher.getFullName())
                 .description(teacher.getDescription())
+                .certificate(teacher.getCertificates().stream() // Chuyển đổi từ List<Certificate> sang List<CertificateDTO>
+                        .map(certificate -> CertificateDTO.builder()
+                                .id(certificate.getId())
+                                .name(certificate.getName())
+                                .fileUrl(certificate.getFileUrl())
+                                .build())
+                        .collect(Collectors.toList()))
                 .phoneNumber(teacher.getPhoneNumber())
                 .email(teacher.getEmail())
                 .major(teacher.getMajor().stream()

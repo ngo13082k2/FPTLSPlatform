@@ -16,7 +16,7 @@ public class TeacherDTO {
     private String address;
     private String email;
     private String fullName;
-    private List<Certificate> certificate;
+    private List<CertificateDTO> certificate;
     private String description;
     private String avatarImage;
     private Set<String> major;
