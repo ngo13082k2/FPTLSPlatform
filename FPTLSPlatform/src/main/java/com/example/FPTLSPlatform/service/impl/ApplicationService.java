@@ -48,50 +48,96 @@ public class ApplicationService implements IApplicationService {
             List<MultipartFile> certificateFiles,
             List<String> certificateNames,
             HttpSession session) throws IOException {
+
         Teacher teacher = (Teacher) session.getAttribute("teacher");
         if (teacher == null) {
             throw new ResourceNotFoundException("Teacher not found");
         }
+
         if (applicationDTO.getStatus() == null) {
             applicationDTO.setStatus("PENDING");
         }
+
         if (applicationDTO.getStatus().equalsIgnoreCase("APPROVED")) {
             throw new ApplicationAlreadyApprovedException("Application has already been approved and cannot be modified.");
         }
-        Application application = Application.builder()
-                .description(applicationDTO.getDescription())
-                .teacher(teacherRepository.getTeacherByTeacherName(teacher.getTeacherName()))
-                .status("PENDING")
-                .build();
-        application = applicationRepository.save(application);
 
-        List<Certificate> certificates = teacher.getCertificates();
-        if (certificates == null) {
-            certificates = new ArrayList<>();
-            teacher.setCertificates(certificates);
-        }
+        // Kiểm tra đơn cũ của giáo viên
+        Optional<Application> existingApplication = applicationRepository
+                .findByTeacher_TeacherNameAndStatusNot(teacher.getTeacherName(), "APPROVED");
 
-        for (int i = 0; i < certificateFiles.size(); i++) {
-            MultipartFile file = certificateFiles.get(i);
-            String name = certificateNames.get(i);
+        Application application;
+        if (existingApplication.isPresent()) {
+            application = existingApplication.get();
 
-            if (!file.isEmpty()) {
-                String uploadedUrl = cloudinaryService.uploadImage(file);
+            if (application.getStatus().equalsIgnoreCase("REJECTED")) {
+                // Nếu đơn bị từ chối, cập nhật thay vì tạo mới
+                application.setDescription(applicationDTO.getDescription());
+                application.setStatus("PENDING");
 
-                Certificate certificate = Certificate.builder()
-                        .name(name)
-                        .fileUrl(uploadedUrl)
-                        .application(application)
-                        .teacher(teacher) // Gắn lại teacher
-                        .build();
+                // Cập nhật chứng chỉ: chỉ thêm mới chứng chỉ
+                List<Certificate> certificates = application.getCertificates(); // Lấy chứng chỉ hiện tại
 
-                certificates.add(certificate);
+                // Thêm chứng chỉ mới từ file lên
+                for (int i = 0; i < certificateFiles.size(); i++) {
+                    MultipartFile file = certificateFiles.get(i);
+                    String name = certificateNames.get(i);
+
+                    if (!file.isEmpty()) {
+                        String uploadedUrl = cloudinaryService.uploadImage(file);
+
+                        Certificate certificate = Certificate.builder()
+                                .name(name)
+                                .fileUrl(uploadedUrl)
+                                .application(application)
+                                .teacher(teacher)
+                                .build();
+
+                        certificates.add(certificate);
+                    }
+                }
+
+                // Gán lại danh sách chứng chỉ vào đơn ứng tuyển
+                application.setCertificates(certificates);
+            } else {
+                throw new RuntimeException("A previous application exists and cannot be modified.");
             }
+        } else {
+            // Nếu không có đơn cũ, tạo mới đơn ứng tuyển
+            application = Application.builder()
+                    .description(applicationDTO.getDescription())
+                    .teacher(teacherRepository.getTeacherByTeacherName(teacher.getTeacherName()))
+                    .status("PENDING")
+                    .build();
+
+            // Thêm chứng chỉ mới từ file lên
+            List<Certificate> certificates = new ArrayList<>();
+            for (int i = 0; i < certificateFiles.size(); i++) {
+                MultipartFile file = certificateFiles.get(i);
+                String name = certificateNames.get(i);
+
+                if (!file.isEmpty()) {
+                    String uploadedUrl = cloudinaryService.uploadImage(file);
+
+                    Certificate certificate = Certificate.builder()
+                            .name(name)
+                            .fileUrl(uploadedUrl)
+                            .application(application)
+                            .teacher(teacher)
+                            .build();
+
+                    certificates.add(certificate);
+                }
+            }
+
+            // Gán lại danh sách chứng chỉ vào đơn ứng tuyển
+            application.setCertificates(certificates);
         }
-        application.setCertificates(certificates);
-        application.setTeacher(teacher);
+
+        // Lưu đơn ứng tuyển với chứng chỉ mới
         application = applicationRepository.save(application);
 
+        // Chuyển đổi sang DTO để trả về cho client
         return convertToDTO(application);
     }
 
@@ -114,13 +160,14 @@ public class ApplicationService implements IApplicationService {
 
                 if (optionalTeacher.isPresent()) {
                     Teacher teacher = optionalTeacher.get();
-
                     teacher.setStatus("ACTIVE");
-                    teacher.setCertificates(application.getCertificates());
                     teacherRepository.save(teacher);
                 }
 
+                // Update application status to APPROVED
                 application.setStatus("APPROVED");
+
+                // Avoid changing the certificates collection reference to prevent orphan deletion
                 applicationRepository.save(application);
 
                 context.setVariable("teacherName", application.getTeacher().getTeacherName());

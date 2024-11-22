@@ -171,6 +171,7 @@ public class AuthService {
                 .createdDate(LocalDateTime.now())
                 .role(Role.TEACHER)
                 .wallet(wallet)
+                .certificates(new ArrayList<>())
                 .status("PENDING")
                 .build();
 
