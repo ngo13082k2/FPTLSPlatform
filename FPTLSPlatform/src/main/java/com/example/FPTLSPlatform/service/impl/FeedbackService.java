@@ -67,7 +67,7 @@ public class FeedbackService implements IFeedbackService {
 
         // Get the class entity related to this order detail
         Class classEntity = orderDetails.getContent().get(0).getClasses();
-        LocalDate classEndDate = classEntity.getEndDate();
+        LocalDate classEndDate = classEntity.getStartDate();
 
         // Define the maximum number of days allowed for feedback submission (e.g., 7 days)
         int feedbackDeadlineInDays = 7;
