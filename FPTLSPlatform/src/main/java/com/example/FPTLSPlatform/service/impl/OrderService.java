@@ -572,7 +572,8 @@ public class OrderService implements IOrderService {
 
         System demoAdjustEndTime = systemRepository.findByName("demo_adjust_end_time");
         int adjustEndTime = demoAdjustEndTime != null ? Integer.parseInt(demoAdjustEndTime.getValue()) : 0;
-
+        System discountPercentage = systemRepository.findByName("discount_percentage");
+        double discount = discountPercentage != null ? Double.parseDouble(discountPercentage.getValue()) : 0;
         List<Class> classesToComplete = classRepository.findByStartDateAndStatus(now.toLocalDate(), ClassStatus.ONGOING);
 
         for (Class scheduledClass : classesToComplete) {
@@ -593,13 +594,13 @@ public class OrderService implements IOrderService {
                     }
                 }
                 SystemWallet systemWallet = systemWalletRepository.getReferenceById(1L);
-                systemWallet.setTotalAmount(systemWallet.getTotalAmount() - scheduledClass.getPrice());
+                systemWallet.setTotalAmount(systemWallet.getTotalAmount() - (scheduledClass.getPrice() * discount));
                 systemWalletRepository.save(systemWallet);
 
                 Wallet wallet = scheduledClass.getTeacher().getWallet();
-                wallet.setBalance(wallet.getBalance() + scheduledClass.getPrice());
+                wallet.setBalance(wallet.getBalance() + (scheduledClass.getPrice() * discount));
                 walletRepository.save(wallet);
-                TransactionHistory transactionHistory = saveTransactionHistory(scheduledClass.getTeacher().getEmail(), scheduledClass.getPrice(), wallet);
+                TransactionHistory transactionHistory = saveTransactionHistory(scheduledClass.getTeacher().getEmail(), (scheduledClass.getPrice() * discount), wallet);
                 transactionHistory.setNote("Salary");
 
                 log.info("Class with ID {} has started and is now COMPLETED.", scheduledClass.getClassId());
@@ -639,7 +640,8 @@ public class OrderService implements IOrderService {
         // Cập nhật trạng thái lớp học thành COMPLETED
         scheduledClass.setStatus(ClassStatus.COMPLETED);
         classRepository.save(scheduledClass);
-
+        System discountPercentage = systemRepository.findByName("discount_percentage");
+        double discount = discountPercentage != null ? Double.parseDouble(discountPercentage.getValue()) : 0;
         // Lấy tất cả các OrderDetail liên quan đến lớp
         Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(classId, Pageable.unpaged());
 
@@ -651,13 +653,13 @@ public class OrderService implements IOrderService {
 
         // Xử lý thanh toán: trừ tiền từ SystemWallet và thêm vào ví của giáo viên
         SystemWallet systemWallet = systemWalletRepository.getReferenceById(1L);
-        systemWallet.setTotalAmount(systemWallet.getTotalAmount() - scheduledClass.getPrice());
+        systemWallet.setTotalAmount(systemWallet.getTotalAmount() - (scheduledClass.getPrice() * discount));
         systemWalletRepository.save(systemWallet);
 
         Wallet teacherWallet = scheduledClass.getTeacher().getWallet();
-        teacherWallet.setBalance(teacherWallet.getBalance() + scheduledClass.getPrice());
+        teacherWallet.setBalance(teacherWallet.getBalance() + (scheduledClass.getPrice() * discount));
         walletRepository.save(teacherWallet);
-        TransactionHistory transactionHistory = saveTransactionHistory(scheduledClass.getTeacher().getEmail(), scheduledClass.getPrice(), teacherWallet);
+        TransactionHistory transactionHistory = saveTransactionHistory(scheduledClass.getTeacher().getEmail(), (scheduledClass.getPrice() * discount), teacherWallet);
         transactionHistory.setNote("Salary");
         // Gửi thông báo cho giáo viên
         notificationService.createNotification(NotificationDTO.builder()
