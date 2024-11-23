@@ -41,4 +41,6 @@ public class CloudinaryService {
         String fileName = file.getOriginalFilename();
         return fileName != null && fileName.contains(".") ? fileName.substring(fileName.lastIndexOf(".")) : "";
     }
+
+
 }
