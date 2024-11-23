@@ -1,5 +1,6 @@
 package com.example.FPTLSPlatform.service;
 
+import com.example.FPTLSPlatform.dto.FeedbackCommentDTO;
 import com.example.FPTLSPlatform.dto.FeedbackDTO;
 import com.example.FPTLSPlatform.dto.FeedbackSubmissionDTO;
 import com.example.FPTLSPlatform.model.User;
@@ -19,4 +20,4 @@ public interface IFeedbackService {
     double getAverageFeedbackForTeacher(String teacherName);
 
     void sendFeedbackForClass(Long classId);
-}
+    List<FeedbackCommentDTO> getAllFeedbackComments();}

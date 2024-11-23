@@ -20,21 +20,36 @@ public class CloudinaryService {
     }
 
     public String uploadImage(MultipartFile file) throws IOException {
-        String fileExtension = getFileExtension(file);
-        String fileNameWithExtension = "document" + fileExtension;
-        Map<String, Object> options = ObjectUtils.asMap(
-                "resource_type", "raw", // Chỉ định loại tài nguyên là "raw" (chưa qua xử lý)
-                "public_id", fileNameWithExtension // Đặt tên tệp PDF
-        );
-        Map uploadResult = cloudinary.uploader().upload(file.getBytes(), options);
+        validateFileType(file);
 
-        return uploadResult.get("url").toString();
+        String originalFilename = file.getOriginalFilename();
+        String fileExtension = getFileExtension(file);
+        String fileNameWithTimestamp = originalFilename != null
+                ? originalFilename.replace(fileExtension, "") + "_" + System.currentTimeMillis() + fileExtension
+                : "uploaded_file_" + System.currentTimeMillis() + fileExtension;
+
+
+        Map<String, Object> options = ObjectUtils.asMap(
+                "resource_type", "raw",
+                "public_id", "uploads/" + fileNameWithTimestamp,
+                "overwrite", true,
+                "type", "upload"
+        );
+
+
+        Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), options);
+
+
+        return uploadResult.get("secure_url").toString();
     }
 
-    public String uploadFile(MultipartFile file) throws IOException {
-        Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
-                ObjectUtils.asMap("resource_type", "auto")); // "auto" cho phép nhiều loại file
-        return uploadResult.get("url").toString();
+    private void validateFileType(MultipartFile file) {
+
+        String fileExtension = getFileExtension(file);
+        if (!fileExtension.equalsIgnoreCase(".pdf") && !fileExtension.equalsIgnoreCase(".txt") &&
+                !fileExtension.equalsIgnoreCase(".docx")) {
+            throw new IllegalArgumentException("Only PDF, TXT, and DOCX files are allowed.");
+        }
     }
 
     private String getFileExtension(MultipartFile file) {

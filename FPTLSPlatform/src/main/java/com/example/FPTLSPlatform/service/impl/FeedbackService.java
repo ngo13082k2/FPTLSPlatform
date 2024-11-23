@@ -1,5 +1,6 @@
 package com.example.FPTLSPlatform.service.impl;
 
+import com.example.FPTLSPlatform.dto.FeedbackCommentDTO;
 import com.example.FPTLSPlatform.dto.FeedbackDTO;
 import com.example.FPTLSPlatform.dto.FeedbackQuestionAnswerDTO;
 import com.example.FPTLSPlatform.dto.FeedbackSubmissionDTO;
@@ -236,4 +237,9 @@ public class FeedbackService implements IFeedbackService {
             return responseDTO;
         }).collect(Collectors.toList());
     }
+    public List<FeedbackCommentDTO> getAllFeedbackComments() {
+        return feedbackRepository.findAllFeedbackComments();
+    }
+
+
 }

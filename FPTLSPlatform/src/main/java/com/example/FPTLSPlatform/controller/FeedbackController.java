@@ -1,5 +1,6 @@
 package com.example.FPTLSPlatform.controller;
 
+import com.example.FPTLSPlatform.dto.FeedbackCommentDTO;
 import com.example.FPTLSPlatform.dto.FeedbackDTO;
 import com.example.FPTLSPlatform.dto.FeedbackSubmissionDTO;
 import com.example.FPTLSPlatform.model.User;
@@ -63,5 +64,10 @@ public class FeedbackController {
     public ResponseEntity<?> sendFeedbackForClass(@PathVariable Long classId) {
         feedbackService.sendFeedbackForClass(classId);
         return ResponseEntity.ok("Send mail for teacher's class successfull");
+    }
+    @GetMapping("/comments")
+    public ResponseEntity<List<FeedbackCommentDTO>> getAllFeedbackComments() {
+        List<FeedbackCommentDTO> comments = feedbackService.getAllFeedbackComments();
+        return ResponseEntity.ok(comments);
     }
 }
