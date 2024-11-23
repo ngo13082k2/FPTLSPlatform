@@ -236,4 +236,8 @@ public class FeedbackService implements IFeedbackService {
             return responseDTO;
         }).collect(Collectors.toList());
     }
+    public List<String> getAllCommentByFeedback(){
+        return feedbackRepository.findAll().stream().map(Feedback::getComment).collect(Collectors.toList());
+    }
+
 }

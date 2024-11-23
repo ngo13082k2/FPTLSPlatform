@@ -19,4 +19,4 @@ public interface IFeedbackService {
     double getAverageFeedbackForTeacher(String teacherName);
 
     void sendFeedbackForClass(Long classId);
-}
+    List<String> getAllCommentByFeedback();}

@@ -64,4 +64,9 @@ public class FeedbackController {
         feedbackService.sendFeedbackForClass(classId);
         return ResponseEntity.ok("Send mail for teacher's class successfull");
     }
+    @GetMapping("/comments")
+    public ResponseEntity<List<String>> getAllComments() {
+        List<String> comments = feedbackService.getAllCommentByFeedback();
+        return ResponseEntity.ok(comments);
+    };
 }

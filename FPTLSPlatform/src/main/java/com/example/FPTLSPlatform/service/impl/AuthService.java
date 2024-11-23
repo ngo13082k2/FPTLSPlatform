@@ -71,14 +71,12 @@ public class AuthService {
         Optional<User> existingUserByEmail = userRepository.findByEmail(request.getEmail());
         Optional<User> existingUserByPhone = userRepository.findByPhoneNumber(request.getPhoneNumber());
         Optional<User> existingUserByUsername = userRepository.findByUserName(request.getUsername());
-        if (existingUserByUsername.isPresent()) {
-            throw new IllegalArgumentException("Username đã tồn tại.");
+        if ((existingUserByUsername.isPresent() && "ACTIVE".equals(existingUserByUsername.get().getStatus())) ||
+                (existingUserByEmail.isPresent() && "ACTIVE".equals(existingUserByEmail.get().getStatus())) ||
+                (existingUserByPhone.isPresent() && "ACTIVE".equals(existingUserByPhone.get().getStatus()))) {
+            throw new IllegalArgumentException("Username, email hoặc số điện thoại đã tồn tại với trạng thái ACTIVE.");
         }
 
-        if ((existingUserByEmail.isPresent() && "ACTIVE".equals(existingUserByEmail.get().getStatus())) ||
-                (existingUserByPhone.isPresent() && "ACTIVE".equals(existingUserByPhone.get().getStatus()))) {
-            throw new IllegalArgumentException("Email hoặc số điện thoại đã tồn tại với trạng thái ACTIVE.");
-        }
 
         User user = existingUserByEmail.orElseGet(() -> existingUserByPhone.orElse(null));
         if (user != null && "PENDING".equals(user.getStatus())) {
