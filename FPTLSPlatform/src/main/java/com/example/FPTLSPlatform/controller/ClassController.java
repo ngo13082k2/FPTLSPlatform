@@ -154,6 +154,16 @@ public class ClassController {
             return principal.toString();
         }
     }
+    @PostMapping("/cancel/{classId}")
+    public ResponseEntity<String> cancelClass(@PathVariable Long classId) {
+        try {
+            String response = classService.cancelClass(classId);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
 
 
 }

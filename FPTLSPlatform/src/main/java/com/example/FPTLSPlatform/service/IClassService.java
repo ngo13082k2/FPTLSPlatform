@@ -35,4 +35,5 @@ public interface IClassService {
     Map<YearMonth, Long> getClassesByStatusAndMonth(ClassStatus status, Integer year);
     long getTotalClasses();
     List<ClassDTO> getClassesByStatusAndMonthDetailed(ClassStatus status, int year, Integer month);
+    String cancelClass(Long classId);
 }
