@@ -14,6 +14,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 
+import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -96,7 +97,7 @@ public class ApplicationUserService implements IApplicationUserService {
         if (applicationUser.getUser() != null) {
             notificationService.createNotification(NotificationDTO.builder()
                     .title("Create withdraw application successful")
-                    .description("Create withdraw " + String.format("%.2f", Math.abs(transactionHistory.getAmount())) + " successful. Remaining account " + String.format("%.2f", Math.abs(transactionHistory.getTransactionBalance())))
+                    .description("Create withdraw " + formatToVND(transactionHistory.getAmount()) + " successful. Remaining account " + formatToVND(transactionHistory.getTransactionBalance()))
                     .name("Application Notification")
                     .username(applicationUser.getUser().getUserName())
                     .type("Withdraw application")
@@ -104,7 +105,7 @@ public class ApplicationUserService implements IApplicationUserService {
         } else {
             notificationService.createNotification(NotificationDTO.builder()
                     .title("Create withdraw application successful")
-                    .description("Create withdraw " + String.format("%.2f", Math.abs(transactionHistory.getAmount())) + " successful. Remaining account " + String.format("%.2f", Math.abs(transactionHistory.getTransactionBalance())))
+                    .description("Create withdraw " + formatToVND(transactionHistory.getAmount()) + " successful. Remaining account " + formatToVND(transactionHistory.getTransactionBalance()))
                     .name("Application Notification")
                     .username(applicationUser.getTeacher().getTeacherName())
                     .type("Withdraw application")
@@ -154,9 +155,9 @@ public class ApplicationUserService implements IApplicationUserService {
             notificationService.createNotification(NotificationDTO.builder()
                     .title("Cancel withdraw application successful")
                     .description("Cancel withdraw " +
-                            String.format("%.2f", Math.abs(transactionHistory.getAmount())) +
+                            formatToVND(transactionHistory.getAmount()) +
                             " successful. Remaining account " +
-                            String.format("%.2f", Math.abs(transactionHistory.getTransactionBalance())))
+                            formatToVND(transactionHistory.getTransactionBalance()))
                     .name("Application Notification")
                     .username(applicationUser.getUser().getUserName())
                     .type("Withdraw application")
@@ -165,9 +166,9 @@ public class ApplicationUserService implements IApplicationUserService {
             notificationService.createNotification(NotificationDTO.builder()
                     .title("Cancel withdraw application successful")
                     .description("Cancel withdraw " +
-                            String.format("%.2f", Math.abs(transactionHistory.getAmount())) +
+                            formatToVND(transactionHistory.getAmount()) +
                             " successful. Remaining account " +
-                            transactionHistory.getTransactionBalance())
+                            formatToVND(transactionHistory.getTransactionBalance()))
                     .name("Application Notification")
                     .username(applicationUser.getTeacher().getTeacherName())
                     .type("Withdraw application")
@@ -182,46 +183,62 @@ public class ApplicationUserService implements IApplicationUserService {
     public String approveApplication(Long applicationId) {
         ApplicationUser applicationUser = applicationUserRepository.findById(applicationId)
                 .orElseThrow(() -> new RuntimeException("Application not found"));
-
-        applicationUser.setStatus("completed");
+        String username;
+        String email;
+        if (applicationUser.getUser() != null) {
+            username = applicationUser.getUser().getUserName();
+            email = applicationUser.getUser().getEmail();
+        } else if (applicationUser.getTeacher() != null) {
+            username = applicationUser.getTeacher().getTeacherName();
+            email = applicationUser.getTeacher().getEmail();
+        } else {
+            throw new RuntimeException("Invalid application user type: no associated User or Teacher.");
+        }
+        applicationUser.setStatus("Completed");
         applicationUserRepository.save(applicationUser);
         notificationService.createNotification(NotificationDTO.builder()
                 .title("Application approved")
-                .description("Your application " + applicationUser.getName() + " has been approved.")
+                .description("Your application " + username + " has been approved.")
                 .name("Notification")
-                .username(applicationUser.getUser().getUserName())
+                .username(username)
                 .type("Other application")
                 .build());
-        sendEmail(applicationUser);
+        sendEmail(applicationUser, email);
         return "Your application has been approved.";
     }
 
-    private void sendEmail(ApplicationUser applicationUser) {
+    private void sendEmail(ApplicationUser applicationUser, String email) {
         Context context = new Context();
         context.setVariable("application", applicationUser);
-        if (applicationUser.getUser() != null) {
-            emailService.sendEmail(applicationUser.getUser().getEmail(), "application", "application-email", context);
-        }
-        if (applicationUser.getTeacher() != null) {
-            emailService.sendEmail(applicationUser.getTeacher().getEmail(), "application", "application-email", context);
-        }
+        emailService.sendEmail(email, "application", "application-email", context);
+
     }
 
     @Override
     public String rejectApplication(Long applicationId) {
         ApplicationUser applicationUser = applicationUserRepository.findById(applicationId)
                 .orElseThrow(() -> new RuntimeException("Application not found"));
-
-        applicationUser.setStatus("rejected");
+        String username;
+        String email;
+        if (applicationUser.getUser() != null) {
+            username = applicationUser.getUser().getUserName();
+            email = applicationUser.getUser().getEmail();
+        } else if (applicationUser.getTeacher() != null) {
+            username = applicationUser.getTeacher().getTeacherName();
+            email = applicationUser.getTeacher().getEmail();
+        } else {
+            throw new RuntimeException("Invalid application user type: no associated User or Teacher.");
+        }
+        applicationUser.setStatus("Rejected");
         applicationUserRepository.save(applicationUser);
         notificationService.createNotification(NotificationDTO.builder()
                 .title("Application rejected")
-                .description("Your application " + applicationUser.getName() + " has been rejected")
+                .description("Your application " + username + " has been rejected")
                 .name("Notification")
-                .username(applicationUser.getUser().getUserName())
+                .username(username)
                 .type("Other application")
                 .build());
-        sendEmail(applicationUser);
+        sendEmail(applicationUser, email);
         return "Your application has been rejected.";
     }
 
@@ -230,8 +247,8 @@ public class ApplicationUserService implements IApplicationUserService {
                 .orElseThrow(() -> new RuntimeException("Withdrawal request not found"));
 
         Double amount = applicationUser.getAmountFromDescription();
-        if (amount == null) {
-            throw new RuntimeException("Không thể xác định số tiền từ description.");
+        if (amount == null || amount <= 0) {
+            throw new RuntimeException("Không thể xác định số tiền từ description hoặc số tiền không hợp lệ.");
         }
 
         SystemWallet systemWallet = systemWalletRepository.findById(1L)
@@ -244,13 +261,16 @@ public class ApplicationUserService implements IApplicationUserService {
         systemWallet.setTotalAmount(systemWallet.getTotalAmount() - amount);
         systemWalletRepository.save(systemWallet);
 
-        String username = null;
+        String username;
+        String email;
         if (applicationUser.getUser() != null) {
             username = applicationUser.getUser().getUserName();
+            email = applicationUser.getUser().getEmail();
         } else if (applicationUser.getTeacher() != null) {
             username = applicationUser.getTeacher().getTeacherName();
+            email = applicationUser.getTeacher().getEmail();
         } else {
-            throw new RuntimeException("Invalid application user type, no associated User or Teacher.");
+            throw new RuntimeException("Invalid application user type: no associated User or Teacher.");
         }
 
         SystemTransactionHistory systemTransactionHistory = SystemTransactionHistory.builder()
@@ -262,24 +282,25 @@ public class ApplicationUserService implements IApplicationUserService {
                 .build();
         systemTransactionHistoryRepository.save(systemTransactionHistory);
 
-        // Đổi trạng thái của ApplicationUser thành completed
-        applicationUser.setStatus("completed");
+        applicationUser.setStatus("Completed");
         applicationUserRepository.save(applicationUser);
+
+        // Tạo thông báo
         notificationService.createNotification(NotificationDTO.builder()
                 .title("Withdraw successful")
-                .description("Withdraw successfully. Your bank account added " + String.format("%.2f", Math.abs(applicationUser.getAmountFromDescription())))
-                .username(applicationUser.getUser().getUserName())
+                .description("Withdraw successfully. Your bank account added " +
+                        formatToVND(amount) +
+                        ". Remaining system wallet: " +
+                        formatToVND(systemWallet.getTotalAmount()))
+                .username(username)
                 .name("Notification")
                 .type("Withdraw application")
                 .build());
+
         Context context = new Context();
         context.setVariable("systemTransactionHistory", systemTransactionHistory);
-        if (applicationUser.getUser() != null) {
-            emailService.sendEmail(applicationUser.getUser().getEmail(), "Transaction", "withdraw-email", context);
-        }
-        if (applicationUser.getTeacher() != null) {
-            emailService.sendEmail(applicationUser.getTeacher().getEmail(), "Transaction", "withdraw-email", context);
-        }
+        emailService.sendEmail(email, "Transaction Successful", "withdraw-email", context);
+
         return "Đã trả tiền thành công và cập nhật trạng thái yêu cầu thành completed.";
     }
 
@@ -399,5 +420,10 @@ public class ApplicationUserService implements IApplicationUserService {
         }
 
         return builder.build();
+    }
+
+    public static String formatToVND(double amount) {
+        DecimalFormat df = new DecimalFormat("#,###");
+        return df.format(Math.abs(amount)) + " VND";
     }
 }

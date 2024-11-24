@@ -20,40 +20,38 @@ public class CloudinaryService {
     }
 
     public String uploadImage(MultipartFile file) throws IOException {
-        validateFileType(file);
-
-        String originalFilename = file.getOriginalFilename();
+        // Lấy phần mở rộng của file
         String fileExtension = getFileExtension(file);
-        String fileNameWithTimestamp = originalFilename != null
-                ? originalFilename.replace(fileExtension, "") + "_" + System.currentTimeMillis() + fileExtension
-                : "uploaded_file_" + System.currentTimeMillis() + fileExtension;
+        if (fileExtension == null || fileExtension.isEmpty()) {
+            throw new IllegalArgumentException("File không có phần mở rộng hợp lệ!");
+        }
 
+        String fileNameWithExtension = "document_" + System.currentTimeMillis() + fileExtension;
 
         Map<String, Object> options = ObjectUtils.asMap(
                 "resource_type", "raw",
-                "public_id", "uploads/" + fileNameWithTimestamp,
-                "overwrite", true,
+                "folder", "uploads",
+                "public_id", fileNameWithExtension,
                 "type", "upload"
         );
 
+        Map uploadResult = cloudinary.uploader().upload(file.getBytes(), options);
 
-        Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), options);
-
-
-        return uploadResult.get("secure_url").toString();
+        return uploadResult.get("url").toString();
     }
 
-    private void validateFileType(MultipartFile file) {
 
-        String fileExtension = getFileExtension(file);
-        if (!fileExtension.equalsIgnoreCase(".pdf") && !fileExtension.equalsIgnoreCase(".txt") &&
-                !fileExtension.equalsIgnoreCase(".docx")) {
-            throw new IllegalArgumentException("Only PDF, TXT, and DOCX files are allowed.");
-        }
+    public String uploadFile(MultipartFile file) throws IOException {
+        Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
+                ObjectUtils.asMap("resource_type", "auto"));
+        return uploadResult.get("url").toString();
     }
 
     private String getFileExtension(MultipartFile file) {
-        String fileName = file.getOriginalFilename();
-        return fileName != null && fileName.contains(".") ? fileName.substring(fileName.lastIndexOf(".")) : "";
+        String originalFileName = file.getOriginalFilename();
+        if (originalFileName == null || originalFileName.lastIndexOf(".") == -1) {
+            return "";
+        }
+        return originalFileName.substring(originalFileName.lastIndexOf("."));
     }
 }
