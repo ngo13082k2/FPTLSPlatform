@@ -40,9 +40,9 @@
 </head>
 <body>
 <div class="container">
-    <h1>Transaction Notification</h1>
+    <h1>Application Notification</h1>
     <p>Dear <span th:text="${application.getUser().getUserName()}"></span>,</p>
-    <p>We have received your transaction. Here are the details:</p>
+    <p>We have received your application. Here are the details:</p>
 
     <table class="transaction-details">
         <tr>
@@ -57,7 +57,7 @@
 
     <p>Your application has been <span th:text="${application.getStatus()()}"></span>!</p>
     <div class="footer">
-        <p>Best regards,<br>Your Company Name</p>
+        <p>Best regards,<br>FPT Learning Support Platform</p>
     </div>
 </div>
 </body>
