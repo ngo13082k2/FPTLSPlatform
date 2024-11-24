@@ -194,7 +194,7 @@ public class ApplicationUserService implements IApplicationUserService {
         } else {
             throw new RuntimeException("Invalid application user type: no associated User or Teacher.");
         }
-        applicationUser.setStatus("Completed");
+        applicationUser.setStatus("completed");
         applicationUserRepository.save(applicationUser);
         notificationService.createNotification(NotificationDTO.builder()
                 .title("Application approved")
@@ -229,7 +229,7 @@ public class ApplicationUserService implements IApplicationUserService {
         } else {
             throw new RuntimeException("Invalid application user type: no associated User or Teacher.");
         }
-        applicationUser.setStatus("Rejected");
+        applicationUser.setStatus("rejected");
         applicationUserRepository.save(applicationUser);
         notificationService.createNotification(NotificationDTO.builder()
                 .title("Application rejected")
@@ -282,7 +282,7 @@ public class ApplicationUserService implements IApplicationUserService {
                 .build();
         systemTransactionHistoryRepository.save(systemTransactionHistory);
 
-        applicationUser.setStatus("Completed");
+        applicationUser.setStatus("completed");
         applicationUserRepository.save(applicationUser);
 
         // Tạo thông báo
