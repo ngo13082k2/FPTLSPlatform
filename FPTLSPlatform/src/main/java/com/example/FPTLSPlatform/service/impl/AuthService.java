@@ -383,6 +383,61 @@ public class AuthService {
                         .collect(Collectors.toSet()))
                 .build();
     }
+    public String forgotPassword(String email) throws MessagingException {
+        String normalizedEmail = email.trim().toLowerCase();
+
+        User user = userRepository.findByEmail(normalizedEmail)
+                .orElseThrow(() -> new IllegalArgumentException("Email không tồn tại trong hệ thống."));
+
+        int otp = otpGmailService.generateOTP(normalizedEmail);
+
+        emailService.sendOTP(normalizedEmail, otp);
+
+        session.setAttribute("forgotPasswordEmail", normalizedEmail);
+
+        return "OTP đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư.";
+    }
+
+    public String confirmOtpForPasswordReset(int otp) {
+        String email = (String) session.getAttribute("forgotPasswordEmail");
+
+        if (email == null) {
+            throw new IllegalArgumentException("Không có email nào trong session để xác nhận OTP.");
+        }
+
+        Integer storedOtp = otpGmailService.getOTP(email);
+
+        if (storedOtp == null || storedOtp != otp) {
+            throw new IllegalArgumentException("OTP không hợp lệ hoặc đã hết hạn.");
+        }
+
+        session.setAttribute("otpVerifiedEmail", email); // Đánh dấu OTP đã xác nhận
+        session.removeAttribute("forgotPasswordEmail");
+
+        return "OTP hợp lệ. Vui lòng đặt mật khẩu mới.";
+    }
+
+    public String resetPassword(String newPassword) {
+        String email = (String) session.getAttribute("otpVerifiedEmail");
+
+        if (email == null) {
+            throw new IllegalArgumentException("Không có email nào đã xác nhận OTP để đặt lại mật khẩu.");
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Người dùng không tồn tại."));
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setModifiedDate(LocalDateTime.now());
+        userRepository.save(user);
+
+        session.removeAttribute("otpVerifiedEmail");
+
+        return "Đặt lại mật khẩu thành công.";
+    }
+
+
+
 
 
 }

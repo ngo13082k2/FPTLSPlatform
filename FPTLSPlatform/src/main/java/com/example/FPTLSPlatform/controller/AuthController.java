@@ -125,4 +125,28 @@ public class AuthController {
         return ResponseEntity.ok(teacherDTO);
     }
 
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotPassword(@RequestBody Map<String, String> request) throws MessagingException {
+        String email = request.get("email");
+        String response = authService.forgotPassword(email);
+        return ResponseEntity.ok(response);
+    }
+
+
+    @PostMapping("/confirm-otpForgot")
+    public ResponseEntity<String> confirmOtp(@RequestBody Map<String, Object> request) {
+        int otp = (int) request.get("otp");
+        String response = authService.confirmOtpForPasswordReset(otp);
+        return ResponseEntity.ok(response);
+    }
+
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestBody Map<String, String> request) {
+        String newPassword = request.get("newPassword");
+        String response = authService.resetPassword(newPassword);
+        return ResponseEntity.ok(response);
+    }
+
+
 }
