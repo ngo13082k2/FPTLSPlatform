@@ -383,6 +383,7 @@ public class AuthService {
                         .collect(Collectors.toSet()))
                 .build();
     }
+
     public String forgotPassword(String email) throws MessagingException {
         String normalizedEmail = email.trim().toLowerCase();
 
@@ -435,9 +436,4 @@ public class AuthService {
 
         return "Đặt lại mật khẩu thành công.";
     }
-
-
-
-
-
 }

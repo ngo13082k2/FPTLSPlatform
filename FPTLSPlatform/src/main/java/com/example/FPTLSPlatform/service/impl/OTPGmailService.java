@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+
 @Service
 public class OTPGmailService {
     private final Map<String, Integer> otpStorage = new HashMap<>();
@@ -23,4 +24,5 @@ public class OTPGmailService {
     public void clearOTP(String email) {
         otpStorage.remove(email);
     }
+
 }

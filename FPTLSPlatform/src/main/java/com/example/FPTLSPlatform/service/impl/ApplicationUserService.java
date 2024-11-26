@@ -295,11 +295,11 @@ public class ApplicationUserService implements IApplicationUserService {
         }
 
         SystemTransactionHistory systemTransactionHistory = SystemTransactionHistory.builder()
-                .transactionAmount(amount)
+                .transactionAmount(-amount)
                 .transactionDate(LocalDateTime.now())
                 .balanceAfterTransaction(systemWallet.getTotalAmount())
                 .username(username)
-                .note("WithdrawalRequest Successful")
+                .note("Withdraw")
                 .build();
         systemTransactionHistoryRepository.save(systemTransactionHistory);
 
@@ -454,8 +454,7 @@ public class ApplicationUserService implements IApplicationUserService {
     }
 
     public static String formatToVND(double amount) {
-        DecimalFormat df = new DecimalFormat("#,###");
-        return df.format(Math.abs(amount)) + " VND";
+        return OrderService.formatToVND(amount);
     }
     public ApprovalRecord getApprovalRecordByApplicationUserId(Long applicationUserId) {
         return approvalRecordRepository.findByApplicationUser_ApplicationUserId(applicationUserId)

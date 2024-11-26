@@ -24,5 +24,9 @@ public interface IOrderService {
 
     void sendActivationEmail(Class scheduledClass);
 
+    String cancelClass(Long classId);
+
+    void sendCancelEmail(Class scheduledClass);
+
     void completeClassImmediately(Long classId);
 }

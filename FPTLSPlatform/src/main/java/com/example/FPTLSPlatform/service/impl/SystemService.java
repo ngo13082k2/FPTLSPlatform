@@ -6,7 +6,6 @@ import com.example.FPTLSPlatform.repository.SystemRepository;
 import com.example.FPTLSPlatform.service.ISystemService;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -62,9 +61,8 @@ public class SystemService implements ISystemService {
 
     @Override
     public List<SystemDTO> createDefaultParam() {
-        // Danh sách tham số mặc định
         List<System> defaultSystems = Arrays.asList(
-                new System(1L, "check_time_before_start", "30"),
+                new System(1L, "check_time_before_start", "2"),
                 new System(2L, "minimum_required_percentage", "0.8"),
                 new System(3L, "discount_percentage", "0.2"),
                 new System(4L, "feedback_deadline", "7"),
@@ -74,27 +72,21 @@ public class SystemService implements ISystemService {
                 new System(8L, "demo_adjust_end_time", "0")
         );
 
-        // Lấy tất cả các tham số hiện có từ database
         List<System> existingSystems = systemRepository.findAll();
         Map<Long, System> existingSystemsMap = existingSystems.stream()
                 .collect(Collectors.toMap(System::getId, system -> system));
 
-        // Duyệt qua danh sách mặc định để thêm mới hoặc cập nhật
         for (System defaultSystem : defaultSystems) {
             System existingSystem = existingSystemsMap.get(defaultSystem.getId());
             if (existingSystem != null) {
-                // Nếu đã tồn tại, cập nhật giá trị
                 existingSystem.setValue(defaultSystem.getValue());
             } else {
-                // Nếu chưa tồn tại, thêm mới
                 existingSystems.add(defaultSystem);
             }
         }
 
-        // Lưu tất cả vào cơ sở dữ liệu
         systemRepository.saveAll(existingSystems);
 
-        // Chuyển đổi thành DTO và trả về
         return existingSystems.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
@@ -114,5 +106,4 @@ public class SystemService implements ISystemService {
                 .value(systemDTO.getValue())
                 .build();
     }
-
 }

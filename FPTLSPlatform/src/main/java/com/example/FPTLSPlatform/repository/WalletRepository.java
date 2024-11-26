@@ -11,18 +11,18 @@ import java.util.List;
 
 @Repository
 public interface WalletRepository extends JpaRepository<Wallet, Long> {
-    @Query("SELECT AVG(w.balance), SUM(w.balance) FROM Wallet w")
-    Object[] getTotalAndAverageBalance();
 
-    @Query("SELECT new com.example.FPTLSPlatform.dto.WalletStatisticDTO(MONTH(w.transactionDate), " +
-            "AVG(w.transactionBalance), SUM(w.transactionBalance)," +
-            "SUM(CASE WHEN w.note = 'Refunded' THEN w.amount ELSE 0 END), " +
-            "AVG(CASE WHEN w.note = 'Deposit' THEN w.amount ELSE 0 END), " +
-            "SUM(CASE WHEN w.note = 'Deposit' THEN w.amount ELSE 0 END), " +
-            "SUM(CASE WHEN w.note = 'Order' THEN w.amount ELSE 0 END))" +
-            "FROM TransactionHistory w " +
+    @Query("SELECT new com.example.FPTLSPlatform.dto.WalletStatisticDTO( " +
+            "MONTH(w.transactionDate), " +
+            "(SELECT w2.balanceAfterTransaction FROM SystemTransactionHistory w2 " +
+            " WHERE YEAR(w2.transactionDate) = :year AND MONTH(w2.transactionDate) = MONTH(w.transactionDate) " +
+            " ORDER BY w2.transactionDate DESC LIMIT 1), " + // Số dư cuối cùng trong tháng
+            "SUM(CASE WHEN w.transactionAmount > 0 THEN w.transactionAmount ELSE 0 END), " + // Tổng thu nhập
+            "SUM(CASE WHEN w.transactionAmount < 0 THEN ABS(w.transactionAmount) ELSE 0 END)) " + // Tổng chi phí
+            "FROM SystemTransactionHistory w " +
             "WHERE YEAR(w.transactionDate) = :year " +
             "GROUP BY MONTH(w.transactionDate) " +
             "ORDER BY MONTH(w.transactionDate)")
     List<WalletStatisticDTO> getWalletStatisticByMonth(@Param("year") Integer year);
+
 }

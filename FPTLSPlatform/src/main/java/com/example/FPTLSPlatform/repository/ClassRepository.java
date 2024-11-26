@@ -1,5 +1,6 @@
 package com.example.FPTLSPlatform.repository;
 
+import com.example.FPTLSPlatform.dto.StudentDTO;
 import com.example.FPTLSPlatform.model.Class;
 import com.example.FPTLSPlatform.model.Teacher;
 import com.example.FPTLSPlatform.model.enums.ClassStatus;
@@ -18,10 +19,6 @@ import java.util.Set;
 public interface ClassRepository extends JpaRepository<Class, Long> {
     List<Class> findByCoursesCourseCode(String courseCode);
 
-    boolean existsBySlot_SlotIdAndDayOfWeek(Long slotId, String dayOfWeek);
-
-    boolean existsByTeacher_TeacherNameAndSlot_SlotIdAndDayOfWeek(String teacherName, Long slotId, String dayOfWeek);
-
     boolean existsByTeacher_TeacherNameAndSlot_SlotIdAndDayOfWeekAndStartDate(
             String teacherName, Long slotId, String dayOfWeek, LocalDate startDate);
 
@@ -33,7 +30,7 @@ public interface ClassRepository extends JpaRepository<Class, Long> {
 
     List<Class> findByTeacher(Teacher teacher);
 
-    Page<Class> findByStartDate(LocalDate date, Pageable pageable);
+    List<StudentDTO> findStudentsByClassId(Long classId);
 
     List<Class> findByStartDateAndStatus(LocalDate localDate, ClassStatus status);
 
@@ -42,11 +39,10 @@ public interface ClassRepository extends JpaRepository<Class, Long> {
     List<Class> findByStatus(ClassStatus status);
 
     List<Class> findByStatusAndStartDateBetween(ClassStatus classStatus, LocalDate localDate, LocalDate localDate1);
-    List<Class> findByTeacher_TeacherName(String teacherName);
-    List<Class> findByTeacherTeacherNameAndStatus(String teacherName, ClassStatus status);
-    Teacher findTeacher_TeacherNameByClassId(Long classId);
-    boolean existsByTeacher_TeacherNameAndSlot_SlotIdAndDayOfWeekAndStartDateAndStatusNot(
-            String teacherName, Long slotId, String dayOfWeek, LocalDate startDate, ClassStatus status);
 
+    List<Class> findByTeacherTeacherNameAndStatus(String teacherName, ClassStatus status);
+    
     boolean existsByCode(String string);
+
+    boolean existsByTeacher_TeacherNameAndSlot_SlotIdAndDayOfWeekAndStartDateAndStatusNot(String teacherName, Long slotId, String dayOfWeek, LocalDate startDate, ClassStatus classStatus);
 }

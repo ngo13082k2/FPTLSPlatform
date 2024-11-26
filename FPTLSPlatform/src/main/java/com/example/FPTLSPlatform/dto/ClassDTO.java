@@ -53,5 +53,6 @@ public class ClassDTO {
     private LocalDate endDate;
 
     private String dayOfWeek;
+
     private String imageTeacher;
 }

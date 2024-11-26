@@ -202,10 +202,10 @@ public class OrderService implements IOrderService {
                         ? Integer.parseInt(checkTimeBeforeStart.getValue())
                         : defaultTime;
                 LocalDateTime now = LocalDateTime.now();
-                LocalDateTime cancelDeadline = scheduledClass.getStartDate().atTime(orderDetail.getClasses().getSlot().getStartTime()).minusMinutes(checkTime);
+                LocalDateTime cancelDeadline = scheduledClass.getStartDate().atTime(orderDetail.getClasses().getSlot().getStartTime()).minusDays(checkTime);
 
                 if (now.isAfter(cancelDeadline)) {
-                    return new ResponseDTO<>("ERROR", "Cannot cancel the order within " + checkTime + " minutes before the class starts.", null);
+                    return new ResponseDTO<>("ERROR", "Cannot cancel the order within " + checkTime + " days before the class starts.", null);
                 }
 
                 // Refund and update order status
@@ -420,6 +420,17 @@ public class OrderService implements IOrderService {
         }
     }
 
+    @Override
+    public void sendCancelEmail(Class scheduledClass) {
+        try {
+            Context context = new Context();
+            context.setVariable("teacherName", scheduledClass.getTeacher().getTeacherName());
+            context.setVariable("class", scheduledClass);
+            emailService.sendEmail(scheduledClass.getTeacher().getEmail(), "Class cancel", "cancel-email", context);
+        } catch (Exception ex) {
+            log.error(ex.getMessage());
+        }
+    }
 
     @Scheduled(cron = "0 * * * * *")
     @Transactional
@@ -427,7 +438,6 @@ public class OrderService implements IOrderService {
         int pageNumber = 0;
         int defaultTime = 1;
 
-        // Lấy giá trị cấu hình từ hệ thống
         System checkTimeBeforeStart = systemRepository.findByName("check_time_before_start");
         int checkTime = checkTimeBeforeStart != null
                 ? Integer.parseInt(checkTimeBeforeStart.getValue())
@@ -451,14 +461,12 @@ public class OrderService implements IOrderService {
 
             for (Class scheduledClass : classesPage) {
                 try {
-                    // Tính toán thời gian bắt đầu lớp
                     LocalDateTime classStartTime = scheduledClass.getStartDate()
                             .atTime(scheduledClass.getSlot().getStartTime())
-                            .minusMinutes(checkTime);
+                            .minusDays(checkTime);
 
-                    // Điều chỉnh thời gian nếu demo_mode được bật
                     if (isDemoMode) {
-                        classStartTime = classStartTime.minusMinutes(demoTimeAdjustment);
+                        classStartTime = classStartTime.minusDays(demoTimeAdjustment);
                     }
 
                     if (classStartTime.isBefore(LocalDateTime.now())) {
@@ -489,14 +497,13 @@ public class OrderService implements IOrderService {
                     scheduledClass.getTeacher().getTeacherName()));
 
             sendActivationEmail(scheduledClass);
-            log.info("Class with ID {} has been activated successfully.", scheduledClass.getClassId());
         } else {
             scheduledClass.setStatus(ClassStatus.CANCELED);
             classRepository.save(scheduledClass);
             notificationService.createNotification(buildNotificationDTO("Your class " + scheduledClass.getCode() + " has been cancelled",
                     "Your class " + scheduledClass.getCode() + " has been cancelled",
                     scheduledClass.getTeacher().getTeacherName()));
-            log.info("Class with ID {} has been cancelled.", scheduledClass.getClassId());
+            sendCancelEmail(scheduledClass);
         }
         return scheduledClass;
     }
@@ -543,7 +550,7 @@ public class OrderService implements IOrderService {
             LocalDateTime startTime = scheduledClass.getStartDate().atTime(scheduledClass.getSlot().getStartTime());
 
             if (isDemoMode) {
-                startTime = startTime.minusMinutes(adjustStartTime);
+                startTime = startTime.minusDays(adjustStartTime);
             }
 
             if (now.isAfter(startTime) && scheduledClass.getStatus().equals(ClassStatus.ACTIVE)) {
@@ -580,7 +587,7 @@ public class OrderService implements IOrderService {
             LocalDateTime endTime = scheduledClass.getStartDate().atTime(scheduledClass.getSlot().getEndTime());
 
             if (isDemoMode) {
-                endTime = endTime.minusMinutes(adjustEndTime);
+                endTime = endTime.minusDays(adjustEndTime);
             }
 
             if (now.isAfter(endTime)) {
@@ -593,19 +600,35 @@ public class OrderService implements IOrderService {
                         orderDetailRepository.save(orderDetail);
                     }
                 }
-                SystemWallet systemWallet = systemWalletRepository.getReferenceById(1L);
-                systemWallet.setTotalAmount(systemWallet.getTotalAmount() - (scheduledClass.getPrice() * discount));
-                systemWalletRepository.save(systemWallet);
-
-                Wallet wallet = scheduledClass.getTeacher().getWallet();
-                wallet.setBalance(wallet.getBalance() + (scheduledClass.getPrice() * discount));
-                walletRepository.save(wallet);
-                TransactionHistory transactionHistory = saveTransactionHistory(scheduledClass.getTeacher().getEmail(), (scheduledClass.getPrice() * discount), wallet);
-                transactionHistory.setNote("Salary");
+                saveSystemWallet(discount, scheduledClass);
 
                 log.info("Class with ID {} has started and is now COMPLETED.", scheduledClass.getClassId());
             }
         }
+    }
+
+    private void saveSystemWallet(double discount, Class scheduledClass) {
+        SystemWallet systemWallet = systemWalletRepository.getReferenceById(1L);
+        List<StudentDTO> studentDTOS = classRepository.findStudentsByClassId(scheduledClass.getClassId());
+        double totalAmount = (scheduledClass.getPrice() * discount) * studentDTOS.size();
+        Wallet wallet = scheduledClass.getTeacher().getWallet();
+        TransactionHistory transactionHistory = saveTransactionHistory(scheduledClass.getTeacher().getEmail(), totalAmount, wallet);
+        transactionHistory.setNote("Salary");
+        SystemTransactionHistory systemTransactionHistory = saveSystemTransactionHistory(totalAmount, systemWallet);
+        systemTransactionHistory.setNote("Salary");
+        systemTransactionHistory.setUsername(scheduledClass.getTeacher().getTeacherName());
+
+    }
+
+    private SystemTransactionHistory saveSystemTransactionHistory(double totalAmount, SystemWallet systemWallet) {
+        SystemTransactionHistory systemTransactionHistory = new SystemTransactionHistory();
+        systemTransactionHistory.setTransactionAmount(-totalAmount);
+        systemTransactionHistory.setTransactionDate(LocalDateTime.now());
+        systemTransactionHistory.setBalanceAfterTransaction(systemWallet.getTotalAmount());
+        systemWallet.setTotalAmount(systemWallet.getTotalAmount() - totalAmount);
+        systemWalletRepository.save(systemWallet);
+
+        return systemTransactionHistory;
     }
 
 
@@ -652,15 +675,7 @@ public class OrderService implements IOrderService {
         }
 
         // Xử lý thanh toán: trừ tiền từ SystemWallet và thêm vào ví của giáo viên
-        SystemWallet systemWallet = systemWalletRepository.getReferenceById(1L);
-        systemWallet.setTotalAmount(systemWallet.getTotalAmount() - (scheduledClass.getPrice() * discount));
-        systemWalletRepository.save(systemWallet);
-
-        Wallet teacherWallet = scheduledClass.getTeacher().getWallet();
-        teacherWallet.setBalance(teacherWallet.getBalance() + (scheduledClass.getPrice() * discount));
-        walletRepository.save(teacherWallet);
-        TransactionHistory transactionHistory = saveTransactionHistory(scheduledClass.getTeacher().getEmail(), (scheduledClass.getPrice() * discount), teacherWallet);
-        transactionHistory.setNote("Salary");
+        saveSystemWallet(discount, scheduledClass);
         // Gửi thông báo cho giáo viên
         notificationService.createNotification(NotificationDTO.builder()
                 .title("Class " + scheduledClass.getCode() + " has been completed")
@@ -673,4 +688,45 @@ public class OrderService implements IOrderService {
         // Log kết quả
         log.info("Class with ID {} has been completed immediately by admin.", classId);
     }
+
+
+    @Transactional
+    public String cancelClass(Long classId) {
+        Class classToCancel = classRepository.findById(classId)
+                .orElseThrow(() -> new RuntimeException("Class not found with ID: " + classId));
+
+        if (classToCancel.getStatus() == ClassStatus.COMPLETED) {
+            throw new RuntimeException("Cannot cancel a class that is already completed.");
+        } else if (classToCancel.getStatus() == ClassStatus.CANCELED) {
+            throw new RuntimeException("This class has already been canceled.");
+        }
+
+        List<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(classId);
+
+        for (OrderDetail orderDetail : orderDetails) {
+            Order order = orderDetail.getOrder();
+            User student = order.getUser();
+
+            Wallet studentWallet = student.getWallet();
+            if (studentWallet == null) {
+                throw new RuntimeException("Student does not have a wallet for refund.");
+            }
+            studentWallet.setBalance(studentWallet.getBalance() + orderDetail.getPrice());
+            walletRepository.save(studentWallet);
+
+            order.setStatus(OrderStatus.CANCELLED);
+            orderRepository.save(order);
+
+        }
+        notificationService.createNotification(buildNotificationDTO("Your class " + classToCancel.getCode() + " has been cancelled",
+                "Your class " + classToCancel.getCode() + " has been cancelled",
+                classToCancel.getTeacher().getTeacherName()));
+
+
+        classToCancel.setStatus(ClassStatus.CANCELED);
+        classRepository.save(classToCancel);
+        sendCancelEmail(classToCancel);
+        return "Class with ID " + classId + " has been successfully canceled, and refunds have been processed.";
+    }
+
 }
