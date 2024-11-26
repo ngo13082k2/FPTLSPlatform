@@ -82,13 +82,14 @@ public class ClassService implements IClassService {
                 .orElseThrow(() -> new RuntimeException("Teacher not found"));
 
         if (classDTO.getStartDate() != null && classDTO.getSlotId() != null && classDTO.getDayOfWeek() != null) {
-            boolean isDuplicateClass = classRepository.existsByTeacher_TeacherNameAndSlot_SlotIdAndDayOfWeekAndStartDate(
-                    teacherName, classDTO.getSlotId(), classDTO.getDayOfWeek(), classDTO.getStartDate());
+            boolean isDuplicateClass = classRepository.existsByTeacher_TeacherNameAndSlot_SlotIdAndDayOfWeekAndStartDateAndStatusNot(
+                    teacherName, classDTO.getSlotId(), classDTO.getDayOfWeek(), classDTO.getStartDate(), ClassStatus.CANCELED);
 
             if (isDuplicateClass) {
-                throw new RuntimeException("A class with the same start date, teacher, slot, and day of the week already exists.");
+                throw new RuntimeException("A class with the same start date, teacher, slot, and day of the week already exists and is not canceled.");
             }
         }
+
 
         classDTO.setCreateDate(LocalDateTime.now());
         classDTO.setTeacherName(teacherName);
@@ -222,6 +223,7 @@ public class ClassService implements IClassService {
         if (classDTO.getDescription() != null) existingClass.setDescription(classDTO.getDescription());
         if (classDTO.getMaxStudents() != null) existingClass.setMaxStudents(classDTO.getMaxStudents());
         if (classDTO.getLocation() != null) existingClass.setLocation(classDTO.getLocation());
+        if(classDTO.getPrice() != null) existingClass.setPrice(classDTO.getPrice());
 
         String imageUrl;
         if (image != null && !image.isEmpty()) {

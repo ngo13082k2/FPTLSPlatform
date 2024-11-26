@@ -45,7 +45,8 @@ public interface ClassRepository extends JpaRepository<Class, Long> {
     List<Class> findByTeacher_TeacherName(String teacherName);
     List<Class> findByTeacherTeacherNameAndStatus(String teacherName, ClassStatus status);
     Teacher findTeacher_TeacherNameByClassId(Long classId);
-
+    boolean existsByTeacher_TeacherNameAndSlot_SlotIdAndDayOfWeekAndStartDateAndStatusNot(
+            String teacherName, Long slotId, String dayOfWeek, LocalDate startDate, ClassStatus status);
 
     boolean existsByCode(String string);
 }

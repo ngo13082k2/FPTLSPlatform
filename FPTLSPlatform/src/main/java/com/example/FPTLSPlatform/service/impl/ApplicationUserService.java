@@ -12,8 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import org.thymeleaf.context.Context;
 
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -41,9 +43,11 @@ public class ApplicationUserService implements IApplicationUserService {
     private final NotificationService notificationService;
 
     private final IEmailService emailService;
+    private final CloudinaryService cloudinaryService;
+    private final ApprovalRecordRepository approvalRecordRepository;
 
     @Autowired
-    public ApplicationUserService(ApplicationUserRepository applicationUserRepository, ApplicationTypeRepository applicationTypeRepository, UserRepository userRepository, WalletRepository walletRepository, SystemTransactionHistoryRepository systemTransactionHistoryRepository, SystemWalletRepository systemWalletRepository, TransactionHistoryRepository transactionHistoryRepository, TeacherRepository teacherRepository, NotificationService notificationService, IEmailService emailService) {
+    public ApplicationUserService(ApplicationUserRepository applicationUserRepository, ApplicationTypeRepository applicationTypeRepository, UserRepository userRepository, WalletRepository walletRepository, SystemTransactionHistoryRepository systemTransactionHistoryRepository, SystemWalletRepository systemWalletRepository, TransactionHistoryRepository transactionHistoryRepository, TeacherRepository teacherRepository, NotificationService notificationService, IEmailService emailService, CloudinaryService cloudinaryService, ApprovalRecordRepository approvalRecordRepository) {
         this.applicationUserRepository = applicationUserRepository;
         this.applicationTypeRepository = applicationTypeRepository;
         this.userRepository = userRepository;
@@ -54,6 +58,8 @@ public class ApplicationUserService implements IApplicationUserService {
         this.teacherRepository = teacherRepository;
         this.notificationService = notificationService;
         this.emailService = emailService;
+        this.cloudinaryService = cloudinaryService;
+        this.approvalRecordRepository = approvalRecordRepository;
     }
 
     public void processWithdrawalRequest(WithdrawalRequestDTO withdrawalRequestDto) {
@@ -242,7 +248,7 @@ public class ApplicationUserService implements IApplicationUserService {
         return "Your application has been rejected.";
     }
 
-    public String completeWithdrawalRequest(Long applicationUserId) {
+    public String completeWithdrawalRequestWithApproval(Long applicationUserId, MultipartFile approvalImage) throws IOException {
         ApplicationUser applicationUser = applicationUserRepository.findById(applicationUserId)
                 .orElseThrow(() -> new RuntimeException("Withdrawal request not found"));
 
@@ -271,6 +277,21 @@ public class ApplicationUserService implements IApplicationUserService {
             email = applicationUser.getTeacher().getEmail();
         } else {
             throw new RuntimeException("Invalid application user type: no associated User or Teacher.");
+        }
+
+        String approvedBy = getCurrentUsername();
+
+        String approvalImageUrl = null;
+        if (approvalImage != null && !approvalImage.isEmpty()) {
+            approvalImageUrl = cloudinaryService.uploadImage(approvalImage);
+
+            ApprovalRecord approvalRecord = ApprovalRecord.builder()
+                    .applicationUser(applicationUser)
+                    .approvedBy(approvedBy)
+                    .approvalImage(approvalImageUrl)
+                    .approvalDate(LocalDateTime.now())
+                    .build();
+            approvalRecordRepository.save(approvalRecord);
         }
 
         SystemTransactionHistory systemTransactionHistory = SystemTransactionHistory.builder()
@@ -303,6 +324,16 @@ public class ApplicationUserService implements IApplicationUserService {
 
         return "Đã trả tiền thành công và cập nhật trạng thái yêu cầu thành completed.";
     }
+
+    private String getCurrentUsername() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
+            return ((org.springframework.security.core.userdetails.UserDetails) principal).getUsername();
+        } else {
+            return principal.toString();
+        }
+    }
+
 
 
     public void processOtherRequest(OtherApplicationDTO otherRequestDto) {
@@ -425,5 +456,9 @@ public class ApplicationUserService implements IApplicationUserService {
     public static String formatToVND(double amount) {
         DecimalFormat df = new DecimalFormat("#,###");
         return df.format(Math.abs(amount)) + " VND";
+    }
+    public ApprovalRecord getApprovalRecordByApplicationUserId(Long applicationUserId) {
+        return approvalRecordRepository.findByApplicationUser_ApplicationUserId(applicationUserId)
+                .orElseThrow(() -> new RuntimeException("ApprovalRecord not found for ApplicationUserId: " + applicationUserId));
     }
 }

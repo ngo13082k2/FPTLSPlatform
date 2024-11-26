@@ -3,12 +3,17 @@ package com.example.FPTLSPlatform.controller;
 import com.example.FPTLSPlatform.dto.OtherApplicationDTO;
 import com.example.FPTLSPlatform.dto.WithdrawalRequestDTO;
 import com.example.FPTLSPlatform.model.ApplicationUser;
+import com.example.FPTLSPlatform.request.ApplicationUserIdRequest;
 import com.example.FPTLSPlatform.service.IApplicationUserService;
 import com.example.FPTLSPlatform.service.impl.ApplicationUserService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -16,6 +21,8 @@ import java.util.List;
 public class ApplicationUserController {
     @Autowired
     private IApplicationUserService applicationUserService;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @PostMapping("/submit/withdrawal")
     public ResponseEntity<String> submitWithdrawal(@RequestBody WithdrawalRequestDTO withdrawalRequest) {
@@ -41,9 +48,20 @@ public class ApplicationUserController {
 //        return ResponseEntity.ok(response);
 //    }
     @PostMapping("/complete")
-    public String completeWithdrawalRequest(@RequestParam Long applicationUserId) {
-        return applicationUserService.completeWithdrawalRequest(applicationUserId);
+    public ResponseEntity<String> completeWithdrawalRequest(@RequestParam String applicationUserJson,
+                                                            @RequestParam(required = false) MultipartFile approvalImage) throws IOException {
+        try {
+            ApplicationUserIdRequest request = objectMapper.readValue(applicationUserJson, ApplicationUserIdRequest.class);
+
+            // Gọi service xử lý
+            String result = applicationUserService.completeWithdrawalRequestWithApproval(request.getApplicationUserId(), approvalImage);
+
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Lỗi: " + e.getMessage());
+        }
     }
+
 
     @PutMapping("/approve/{id}")
     public String approveRequest(@PathVariable Long id) {

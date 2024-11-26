@@ -4,6 +4,7 @@ import com.example.FPTLSPlatform.dto.ClassDTO;
 import com.example.FPTLSPlatform.dto.ListTotalOrderDTO;
 import com.example.FPTLSPlatform.dto.TotalOrderDTO;
 import com.example.FPTLSPlatform.dto.WalletStatisticDTO;
+import com.example.FPTLSPlatform.model.ApprovalRecord;
 import com.example.FPTLSPlatform.model.SystemTransactionHistory;
 import com.example.FPTLSPlatform.model.Teacher;
 import com.example.FPTLSPlatform.model.User;
@@ -40,13 +41,14 @@ public class AdminController {
     private final ICategoryService categoryService;
 
     private final ICourseService courseService;
+    private final IApplicationUserService applicationUserService;
 
     @Autowired
     public AdminController(IUserService userService,
                            ISystemWalletService systemWalletService,
                            IOrderService orderService,
                            IClassService classService,
-                           IWalletService walletService, ICategoryService categoryService, ICourseService courseService) {
+                           IWalletService walletService, ICategoryService categoryService, ICourseService courseService, IApplicationUserService applicationUserService) {
         this.userService = userService;
         this.systemWalletService = systemWalletService;
         this.orderService = orderService;
@@ -54,6 +56,7 @@ public class AdminController {
         this.walletService = walletService;
         this.categoryService = categoryService;
         this.courseService = courseService;
+        this.applicationUserService = applicationUserService;
     }
 
     @GetMapping("/system-wallet/balance")
@@ -211,5 +214,10 @@ public class AdminController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while completing the class.");
         }
+    }
+    @GetMapping("/getAprroveRecord/{applicationUserId}")
+    public ResponseEntity<ApprovalRecord> getApprovalRecordByApplicationUserId(@PathVariable Long applicationUserId) {
+        ApprovalRecord approvalRecord = applicationUserService.getApprovalRecordByApplicationUserId(applicationUserId);
+        return ResponseEntity.ok(approvalRecord);
     }
 }
