@@ -62,12 +62,15 @@ public class NotificationController {
     }
 
     @GetMapping("/user/")
-    public List<NotificationDTO> getNotifications() {
+    public ResponseEntity<List<NotificationDTO>> getUserNotifications() {
         String username = getCurrentUsername();
         List<Notification> notifications = notificationService.getNotificationByUsername(username);
-        messagingTemplate.convertAndSend("/topic/notifications", notifications);
+        List<NotificationDTO> notificationDTOs = notifications.stream()
+                .map(NotificationDTO::fromEntity)
+                .collect(Collectors.toList());
 
-        return notifications.stream().map(NotificationDTO::fromEntity).collect(Collectors.toList());
+        messagingTemplate.convertAndSendToUser(username, "/topic/notifications", notificationDTOs);
+        return ResponseEntity.ok(notificationDTOs);
     }
 
     @PutMapping("/{notificationId}/read")
@@ -75,22 +78,38 @@ public class NotificationController {
         try {
             notificationService.markAsRead(notificationId);
 
-            messagingTemplate.convertAndSend("/topic/notifications", "Notification " + notificationId + " marked as read");
+            // Fetch updated notifications and send real-time update
+            String username = getCurrentUsername();
+            List<NotificationDTO> updatedNotifications = notificationService.getNotificationByUsername(username)
+                    .stream()
+                    .map(NotificationDTO::fromEntity)
+                    .collect(Collectors.toList());
+            messagingTemplate.convertAndSendToUser(username, "/topic/notifications", updatedNotifications);
+
             return ResponseEntity.ok("Notification marked as read.");
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error marking notifications as read.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error marking notification as read.");
         }
     }
 
     @PutMapping("/readAll")
-    public ResponseEntity<String> markAllNotificationAsRead() {
-        String username = getCurrentUsername();
+    public ResponseEntity<String> markAllNotificationsAsRead() {
         try {
+            String username = getCurrentUsername();
             notificationService.markAllAsRead(username);
-            messagingTemplate.convertAndSend("/topic/notifications", "All notifications for " + username + " marked as read");
+
+            // Fetch updated notifications and send real-time update
+            List<NotificationDTO> updatedNotifications = notificationService.getNotificationByUsername(username)
+                    .stream()
+                    .map(NotificationDTO::fromEntity)
+                    .collect(Collectors.toList());
+            messagingTemplate.convertAndSendToUser(username, "/topic/notifications", updatedNotifications);
+
             return ResponseEntity.ok("All notifications marked as read.");
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error marking notifications as read.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error marking all notifications as read.");
         }
     }
 

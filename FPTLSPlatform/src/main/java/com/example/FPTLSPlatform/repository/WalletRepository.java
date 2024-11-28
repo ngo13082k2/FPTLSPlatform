@@ -12,17 +12,21 @@ import java.util.List;
 @Repository
 public interface WalletRepository extends JpaRepository<Wallet, Long> {
 
-    @Query("SELECT new com.example.FPTLSPlatform.dto.WalletStatisticDTO( " +
-            "MONTH(w.transactionDate), " +
-            "(SELECT w2.balanceAfterTransaction FROM SystemTransactionHistory w2 " +
-            " WHERE YEAR(w2.transactionDate) = :year AND MONTH(w2.transactionDate) = MONTH(w.transactionDate) " +
-            " ORDER BY w2.transactionDate DESC LIMIT 1), " + // Số dư cuối cùng trong tháng
-            "SUM(CASE WHEN w.transactionAmount > 0 THEN w.transactionAmount ELSE 0 END), " + // Tổng thu nhập
-            "SUM(CASE WHEN w.transactionAmount < 0 THEN ABS(w.transactionAmount) ELSE 0 END)) " + // Tổng chi phí
-            "FROM SystemTransactionHistory w " +
-            "WHERE YEAR(w.transactionDate) = :year " +
-            "GROUP BY MONTH(w.transactionDate) " +
-            "ORDER BY MONTH(w.transactionDate)")
+    @Query(value = "SELECT " +
+            "  MONTH(w.transaction_date) AS month, " +
+            "  (SELECT w2.balance_after_transaction " +
+            "   FROM system_transaction_history w2 " +
+            "   WHERE YEAR(w2.transaction_date) = :year " +
+            "     AND MONTH(w2.transaction_date) = MONTH(w.transaction_date) " +
+            "   ORDER BY w2.transaction_date DESC " +
+            "   LIMIT 1) AS balanceAfterLastTransaction, " +
+            "  SUM(CASE WHEN w.transaction_amount > 0 THEN w.transaction_amount ELSE 0 END) AS totalDeposit, " +
+            "  SUM(CASE WHEN w.transaction_amount < 0 THEN ABS(w.transaction_amount) ELSE 0 END) AS totalWithdrawal " +
+            "FROM system_transaction_history w " +
+            "WHERE YEAR(w.transaction_date) = :year " +
+            "GROUP BY MONTH(w.transaction_date) " +
+            "ORDER BY MONTH(w.transaction_date)", nativeQuery = true)
     List<WalletStatisticDTO> getWalletStatisticByMonth(@Param("year") Integer year);
+
 
 }
