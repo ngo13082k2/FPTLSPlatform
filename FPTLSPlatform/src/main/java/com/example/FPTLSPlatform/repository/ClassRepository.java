@@ -30,7 +30,13 @@ public interface ClassRepository extends JpaRepository<Class, Long> {
 
     List<Class> findByTeacher(Teacher teacher);
 
-    List<StudentDTO> findStudentsByClassId(Long classId);
+    @Query("SELECT new com.example.FPTLSPlatform.dto.StudentDTO(s.userName, s.phoneNumber, s.email, s.fullName, s.address) " +
+            "FROM OrderDetail od " +
+            "JOIN od.order o " +
+            "JOIN o.user s " +
+            "WHERE od.classes.classId = :classId")
+    List<StudentDTO> findStudentsByClassId(@Param("classId") Long classId);
+
 
     List<Class> findByStartDateAndStatus(LocalDate localDate, ClassStatus status);
 
@@ -41,7 +47,7 @@ public interface ClassRepository extends JpaRepository<Class, Long> {
     List<Class> findByStatusAndStartDateBetween(ClassStatus classStatus, LocalDate localDate, LocalDate localDate1);
 
     List<Class> findByTeacherTeacherNameAndStatus(String teacherName, ClassStatus status);
-    
+
     boolean existsByCode(String string);
 
     boolean existsByTeacher_TeacherNameAndSlot_SlotIdAndDayOfWeekAndStartDateAndStatusNot(String teacherName, Long slotId, String dayOfWeek, LocalDate startDate, ClassStatus classStatus);
