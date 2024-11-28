@@ -12,6 +12,7 @@ import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.*;
 import com.example.FPTLSPlatform.dto.ClassDTO;
 import com.example.FPTLSPlatform.service.IClassService;
+import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +41,8 @@ public class ClassService implements IClassService {
     private final CloudinaryService cloudinaryService;
     private final SlotRepository slotRepository;
     private final UserRepository userRepository;
-
+    private final WalletRepository walletRepository;
+    private final OrderRepository orderRepository;
     @Autowired
     public ClassService(ClassRepository classRepository,
                         CourseRepository courseRepository,
@@ -48,7 +50,7 @@ public class ClassService implements IClassService {
                         OrderDetailRepository orderDetailRepository,
                         CloudinaryService cloudinaryService,
                         SlotRepository slotRepository,
-                        UserRepository userRepository
+                        UserRepository userRepository, WalletRepository walletRepository, OrderRepository orderRepository
     ) {
         this.classRepository = classRepository;
         this.courseRepository = courseRepository;
@@ -59,6 +61,8 @@ public class ClassService implements IClassService {
         this.userRepository = userRepository;
 
 
+        this.walletRepository = walletRepository;
+        this.orderRepository = orderRepository;
     }
 
     private static final Logger log = LoggerFactory.getLogger(ClassService.class);
@@ -395,6 +399,18 @@ public class ClassService implements IClassService {
                         Collectors.counting()
                 ));
     }
+    public Map<String, Map<YearMonth, Long>> getClassesGroupedByStatusAndMonths(Integer year) {
+        // Lấy danh sách lớp với ba trạng thái khác nhau
+        Map<String, Map<YearMonth, Long>> result = new HashMap<>();
+
+        result.put("ACTIVE", getClassesByStatusAndMonth(ClassStatus.ACTIVE, year));
+        result.put("ONGOING", getClassesByStatusAndMonth(ClassStatus.ONGOING, year));
+        result.put("COMPLETED", getClassesByStatusAndMonth(ClassStatus.COMPLETED, year));
+        result.put("CANCELED", getClassesByStatusAndMonth(ClassStatus.CANCELED, year));
+
+        return result;
+    }
+
 
     public List<ClassDTO> getClassesByStatusAndMonthDetailed(ClassStatus status, int year, Integer month) {
         List<Class> classes = classRepository.findByStatus(status);
@@ -406,6 +422,39 @@ public class ClassService implements IClassService {
                 .filter(clazz -> month == null || clazz.getCreateDate().getMonthValue() == month) // Lọc theo tháng nếu có
                 .map(this::mapEntityToDTO)
                 .collect(Collectors.toList());
+    }
+    @Transactional
+    public String cancelClass(Long classId) {
+        Class classToCancel = classRepository.findById(classId)
+                .orElseThrow(() -> new RuntimeException("Class not found with ID: " + classId));
+
+        if (classToCancel.getStatus() == ClassStatus.COMPLETED) {
+            throw new RuntimeException("Cannot cancel a class that is already completed.");
+        } else if (classToCancel.getStatus() == ClassStatus.CANCELED) {
+            throw new RuntimeException("This class has already been canceled.");
+        }
+
+        List<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(classId);
+
+        for (OrderDetail orderDetail : orderDetails) {
+            Order order = orderDetail.getOrder();
+            User student = order.getUser();
+
+            Wallet studentWallet = student.getWallet();
+            if (studentWallet == null) {
+                throw new RuntimeException("Student does not have a wallet for refund.");
+            }
+            studentWallet.setBalance(studentWallet.getBalance() + orderDetail.getPrice());
+            walletRepository.save(studentWallet);
+
+            order.setStatus(OrderStatus.CANCELLED);
+            orderRepository.save(order);
+        }
+
+        classToCancel.setStatus(ClassStatus.CANCELED);
+        classRepository.save(classToCancel);
+
+        return "Class with ID " + classId + " has been successfully canceled, and refunds have been processed.";
     }
 
 

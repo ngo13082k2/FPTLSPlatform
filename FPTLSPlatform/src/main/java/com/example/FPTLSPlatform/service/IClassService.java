@@ -29,17 +29,11 @@ public interface IClassService {
     List<ClassDTO> getClassesByTeacherName(String teacherName);
 
     Page<StudentDTO> getAllStudentsInClass(Long classId, Pageable pageable);
-
     List<ClassDTO> getAllClassesByCurrentTeacher();
-
     List<ClassDTO> getClassByMajor();
-
     List<ClassDTO> getClassesByStatusCompleted();
-
-    Map<YearMonth, Long> getClassesByStatusAndMonth(ClassStatus status, Integer year);
-
+    Map<String, Map<YearMonth, Long>> getClassesGroupedByStatusAndMonths(Integer year);
     long getTotalClasses();
-
     List<ClassDTO> getClassesByStatusAndMonthDetailed(ClassStatus status, int year, Integer month);
-
+    String cancelClass(Long classId);
 }

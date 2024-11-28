@@ -87,29 +87,12 @@ public class AdminController {
         return ResponseEntity.ok(totalClasses);
     }
 
-    @GetMapping("/statistics/active")
-    public ResponseEntity<Map<YearMonth, Long>> getActiveClassesByMonth(@RequestParam(required = false) Integer year) {
-        Map<YearMonth, Long> statistics = classService.getClassesByStatusAndMonth(ClassStatus.ACTIVE, year);
+    @GetMapping("/statistics")
+    public ResponseEntity<Map<String, Map<YearMonth, Long>>> getClassesByStatusAndMonth(@RequestParam(required = false) Integer year) {
+        Map<String, Map<YearMonth, Long>> statistics = classService.getClassesGroupedByStatusAndMonths(year);
         return ResponseEntity.ok(statistics);
     }
 
-    @GetMapping("/statistics/ongoing")
-    public ResponseEntity<Map<YearMonth, Long>> getOngoingClassesByMonth(@RequestParam(required = false) Integer year) {
-        Map<YearMonth, Long> statistics = classService.getClassesByStatusAndMonth(ClassStatus.ONGOING, year);
-        return ResponseEntity.ok(statistics);
-    }
-
-    @GetMapping("/statistics/completed")
-    public ResponseEntity<Map<YearMonth, Long>> getCompletedClassesByMonth(@RequestParam(required = false) Integer year) {
-        Map<YearMonth, Long> statistics = classService.getClassesByStatusAndMonth(ClassStatus.COMPLETED, year);
-        return ResponseEntity.ok(statistics);
-    }
-
-    @GetMapping("/statistics/canceled")
-    public ResponseEntity<Map<YearMonth, Long>> getCanceledClassesByMonth(@RequestParam(required = false) Integer year) {
-        Map<YearMonth, Long> statistics = classService.getClassesByStatusAndMonth(ClassStatus.CANCELED, year);
-        return ResponseEntity.ok(statistics);
-    }
 
 
     @GetMapping("/details/active")
