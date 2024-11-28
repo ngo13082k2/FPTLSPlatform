@@ -16,8 +16,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -51,6 +50,7 @@ public class WalletService implements IWalletService {
             throw new Exception("Không tìm thấy người dùng: " + username);
         }
     }
+
     public Wallet getWalletByTeacherName() throws Exception {
         String username = getCurrentUsername();
         Optional<Teacher> optionalTeacher = teacherRepository.findById(username);
@@ -110,7 +110,7 @@ public class WalletService implements IWalletService {
                 history.getAmount(),
                 history.getTransactionDate(),
                 history.getTransactionBalance(),
-               null,
+                null,
                 history.getTeacher().getTeacherName(),
                 history.getNote()
 
@@ -128,7 +128,34 @@ public class WalletService implements IWalletService {
 
     @Override
     public List<WalletStatisticDTO> getWalletStatistic(Integer year) {
-        return walletRepository.getWalletStatisticByMonth(year);
+        // Lấy dữ liệu từ hai truy vấn
+        List<Object[]> lastBalances = walletRepository.getLastBalanceByMonth(year);
+        List<Object[]> transactionSummaries = walletRepository.getTransactionSummaryByMonth(year);
+
+        // Chuyển dữ liệu thành Map để dễ xử lý
+        Map<Integer, Double> balanceMap = new HashMap<>();
+        for (Object[] row : lastBalances) {
+            Integer month = (Integer) row[0];
+            Double lastBalance = (Double) row[1];
+            balanceMap.put(month, lastBalance);
+        }
+
+        // Tạo danh sách WalletStatisticDTO
+        List<WalletStatisticDTO> statistics = new ArrayList<>();
+        for (Object[] row : transactionSummaries) {
+            Integer month = (Integer) row[0];
+            Double totalIncome = (Double) row[1];
+            Double totalExpense = (Double) row[2];
+
+            // Lấy số dư cuối cùng từ balanceMap
+            Double lastBalance = balanceMap.getOrDefault(month, 0.0);
+
+            // Tạo DTO và thêm vào danh sách
+            WalletStatisticDTO dto = new WalletStatisticDTO(month, lastBalance, totalIncome, totalExpense);
+            statistics.add(dto);
+        }
+
+        return statistics;
     }
 
 
