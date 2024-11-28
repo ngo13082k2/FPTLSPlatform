@@ -1,64 +1,67 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<html lang="en">
 <head>
-    <title>Class Booking Confirmation</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback for Class</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-        }
-
-        h3 {
-            color: #4CAF50;
-        }
-
         table {
             width: 100%;
             border-collapse: collapse;
         }
 
         th, td {
-            padding: 8px 12px;
             border: 1px solid #ddd;
-        }
-
-        th {
-            background-color: #f4f4f4;
-            font-weight: bold;
-        }
-
-        td {
+            padding: 8px;
             text-align: left;
         }
 
-        p {
-            margin: 20px 0;
+        th {
+            background-color: #f2f2f2;
         }
     </style>
 </head>
 <body>
-<h3>Dear <span th:text="${class.getTeacher().getTeacherName()}">User</span>,</h3>
-<p>The feedback for your class <a th:text="${class.getName()}">A</a> is summarized as follows:</p>
-<p th:text="${feedbackSummary}"><strong>Average Rating:</strong> 0.0</p>
-<h2>Feedback Details:</h2>
+<h2>Feedback Summary for Class: [[${class.name}]]</h2>
+
+<p>Hello [[${class.teacher.name}]],</p>
+<p>Here is the feedback summary for your class:</p>
+
+<h3>Class Feedback Summary</h3>
 <table>
     <thead>
     <tr>
-        <th>Student</th>
-        <th>Rating</th>
-        <th>Comment</th>
+        <th>Question</th>
+        <th>Extremely dissatisfied</th>
+        <th>Dissatisfied</th>
+        <th>Slightly dissatisfied</th>
+        <th>Slightly satisfied</th>
+        <th>Satisfied</th>
+        <th>Extremely satisfied</th>
+        <th>Average Rating</th>
+        <th>Total Responses</th>
     </tr>
     </thead>
     <tbody>
-    <tr th:each="feedback : ${feedbacks}">
-        <td th:text="${feedback.getStudentUsername()}">Student Name</td>
-        <td th:text="${feedback.getRating()}">Rating</td>
-        <td th:text="${feedback.getComment()}">Comment</td>
+    <tr th:each="summary : ${feedbackSummary}">
+        <td>
+            <span th:each="question : ${questions}"
+                  th:if="${question.getId() == summary.getQuestionId()}">
+                <span th:text="${question.getQuestionText()}">Question</span>
+            </span>
+        </td>
+        <td th:text="${summary.ratingCount[1]}"></td>
+        <td th:text="${summary.ratingCount[2]}"></td>
+        <td th:text="${summary.ratingCount[3]}"></td>
+        <td th:text="${summary.ratingCount[4]}"></td>
+        <td th:text="${summary.ratingCount[5]}"></td>
+        <td th:text="${summary.ratingCount[6]}"></td>
+        <td th:text="${summary.averageRating}"></td>
+        <td th:text="${summary.totalResponses}"></td>
     </tr>
     </tbody>
 </table>
-<p>Thank you for choosing our platform!</p>
-<p>Best regards,</p>
-<p>FPT Learning Support</p>
+
+<p>Thank you for your feedback!</p>
 </body>
 </html>

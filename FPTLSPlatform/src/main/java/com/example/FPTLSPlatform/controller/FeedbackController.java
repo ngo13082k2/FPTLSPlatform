@@ -3,6 +3,7 @@ package com.example.FPTLSPlatform.controller;
 import com.example.FPTLSPlatform.dto.FeedbackCommentDTO;
 import com.example.FPTLSPlatform.dto.FeedbackDTO;
 import com.example.FPTLSPlatform.dto.FeedbackSubmissionDTO;
+import com.example.FPTLSPlatform.dto.FeedbackSummaryDTO;
 import com.example.FPTLSPlatform.model.User;
 import com.example.FPTLSPlatform.service.IFeedbackService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,8 +31,8 @@ public class FeedbackController {
     }
 
     @GetMapping("/class/{classId}/summary")
-    public ResponseEntity<List<Map<String, Object>>> getClassFeedbackSummary(@PathVariable Long classId) {
-        List<Map<String, Object>> summary = feedbackService.getClassFeedbackSummary(classId);
+    public ResponseEntity<List<FeedbackSummaryDTO>> getClassFeedbackSummary(@PathVariable Long classId) {
+        List<FeedbackSummaryDTO> summary = feedbackService.getClassFeedbackSummary(classId);
         return ResponseEntity.ok(summary);
     }
 
@@ -65,6 +66,7 @@ public class FeedbackController {
         feedbackService.sendFeedbackForClass(classId);
         return ResponseEntity.ok("Send mail for teacher's class successfull");
     }
+
     @GetMapping("/comments")
     public ResponseEntity<List<FeedbackCommentDTO>> getAllFeedbackComments() {
         List<FeedbackCommentDTO> comments = feedbackService.getAllFeedbackComments();

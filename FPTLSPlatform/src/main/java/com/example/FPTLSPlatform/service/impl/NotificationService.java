@@ -6,6 +6,7 @@ import com.example.FPTLSPlatform.exception.ResourceNotFoundException;
 import com.example.FPTLSPlatform.model.Notification;
 import com.example.FPTLSPlatform.repository.NotificationRepository;
 import com.example.FPTLSPlatform.service.INotificationService;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -15,9 +16,11 @@ import java.util.List;
 public class NotificationService implements INotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
-    public NotificationService(NotificationRepository notificationRepository) {
+    public NotificationService(NotificationRepository notificationRepository, SimpMessagingTemplate messagingTemplate) {
         this.notificationRepository = notificationRepository;
+        this.messagingTemplate = messagingTemplate;
     }
 
     @Override
@@ -31,6 +34,9 @@ public class NotificationService implements INotificationService {
                 .username(notificationDto.getUsername())
                 .type(notificationDto.getType())
                 .build();
+        NotificationDTO notificationDTO = NotificationDTO.fromEntity(notification);
+        messagingTemplate.convertAndSendToUser(notificationDto.getUsername(), "/queue/notifications", notificationDTO);
+
         return notificationRepository.save(notification);
     }
 

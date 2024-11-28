@@ -38,15 +38,19 @@ public class NotificationController {
     @PostMapping("/create")
     public ResponseEntity<Notification> createNotification(@RequestBody NotificationDTO notificationDto) {
         Notification notification = notificationService.createNotification(notificationDto);
+        messagingTemplate.convertAndSend("/topic/notifications", notification);
+
         return ResponseEntity.ok(notification);
     }
 
     @GetMapping
-    public ResponseEntity<List<Notification>> getAllNotifications() {
+    public ResponseEntity<List<NotificationDTO>> getAllNotifications() {
         List<Notification> notifications = notificationService.getAllNotifications();
-        messagingTemplate.convertAndSend("/topic/notifications", notifications);
+        List<NotificationDTO> notificationDTOs = notifications.stream()
+                .map(NotificationDTO::fromEntity)
+                .collect(Collectors.toList());
 
-        return ResponseEntity.ok(notifications);
+        return ResponseEntity.ok(notificationDTOs);
     }
 
     @GetMapping("/{id}")
@@ -69,7 +73,6 @@ public class NotificationController {
                 .map(NotificationDTO::fromEntity)
                 .collect(Collectors.toList());
 
-        messagingTemplate.convertAndSendToUser(username, "/topic/notifications", notificationDTOs);
         return ResponseEntity.ok(notificationDTOs);
     }
 
@@ -77,14 +80,6 @@ public class NotificationController {
     public ResponseEntity<String> markNotificationAsRead(@PathVariable Long notificationId) {
         try {
             notificationService.markAsRead(notificationId);
-
-            // Fetch updated notifications and send real-time update
-            String username = getCurrentUsername();
-            List<NotificationDTO> updatedNotifications = notificationService.getNotificationByUsername(username)
-                    .stream()
-                    .map(NotificationDTO::fromEntity)
-                    .collect(Collectors.toList());
-            messagingTemplate.convertAndSendToUser(username, "/topic/notifications", updatedNotifications);
 
             return ResponseEntity.ok("Notification marked as read.");
         } catch (Exception e) {
@@ -98,19 +93,10 @@ public class NotificationController {
         try {
             String username = getCurrentUsername();
             notificationService.markAllAsRead(username);
-
-            // Fetch updated notifications and send real-time update
-            List<NotificationDTO> updatedNotifications = notificationService.getNotificationByUsername(username)
-                    .stream()
-                    .map(NotificationDTO::fromEntity)
-                    .collect(Collectors.toList());
-            messagingTemplate.convertAndSendToUser(username, "/topic/notifications", updatedNotifications);
-
             return ResponseEntity.ok("All notifications marked as read.");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error marking all notifications as read.");
         }
     }
-
 }

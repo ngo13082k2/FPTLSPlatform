@@ -16,7 +16,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.thymeleaf.context.Context;
 
 import java.io.IOException;
-import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -91,7 +90,7 @@ public class ApplicationUserService implements IApplicationUserService {
         walletRepository.save(wallet);
 
         TransactionHistory transactionHistory = TransactionHistory.builder()
-                .amount(-withdrawalAmount)
+                .amount(withdrawalAmount)
                 .transactionDate(LocalDateTime.now())
                 .transactionBalance(wallet.getBalance())
                 .user(userOrTeacher instanceof User ? (User) userOrTeacher : null)
@@ -335,7 +334,6 @@ public class ApplicationUserService implements IApplicationUserService {
     }
 
 
-
     public void processOtherRequest(OtherApplicationDTO otherRequestDto) {
         ApplicationType applicationType = applicationTypeRepository.findById(otherRequestDto.getApplicationTypeId())
                 .orElseThrow(() -> new RuntimeException("Application type not found"));
@@ -456,6 +454,7 @@ public class ApplicationUserService implements IApplicationUserService {
     public static String formatToVND(double amount) {
         return OrderService.formatToVND(amount);
     }
+
     public ApprovalRecord getApprovalRecordByApplicationUserId(Long applicationUserId) {
         return approvalRecordRepository.findByApplicationUser_ApplicationUserId(applicationUserId)
                 .orElseThrow(() -> new RuntimeException("ApprovalRecord not found for ApplicationUserId: " + applicationUserId));
