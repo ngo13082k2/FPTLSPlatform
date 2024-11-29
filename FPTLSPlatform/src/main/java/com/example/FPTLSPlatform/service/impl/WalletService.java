@@ -6,10 +6,7 @@ import com.example.FPTLSPlatform.model.Teacher;
 import com.example.FPTLSPlatform.model.TransactionHistory;
 import com.example.FPTLSPlatform.model.User;
 import com.example.FPTLSPlatform.model.Wallet;
-import com.example.FPTLSPlatform.repository.TeacherRepository;
-import com.example.FPTLSPlatform.repository.TransactionHistoryRepository;
-import com.example.FPTLSPlatform.repository.UserRepository;
-import com.example.FPTLSPlatform.repository.WalletRepository;
+import com.example.FPTLSPlatform.repository.*;
 import com.example.FPTLSPlatform.service.IWalletService;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -25,12 +22,14 @@ public class WalletService implements IWalletService {
     private final TransactionHistoryRepository transactionHistoryRepository;
     private final WalletRepository walletRepository;
     private final TeacherRepository teacherRepository;
+    private final OrderRepository orderRepository;
 
-    public WalletService(UserRepository userRepository, TransactionHistoryRepository transactionHistoryRepository, WalletRepository walletRepository, TeacherRepository teacherRepository) {
+    public WalletService(UserRepository userRepository, TransactionHistoryRepository transactionHistoryRepository, WalletRepository walletRepository, TeacherRepository teacherRepository, OrderRepository orderRepository) {
         this.userRepository = userRepository;
         this.transactionHistoryRepository = transactionHistoryRepository;
         this.walletRepository = walletRepository;
         this.teacherRepository = teacherRepository;
+        this.orderRepository = orderRepository;
     }
 
     public Wallet getWalletByUserName() throws Exception {
@@ -128,9 +127,10 @@ public class WalletService implements IWalletService {
 
     @Override
     public List<WalletStatisticDTO> getWalletStatistic(Integer year) {
-        // Lấy dữ liệu từ hai truy vấn
+        // Lấy dữ liệu từ ba truy vấn
         List<Object[]> lastBalances = walletRepository.getLastBalanceByMonth(year);
         List<Object[]> transactionSummaries = walletRepository.getTransactionSummaryByMonth(year);
+        List<Object[]> orders = orderRepository.getTotalOrderByMonth(year);
 
         // Chuyển dữ liệu thành Map để dễ xử lý
         Map<Integer, Double> balanceMap = new HashMap<>();
@@ -138,6 +138,13 @@ public class WalletService implements IWalletService {
             Integer month = (Integer) row[0];
             Double lastBalance = (Double) row[1];
             balanceMap.put(month, lastBalance);
+        }
+
+        Map<Integer, Long> orderMap = new HashMap<>();
+        for (Object[] row : orders) {
+            Integer month = (Integer) row[0];
+            Long totalOrders = (Long) row[1];
+            orderMap.put(month, totalOrders);
         }
 
         // Tạo danh sách WalletStatisticDTO
@@ -150,8 +157,11 @@ public class WalletService implements IWalletService {
             // Lấy số dư cuối cùng từ balanceMap
             Double lastBalance = balanceMap.getOrDefault(month, 0.0);
 
+            // Lấy tổng số đơn hàng từ orderMap
+            Long totalOrders = orderMap.getOrDefault(month, 0L);
+
             // Tạo DTO và thêm vào danh sách
-            WalletStatisticDTO dto = new WalletStatisticDTO(month, lastBalance, totalIncome, totalExpense);
+            WalletStatisticDTO dto = new WalletStatisticDTO(month, lastBalance, totalIncome, totalExpense, totalOrders);
             statistics.add(dto);
         }
 

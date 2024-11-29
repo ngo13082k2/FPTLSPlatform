@@ -10,4 +10,5 @@ public class WalletStatisticDTO {
     private Double totalBalance;
     private Double totalIncome;
     private Double totalExpenses;
+    private Long totalOrders;
 }

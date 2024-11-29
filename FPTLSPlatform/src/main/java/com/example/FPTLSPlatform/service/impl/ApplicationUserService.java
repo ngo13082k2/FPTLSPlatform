@@ -304,14 +304,23 @@ public class ApplicationUserService implements IApplicationUserService {
 
         applicationUser.setStatus("completed");
         applicationUserRepository.save(applicationUser);
+        Object userOrTeacher = applicationUser.getUser() != null ? applicationUser.getUser() : applicationUser.getTeacher();
+        Wallet wallet;
 
+        if (userOrTeacher instanceof User user) {
+            wallet = user.getWallet();
+        } else if (userOrTeacher instanceof Teacher teacher) {
+            wallet = teacher.getWallet();
+        } else {
+            throw new RuntimeException("Invalid user type.");
+        }
         // Tạo thông báo
         notificationService.createNotification(NotificationDTO.builder()
                 .title("Withdraw successful")
                 .description("Withdraw successfully. Your bank account added " +
                         formatToVND(amount) +
-                        ". Remaining system wallet: " +
-                        formatToVND(systemWallet.getTotalAmount()))
+                        ". Remaining wallet: " +
+                        formatToVND(wallet.getBalance()))
                 .username(username)
                 .name("Notification")
                 .type("Withdraw application")

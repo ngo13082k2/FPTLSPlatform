@@ -43,6 +43,7 @@ public class ClassService implements IClassService {
     private final UserRepository userRepository;
     private final WalletRepository walletRepository;
     private final OrderRepository orderRepository;
+
     @Autowired
     public ClassService(ClassRepository classRepository,
                         CourseRepository courseRepository,
@@ -223,7 +224,7 @@ public class ClassService implements IClassService {
         if (classDTO.getDescription() != null) existingClass.setDescription(classDTO.getDescription());
         if (classDTO.getMaxStudents() != null) existingClass.setMaxStudents(classDTO.getMaxStudents());
         if (classDTO.getLocation() != null) existingClass.setLocation(classDTO.getLocation());
-        if(classDTO.getPrice() != null) existingClass.setPrice(classDTO.getPrice());
+        if (classDTO.getPrice() != null) existingClass.setPrice(classDTO.getPrice());
 
         String imageUrl;
         if (image != null && !image.isEmpty()) {
@@ -399,6 +400,7 @@ public class ClassService implements IClassService {
                         Collectors.counting()
                 ));
     }
+
     public Map<String, Map<YearMonth, Long>> getClassesGroupedByStatusAndMonths(Integer year) {
         // Lấy danh sách lớp với ba trạng thái khác nhau
         Map<String, Map<YearMonth, Long>> result = new HashMap<>();
@@ -423,6 +425,7 @@ public class ClassService implements IClassService {
                 .map(this::mapEntityToDTO)
                 .collect(Collectors.toList());
     }
+
     @Transactional
     public String cancelClass(Long classId) {
         Class classToCancel = classRepository.findById(classId)

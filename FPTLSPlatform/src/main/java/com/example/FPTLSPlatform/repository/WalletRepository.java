@@ -1,6 +1,5 @@
 package com.example.FPTLSPlatform.repository;
 
-import com.example.FPTLSPlatform.dto.WalletStatisticDTO;
 import com.example.FPTLSPlatform.model.Wallet;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -11,12 +10,16 @@ import java.util.List;
 
 @Repository
 public interface WalletRepository extends JpaRepository<Wallet, Long> {
-
-    @Query("SELECT MONTH(w.transactionDate) AS month, " +
-            "MAX(w.balanceAfterTransaction) AS lastBalance " +
+    @Query("SELECT MONTH(w.transactionDate) AS month, w.balanceAfterTransaction AS lastBalance " +
             "FROM SystemTransactionHistory w " +
             "WHERE YEAR(w.transactionDate) = :year " +
-            "GROUP BY MONTH(w.transactionDate)")
+            "AND w.transactionDate IN (" +
+            "    SELECT MAX(sub.transactionDate) " +
+            "    FROM SystemTransactionHistory sub " +
+            "    WHERE YEAR(sub.transactionDate) = :year " +
+            "    GROUP BY MONTH(sub.transactionDate)" +
+            ") " +
+            "ORDER BY MONTH(w.transactionDate) ASC")
     List<Object[]> getLastBalanceByMonth(@Param("year") Integer year);
 
 

@@ -1,6 +1,7 @@
 package com.example.FPTLSPlatform.service.impl;
 
 import com.example.FPTLSPlatform.dto.*;
+import com.example.FPTLSPlatform.exception.ClassAlreadyCancelledException;
 import com.example.FPTLSPlatform.exception.InsufficientBalanceException;
 import com.example.FPTLSPlatform.exception.OrderAlreadyExistsException;
 import com.example.FPTLSPlatform.exception.ResourceNotFoundException;
@@ -51,7 +52,6 @@ public class OrderService implements IOrderService {
 
     private final TransactionHistoryRepository transactionHistoryRepository;
 
-    private final SystemWalletRepository systemWalletRepository;
 
     private final ClassService classService;
 
@@ -71,7 +71,6 @@ public class OrderService implements IOrderService {
                         IEmailService emailService,
                         INotificationService notificationService,
                         TransactionHistoryRepository transactionHistoryRepository,
-                        SystemWalletRepository systemWalletRepository,
                         ClassService classService,
                         SystemRepository systemRepository,
 //                        ClassStatusController classStatusController
@@ -84,7 +83,6 @@ public class OrderService implements IOrderService {
         this.emailService = emailService;
         this.notificationService = notificationService;
         this.transactionHistoryRepository = transactionHistoryRepository;
-        this.systemWalletRepository = systemWalletRepository;
 
         this.classService = classService;
         this.systemRepository = systemRepository;
@@ -331,11 +329,13 @@ public class OrderService implements IOrderService {
 
     private void checkOrderAlreadyExists(String username, Long classId) {
         OrderDetail orderDetail = orderDetailRepository.findByOrder_User_UserNameAndClasses_ClassId(username, classId);
-        if (orderDetail != null && !OrderStatus.CANCELLED.equals(orderDetail.getOrder().getStatus())) {
-            throw new OrderAlreadyExistsException("User has already registered for this class.");
-        }
-        if (hasDuplicateSchedule(username, classId)) {
-            throw new IllegalStateException("User has already registered for this schedule.");
+        if (orderDetail != null) {
+            if (!OrderStatus.CANCELLED.equals(orderDetail.getOrder().getStatus())) {
+                throw new OrderAlreadyExistsException("User has already registered for this class.");
+            }
+            if (hasDuplicateSchedule(username, classId)) {
+                throw new IllegalStateException("User has already registered for this schedule.");
+            }
         }
     }
 
@@ -385,8 +385,14 @@ public class OrderService implements IOrderService {
     }
 
     private Class getClassOrThrow(Long id) {
-        return classRepository.findById(id)
+        Class clazz = classRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Schedule not found with id: " + id));
+        if (clazz != null) {
+            if (clazz.getStatus().equals(ClassStatus.CANCELED)) {
+                throw new ClassAlreadyCancelledException("Class is already cancelled.");
+            }
+        }
+        return clazz;
     }
 
     private User getUserOrThrow(String username) {
@@ -600,35 +606,20 @@ public class OrderService implements IOrderService {
                         orderDetailRepository.save(orderDetail);
                     }
                 }
-                saveSystemWallet(discount, scheduledClass);
+                saveTeacherWallet(discount, scheduledClass);
 
                 log.info("Class with ID {} has started and is now COMPLETED.", scheduledClass.getClassId());
             }
         }
     }
 
-    private void saveSystemWallet(double discount, Class scheduledClass) {
-        SystemWallet systemWallet = systemWalletRepository.getReferenceById(1L);
+    private void saveTeacherWallet(double discount, Class scheduledClass) {
         List<StudentDTO> studentDTOS = classRepository.findStudentsByClassId(scheduledClass.getClassId());
-        double totalAmount = (scheduledClass.getPrice() * discount) * studentDTOS.size();
+        double totalAmount = (scheduledClass.getPrice() * (1 - discount)) * studentDTOS.size();
         Wallet wallet = scheduledClass.getTeacher().getWallet();
+        wallet.setBalance(wallet.getBalance() + totalAmount);
         TransactionHistory transactionHistory = saveTransactionHistory(scheduledClass.getTeacher().getEmail(), totalAmount, wallet);
         transactionHistory.setNote("Salary");
-        SystemTransactionHistory systemTransactionHistory = saveSystemTransactionHistory(totalAmount, systemWallet);
-        systemTransactionHistory.setNote("Salary");
-        systemTransactionHistory.setUsername(scheduledClass.getTeacher().getTeacherName());
-
-    }
-
-    private SystemTransactionHistory saveSystemTransactionHistory(double totalAmount, SystemWallet systemWallet) {
-        SystemTransactionHistory systemTransactionHistory = new SystemTransactionHistory();
-        systemTransactionHistory.setTransactionAmount(-totalAmount);
-        systemTransactionHistory.setTransactionDate(LocalDateTime.now());
-        systemTransactionHistory.setBalanceAfterTransaction(systemWallet.getTotalAmount());
-        systemWallet.setTotalAmount(systemWallet.getTotalAmount() - totalAmount);
-        systemWalletRepository.save(systemWallet);
-
-        return systemTransactionHistory;
     }
 
 
@@ -675,7 +666,7 @@ public class OrderService implements IOrderService {
         }
 
         // Xử lý thanh toán: trừ tiền từ SystemWallet và thêm vào ví của giáo viên
-        saveSystemWallet(discount, scheduledClass);
+        saveTeacherWallet(discount, scheduledClass);
         // Gửi thông báo cho giáo viên
         notificationService.createNotification(NotificationDTO.builder()
                 .title("Class " + scheduledClass.getCode() + " has been completed")

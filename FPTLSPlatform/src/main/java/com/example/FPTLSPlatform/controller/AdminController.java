@@ -2,7 +2,6 @@ package com.example.FPTLSPlatform.controller;
 
 import com.example.FPTLSPlatform.dto.ClassDTO;
 import com.example.FPTLSPlatform.dto.ListTotalOrderDTO;
-import com.example.FPTLSPlatform.dto.TotalOrderDTO;
 import com.example.FPTLSPlatform.dto.WalletStatisticDTO;
 import com.example.FPTLSPlatform.model.ApprovalRecord;
 import com.example.FPTLSPlatform.model.SystemTransactionHistory;
@@ -11,7 +10,6 @@ import com.example.FPTLSPlatform.model.User;
 import com.example.FPTLSPlatform.model.enums.ClassStatus;
 import com.example.FPTLSPlatform.request.RegisterRequest;
 import com.example.FPTLSPlatform.service.*;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -92,7 +90,6 @@ public class AdminController {
         Map<String, Map<YearMonth, Long>> statistics = classService.getClassesGroupedByStatusAndMonths(year);
         return ResponseEntity.ok(statistics);
     }
-
 
 
     @GetMapping("/details/active")
@@ -186,7 +183,7 @@ public class AdminController {
         Teacher updatedTeacher = userService.deactivateTeacher(teacherName);
         return ResponseEntity.ok(updatedTeacher);
     }
-    
+
     @PutMapping("/{classId}/complete")
     public ResponseEntity<String> completeClassImmediately(@PathVariable Long classId) {
         try {
@@ -198,6 +195,7 @@ public class AdminController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while completing the class.");
         }
     }
+
     @GetMapping("/getAprroveRecord/{applicationUserId}")
     public ResponseEntity<ApprovalRecord> getApprovalRecordByApplicationUserId(@PathVariable Long applicationUserId) {
         ApprovalRecord approvalRecord = applicationUserService.getApprovalRecordByApplicationUserId(applicationUserId);

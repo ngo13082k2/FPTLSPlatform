@@ -26,4 +26,11 @@ public interface OrderRepository extends JpaRepository<Order, String> {
     @Query("SELECT od FROM OrderDetail od WHERE od.order.createAt BETWEEN :startDate AND :endDate")
     List<OrderDetail> getOrderDetailsByDateRange(@Param("startDate") LocalDateTime startDate,
                                                  @Param("endDate") LocalDateTime endDate);
+
+    @Query("SELECT MONTH(o.createAt) AS month, SUM(o.totalPrice) AS totalOrders " +
+            "FROM Order o " +
+            "WHERE YEAR(o.createAt) = :year AND o.status = 'COMPLETED' " +
+            "GROUP BY MONTH(o.createAt) " +
+            "ORDER BY MONTH(o.createAt)")
+    List<Object[]> getTotalOrderByMonth(@Param("year") Integer year);
 }
