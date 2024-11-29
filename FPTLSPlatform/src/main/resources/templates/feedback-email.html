@@ -24,7 +24,7 @@
 <body>
 <h2>Feedback Summary for Class: [[${class.name}]]</h2>
 
-<p>Hello [[${class.teacher.name}]],</p>
+<p>Hello <span th:text="${class.getTeacher().getTeacherName()}">Teacher</span>,</p>
 <p>Here is the feedback summary for your class:</p>
 
 <h3>Class Feedback Summary</h3>
