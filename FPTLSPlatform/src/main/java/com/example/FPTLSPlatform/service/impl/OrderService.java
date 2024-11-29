@@ -1,10 +1,7 @@
 package com.example.FPTLSPlatform.service.impl;
 
 import com.example.FPTLSPlatform.dto.*;
-import com.example.FPTLSPlatform.exception.ClassAlreadyCancelledException;
-import com.example.FPTLSPlatform.exception.InsufficientBalanceException;
-import com.example.FPTLSPlatform.exception.OrderAlreadyExistsException;
-import com.example.FPTLSPlatform.exception.ResourceNotFoundException;
+import com.example.FPTLSPlatform.exception.*;
 import com.example.FPTLSPlatform.model.Class;
 import com.example.FPTLSPlatform.model.System;
 import com.example.FPTLSPlatform.model.*;
@@ -409,6 +406,9 @@ public class OrderService implements IOrderService {
         if (clazz != null) {
             if (clazz.getStatus().equals(ClassStatus.CANCELED)) {
                 throw new ClassAlreadyCancelledException("Class is already cancelled.");
+            }
+            if (clazz.getStatus().equals(ClassStatus.COMPLETED)) {
+                throw new ClassAlreadyCompletedException("Class is already completed.");
             }
         }
         return clazz;
