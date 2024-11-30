@@ -23,12 +23,13 @@ public interface OrderDetailRepository extends JpaRepository<OrderDetail, Long> 
     Optional<OrderDetail> findByOrder_OrderId(Long orderId);
 
     OrderDetail findByOrder_User_UserNameAndClasses_ClassId(String username, Long classId);
-
+    
     Page<OrderDetail> findByClasses_ClassId(Long classId, Pageable pageable);
 
     Page<OrderDetail> findByOrder_User_UserName(String username, Pageable pageable);
 
     Page<OrderDetail> findByOrderOrderId(Long orderId, Pageable pageable);
+
     List<OrderDetail> findByClasses_ClassId(Long classId);
 
 }

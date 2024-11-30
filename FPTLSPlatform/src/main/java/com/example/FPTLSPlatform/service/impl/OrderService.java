@@ -115,31 +115,25 @@ public class OrderService implements IOrderService {
 
     @Override
     public OrderDTO createOrder(Long classId, String username) throws Exception {
-        // Lấy lớp học và người dùng
         Class scheduleClass = getClassOrThrow(classId);
         User user = getUserOrThrow(username);
 
-        // Kiểm tra nếu người dùng đã đăng ký lớp học này
-        checkOrderAlreadyExists(username, classId);
-
-        // Kiểm tra ví của người dùng có đủ số dư không
-        Wallet wallet = walletService.getWalletByUserName();
-        checkSufficientBalance(wallet, scheduleClass.getPrice());
-
-        // Kiểm tra số lượng học viên trong lớp học
-        checkClassCapacity(classId, scheduleClass.getMaxStudents());
-
-        // Tìm xem đơn hàng của người dùng có tồn tại và bị hủy không
         OrderDetail existingOrderDetail = orderDetailRepository.findByOrder_User_UserNameAndClasses_ClassId(username, classId);
         Order order;
 
-        // Nếu đã có đơn hàng và trạng thái là CANCELLED, khôi phục đơn hàng
+        checkOrderAlreadyExists(username, classId);
+
+        Wallet wallet = walletService.getWalletByUserName();
+        checkSufficientBalance(wallet, scheduleClass.getPrice());
+        checkClassCapacity(classId, scheduleClass.getMaxStudents());
+
         if (existingOrderDetail != null && existingOrderDetail.getOrder().getStatus().equals(OrderStatus.CANCELLED)) {
             order = existingOrderDetail.getOrder();
             order.setStatus(OrderStatus.PENDING);
             order.setCreateAt(LocalDateTime.now());
         } else {
-            // Nếu không có đơn hàng hoặc đơn hàng không bị hủy, tạo đơn hàng mới
+            checkOrderAlreadyExists(username, classId);
+
             order = new Order();
             order.setUser(user);
             order.setCreateAt(LocalDateTime.now());
@@ -147,25 +141,22 @@ public class OrderService implements IOrderService {
             order.setTotalPrice(scheduleClass.getPrice());
             order = orderRepository.save(order);
 
-            // Lưu chi tiết đơn hàng
             saveOrderDetail(order, scheduleClass);
         }
 
-        // Cập nhật ví của người dùng
         wallet.setBalance(wallet.getBalance() - scheduleClass.getPrice());
         TransactionHistory transactionHistory = saveTransactionHistory(user.getEmail(), -order.getTotalPrice(), wallet);
         transactionHistory.setNote("Order");
         userRepository.save(wallet.getUser());
 
-        // Gửi email thông báo cho người dùng
         Context context = new Context();
         context.setVariable("username", username);
         context.setVariable("class", scheduleClass);
         context.setVariable("teacherName", scheduleClass.getTeacher().getTeacherName());
         emailService.sendEmail(order.getUser().getEmail(), "Booking successful", "order-email", context);
 
-        // Tạo và gửi thông báo tới người dùng (nếu có hệ thống thông báo real-time)
-        Notification notification = notificationService.createNotification(NotificationDTO.builder()
+        // Tạo thông báo
+        notificationService.createNotification(NotificationDTO.builder()
                 .title("Class " + scheduleClass.getName() + " has been booked.")
                 .description("Class " + scheduleClass.getName() + " has been successfully booked. Your new balance " + formatToVND(wallet.getBalance()) + "(-" + formatToVND(order.getTotalPrice()) + ")")
                 .username(order.getUser().getUserName())
@@ -173,8 +164,6 @@ public class OrderService implements IOrderService {
                 .name("Order Notification")
                 .build());
 
-
-        // Trả về DTO của đơn hàng đã tạo
         return OrderDTO.builder()
                 .orderId(order.getOrderId())
                 .username(order.getUser().getUserName())
@@ -183,6 +172,41 @@ public class OrderService implements IOrderService {
                 .status(order.getStatus())
                 .build();
     }
+
+    private void checkOrderAlreadyExists(String username, Long classId) {
+        OrderDetail orderDetail = orderDetailRepository.findByOrder_User_UserNameAndClasses_ClassId(username, classId);
+
+        if (orderDetail != null && !OrderStatus.CANCELLED.equals(orderDetail.getOrder().getStatus())) {
+            throw new OrderAlreadyExistsException("User has already registered for this class.");
+        }
+        // Kiểm tra trùng lịch
+        if (hasDuplicateSchedule(username, classId)) {
+            throw new IllegalStateException("User has already registered for this schedule.");
+        }
+
+    }
+
+
+    public boolean hasDuplicateSchedule(String username, Long classId) {
+        // Lấy tất cả các OrderDetail của user
+        Page<OrderDetail> userOrders = orderDetailRepository.findByOrder_User_UserName(username, Pageable.unpaged());
+        Class newClass = classRepository.getReferenceById(classId);
+
+        for (OrderDetail orderDetail : userOrders) {
+            if (orderDetail.getOrder().getStatus().equals(OrderStatus.CANCELLED)) {
+                continue; // Bỏ qua các order đã bị hủy
+            }
+
+            Class existingClass = orderDetail.getClasses();
+            if (existingClass != null
+                    && existingClass.getStartDate().equals(newClass.getStartDate()) // Kiểm tra cùng ngày
+                    && existingClass.getSlot().equals(newClass.getSlot())) {        // Kiểm tra cùng slot
+                return true; // Trùng lịch
+            }
+        }
+        return false; // Không trùng lịch
+    }
+
 
     @Transactional
     public ResponseDTO<String> cancelOrder(Long orderId) {
@@ -335,23 +359,6 @@ public class OrderService implements IOrderService {
         }
     }
 
-    private void checkOrderAlreadyExists(String username, Long classId) {
-        // Tìm đơn hàng đã tồn tại của người dùng cho lớp học này
-        OrderDetail orderDetail = orderDetailRepository.findByOrder_User_UserNameAndClasses_ClassId(username, classId);
-
-        if (orderDetail != null) {
-            // Nếu tìm thấy đơn hàng, kiểm tra trạng thái của đơn hàng
-            if (!OrderStatus.CANCELLED.equals(orderDetail.getOrder().getStatus())) {
-                throw new OrderAlreadyExistsException("User has already registered for this class.");
-            }
-
-            // Nếu đơn hàng đã bị hủy và lớp học trùng lịch, kiểm tra trùng lịch
-            if (hasDuplicateSchedule(username, classId)) {
-                throw new IllegalStateException("User has already registered for this schedule.");
-            }
-        }
-    }
-
 
     private void saveOrderDetail(Order order, Class scheduledClass) {
         OrderDetail orderDetail = new OrderDetail();
@@ -359,27 +366,6 @@ public class OrderService implements IOrderService {
         orderDetail.setClasses(scheduledClass);
         orderDetail.setPrice(scheduledClass.getPrice());
         orderDetailRepository.save(orderDetail);
-    }
-
-    public boolean hasDuplicateSchedule(String username, Long classId) {
-        Page<OrderDetail> userOrders = orderDetailRepository.findByOrder_User_UserName(username, Pageable.unpaged());
-        Class newClass = classRepository.getReferenceById(classId);
-
-        for (OrderDetail orderDetail : userOrders) {
-            Order order = orderDetail.getOrder();
-            if (order.getStatus().equals(OrderStatus.CANCELLED)) {
-                continue;
-            }
-
-            Class existingClass = orderDetail.getClasses();
-            if (existingClass != null) {
-                if (existingClass.getDayOfWeek().equals(newClass.getDayOfWeek())
-                        && existingClass.getSlot().equals(newClass.getSlot())) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
 
