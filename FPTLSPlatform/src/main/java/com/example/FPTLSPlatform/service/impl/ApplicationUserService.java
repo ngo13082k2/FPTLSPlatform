@@ -213,11 +213,34 @@ public class ApplicationUserService implements IApplicationUserService {
     }
 
     private void sendEmail(ApplicationUser applicationUser, String email) {
+        // Lấy toàn bộ mô tả
+        String description = applicationUser.getDescription();
+        String reason = extractReason(description); // Hàm lấy "Reason" từ chuỗi
+
+        // Tạo Context cho email
         Context context = new Context();
         context.setVariable("application", applicationUser);
-        emailService.sendEmail(email, "application", "application-email", context);
+        context.setVariable("content", reason); // Gửi phần "Reason" trong email
 
+        // Gửi email
+        emailService.sendEmail(email, "Application Notification", "application-email", context);
     }
+
+    // Hàm tách "Reason"
+    private String extractReason(String description) {
+        if (description == null || description.isEmpty()) {
+            return "No reason provided";
+        }
+
+        // Tìm vị trí "Reason: " và lấy phần còn lại
+        String prefix = "Reason: ";
+        int index = description.indexOf(prefix);
+        if (index != -1) {
+            return description.substring(index + prefix.length()).trim(); // Lấy phần sau "Reason: "
+        }
+        return "No reason found"; // Nếu không tìm thấy "Reason: "
+    }
+
 
     @Override
     public String rejectApplication(Long applicationId) {

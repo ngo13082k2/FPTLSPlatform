@@ -50,12 +50,12 @@
             <td th:text="${application.getTitle()}"></td>
         </tr>
         <tr>
-            <th>Amount</th>
-            <td th:text="${application.getDescription()}"></td>
+            <th>Content</th>
+            <td th:text="${content}"></td>
         </tr>
     </table>
 
-    <p>Your application has been <span th:text="${application.getStatus()()}"></span>!</p>
+    <p>Your application has been <span th:text="${application.getStatus()}"></span>!</p>
     <div class="footer">
         <p>Best regards,<br>FPT Learning Support Platform</p>
     </div>

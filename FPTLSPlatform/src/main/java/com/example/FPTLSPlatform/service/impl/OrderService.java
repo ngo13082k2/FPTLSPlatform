@@ -378,13 +378,26 @@ public class OrderService implements IOrderService {
         transactionHistory.setTransactionBalance(wallet.getBalance());
 
         transactionHistoryRepository.save(transactionHistory);
+
+        // Xác định tên người nhận email
+        String recipientName;
+        if (wallet.getUser() != null) { // Nếu wallet gắn với student
+            recipientName = wallet.getUser().getUserName(); // Lấy tên student
+        } else if (wallet.getTeacherName() != null) { // Nếu wallet gắn với teacher
+            recipientName = wallet.getTeacherName().getTeacherName(); // Lấy tên teacher
+        } else {
+            throw new IllegalStateException("Wallet không có thông tin người dùng hoặc giáo viên");
+        }
+
         Context context = new Context();
         context.setVariable("transactionHistory", transactionHistory);
-        context.setVariable("teacherName", wallet.getTeacherName());
+        context.setVariable("name", recipientName);
+
         emailService.sendEmail(email, "Transaction", "transaction-email", context);
 
         return transactionHistory;
     }
+
 
     private Class getClassOrThrow(Long id) {
         Class clazz = classRepository.findById(id)
@@ -709,7 +722,11 @@ public class OrderService implements IOrderService {
             }
             studentWallet.setBalance(studentWallet.getBalance() + orderDetail.getPrice());
             walletRepository.save(studentWallet);
-
+            notificationService.createNotification(buildNotificationDTO("Your booked lesson " + classToCancel.getCode() + " has been cancelled",
+                    "Your lesson " + classToCancel.getCode() + " has been cancelled. " + "Refund to your wallet " + formatToVND(order.getTotalPrice()),
+                    student.getUserName()));
+            TransactionHistory transactionHistory = saveTransactionHistory(student.getEmail(), order.getTotalPrice(), studentWallet);
+            transactionHistory.setNote("Refunded");
             order.setStatus(OrderStatus.CANCELLED);
             orderRepository.save(order);
 
