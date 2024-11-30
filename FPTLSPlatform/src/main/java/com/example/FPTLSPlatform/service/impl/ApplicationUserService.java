@@ -208,11 +208,11 @@ public class ApplicationUserService implements IApplicationUserService {
                 .username(username)
                 .type("Other application")
                 .build());
-        sendEmail(applicationUser, email);
+        sendEmail(applicationUser, email, username);
         return "Your application has been approved.";
     }
 
-    private void sendEmail(ApplicationUser applicationUser, String email) {
+    private void sendEmail(ApplicationUser applicationUser, String email, String username) {
         // Lấy toàn bộ mô tả
         String description = applicationUser.getDescription();
         String reason = extractReason(description); // Hàm lấy "Reason" từ chuỗi
@@ -221,7 +221,7 @@ public class ApplicationUserService implements IApplicationUserService {
         Context context = new Context();
         context.setVariable("application", applicationUser);
         context.setVariable("content", reason); // Gửi phần "Reason" trong email
-
+        context.setVariable("username", username);
         // Gửi email
         emailService.sendEmail(email, "Application Notification", "application-email", context);
     }
@@ -266,7 +266,7 @@ public class ApplicationUserService implements IApplicationUserService {
                 .username(username)
                 .type("Other application")
                 .build());
-        sendEmail(applicationUser, email);
+        sendEmail(applicationUser, email, username);
         return "Your application has been rejected.";
     }
 
