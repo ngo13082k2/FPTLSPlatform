@@ -105,14 +105,5 @@ public class OrderController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @PostMapping("/cancel/{classId}")
-    public ResponseEntity<String> cancelClass(@PathVariable Long classId) {
-        try {
-            String response = orderService.cancelClass(classId);
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
-    }
 
 }

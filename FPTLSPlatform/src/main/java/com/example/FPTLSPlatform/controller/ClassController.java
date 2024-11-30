@@ -4,6 +4,7 @@ import com.example.FPTLSPlatform.dto.ClassDTO;
 import com.example.FPTLSPlatform.dto.ResponseDTO;
 import com.example.FPTLSPlatform.dto.StudentDTO;
 import com.example.FPTLSPlatform.service.IClassService;
+import com.example.FPTLSPlatform.service.IOrderService;
 import com.example.FPTLSPlatform.service.impl.ClassService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.domain.Page;
@@ -26,10 +27,12 @@ public class ClassController {
 
     private final IClassService classService;
     private final ObjectMapper objectMapper;
+    private final IOrderService orderService;
 
-    public ClassController(ClassService classService, ObjectMapper objectMapper) {
+    public ClassController(ClassService classService, ObjectMapper objectMapper, IOrderService orderService) {
         this.classService = classService;
         this.objectMapper = objectMapper;
+        this.orderService = orderService;
     }
 
     @PostMapping("")
@@ -154,10 +157,11 @@ public class ClassController {
             return principal.toString();
         }
     }
+
     @PostMapping("/cancel/{classId}")
     public ResponseEntity<String> cancelClass(@PathVariable Long classId) {
         try {
-            String response = classService.cancelClass(classId);
+            String response = orderService.cancelClass(classId);
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
