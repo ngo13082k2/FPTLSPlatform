@@ -518,7 +518,7 @@ public class OrderService implements IOrderService {
             classRepository.save(scheduledClass);
             notificationService.createNotification(buildNotificationDTO("Your class " + scheduledClass.getCode() + " has been activated",
                     "Class " + scheduledClass.getCode() + " is starting on " + scheduledClass.getStartDate(),
-                    scheduledClass.getTeacher().getTeacherName()));
+                    scheduledClass.getTeacher().getTeacherName(), "Active class"));
 
             sendActivationEmail(scheduledClass);
         } else {
@@ -526,7 +526,7 @@ public class OrderService implements IOrderService {
             classRepository.save(scheduledClass);
             notificationService.createNotification(buildNotificationDTO("Your class " + scheduledClass.getCode() + " has been cancelled",
                     "Your class " + scheduledClass.getCode() + " has been cancelled",
-                    scheduledClass.getTeacher().getTeacherName()));
+                    scheduledClass.getTeacher().getTeacherName(), "Cancel class - Not enough student"));
             sendCancelEmail(scheduledClass);
         }
         return scheduledClass;
@@ -648,11 +648,11 @@ public class OrderService implements IOrderService {
                 : 0.8;
     }
 
-    private NotificationDTO buildNotificationDTO(String title, String description, String username) {
+    private NotificationDTO buildNotificationDTO(String title, String description, String username, String type) {
         return NotificationDTO.builder()
                 .title(title)
                 .description(description)
-                .type("Active Class Notification")
+                .type(type)
                 .username(username)
                 .name("Notification")
                 .build();
@@ -724,7 +724,7 @@ public class OrderService implements IOrderService {
             walletRepository.save(studentWallet);
             notificationService.createNotification(buildNotificationDTO("Your booked lesson " + classToCancel.getCode() + " has been cancelled",
                     "Your lesson " + classToCancel.getCode() + " has been cancelled. " + "Refund to your wallet " + formatToVND(order.getTotalPrice()),
-                    student.getUserName()));
+                    student.getUserName(), "Cancel class - Refund"));
             TransactionHistory transactionHistory = saveTransactionHistory(student.getEmail(), order.getTotalPrice(), studentWallet);
             transactionHistory.setNote("Refunded");
             order.setStatus(OrderStatus.CANCELLED);
@@ -733,7 +733,7 @@ public class OrderService implements IOrderService {
         }
         notificationService.createNotification(buildNotificationDTO("Your class " + classToCancel.getCode() + " has been cancelled",
                 "Your class " + classToCancel.getCode() + " has been cancelled",
-                classToCancel.getTeacher().getTeacherName()));
+                classToCancel.getTeacher().getTeacherName(), "Cancel class"));
 
 
         classToCancel.setStatus(ClassStatus.CANCELED);
