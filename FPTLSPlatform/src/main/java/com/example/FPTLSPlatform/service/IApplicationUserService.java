@@ -18,7 +18,7 @@ public interface IApplicationUserService {
 
     String processWithdrawalPayment(Long applicationUserId);
 
-    String approveApplication(Long applicationId);
+    String approveApplication(Long applicationId, MultipartFile approvalImage) throws IOException;
 
     String rejectApplication(Long applicationId);
 

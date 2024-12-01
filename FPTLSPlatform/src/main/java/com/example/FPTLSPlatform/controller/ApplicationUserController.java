@@ -64,10 +64,17 @@ public class ApplicationUserController {
 
 
     @PutMapping("/approve/{id}")
-    public String approveRequest(@PathVariable Long id) {
-        return applicationUserService.approveApplication(id);
-    }
+    public ResponseEntity<String> approveRequest(@PathVariable Long id,
+                                                 @RequestParam(required = false) MultipartFile approvalImage) {
+        try {
+            // Gọi service xử lý phê duyệt yêu cầu
+            String result = applicationUserService.approveApplication(id, approvalImage);
 
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Lỗi: " + e.getMessage());
+        }
+    }
     @PutMapping("/reject/{id}")
     public String rejectRequest(@PathVariable Long id) {
         return applicationUserService.rejectApplication(id);

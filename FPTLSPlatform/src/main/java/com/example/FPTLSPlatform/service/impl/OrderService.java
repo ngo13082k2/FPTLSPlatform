@@ -12,6 +12,9 @@ import com.example.FPTLSPlatform.service.IEmailService;
 import com.example.FPTLSPlatform.service.INotificationService;
 import com.example.FPTLSPlatform.service.IOrderService;
 import com.example.FPTLSPlatform.service.IWalletService;
+import com.google.api.services.calendar.Calendar;
+import com.google.api.services.calendar.model.Event;
+import com.google.api.services.calendar.model.EventAttendee;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +26,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -53,6 +57,7 @@ public class OrderService implements IOrderService {
     private final ClassService classService;
 
     private final SystemRepository systemRepository;
+    private final ViolationRepository violationRepository;
 
 //    private final ClassStatusController classStatusController;
 
@@ -69,7 +74,7 @@ public class OrderService implements IOrderService {
                         INotificationService notificationService,
                         TransactionHistoryRepository transactionHistoryRepository,
                         ClassService classService,
-                        SystemRepository systemRepository,
+                        SystemRepository systemRepository, ViolationRepository violationRepository,
 //                        ClassStatusController classStatusController
                         WalletRepository walletRepository) {
         this.orderRepository = orderRepository;
@@ -83,6 +88,7 @@ public class OrderService implements IOrderService {
 
         this.classService = classService;
         this.systemRepository = systemRepository;
+        this.violationRepository = violationRepository;
 //        this.classStatusController = classStatusController;
         this.walletRepository = walletRepository;
     }
@@ -115,25 +121,34 @@ public class OrderService implements IOrderService {
 
     @Override
     public OrderDTO createOrder(Long classId, String username) throws Exception {
+        // Lấy lớp học từ classId và người dùng từ username
         Class scheduleClass = getClassOrThrow(classId);
         User user = getUserOrThrow(username);
 
+        // Kiểm tra nếu người dùng đã đặt lớp này hay chưa
         OrderDetail existingOrderDetail = orderDetailRepository.findByOrder_User_UserNameAndClasses_ClassId(username, classId);
         Order order;
 
+        // Kiểm tra nếu đơn hàng đã tồn tại, nếu có, sẽ báo lỗi
         checkOrderAlreadyExists(username, classId);
 
+        // Lấy ví của người dùng và kiểm tra số dư
         Wallet wallet = walletService.getWalletByUserName();
         checkSufficientBalance(wallet, scheduleClass.getPrice());
+
+        // Kiểm tra nếu lớp học đã đầy
         checkClassCapacity(classId, scheduleClass.getMaxStudents());
 
+        // Nếu có đơn hàng cũ và đơn hàng đã bị hủy, khôi phục lại đơn hàng
         if (existingOrderDetail != null && existingOrderDetail.getOrder().getStatus().equals(OrderStatus.CANCELLED)) {
             order = existingOrderDetail.getOrder();
-            order.setStatus(OrderStatus.PENDING);
+            order.setStatus(OrderStatus.PENDING); // Đặt trạng thái là PENDING
             order.setCreateAt(LocalDateTime.now());
         } else {
+            // Tạo đơn hàng mới nếu không có đơn hàng cũ hoặc đơn hàng đã bị hủy
             checkOrderAlreadyExists(username, classId);
 
+            // Tạo đơn hàng mới
             order = new Order();
             order.setUser(user);
             order.setCreateAt(LocalDateTime.now());
@@ -141,21 +156,24 @@ public class OrderService implements IOrderService {
             order.setTotalPrice(scheduleClass.getPrice());
             order = orderRepository.save(order);
 
+            // Lưu chi tiết đơn hàng
             saveOrderDetail(order, scheduleClass);
         }
 
+        // Trừ số dư ví của người dùng sau khi đặt lớp
         wallet.setBalance(wallet.getBalance() - scheduleClass.getPrice());
         TransactionHistory transactionHistory = saveTransactionHistory(user.getEmail(), -order.getTotalPrice(), wallet);
         transactionHistory.setNote("Order");
         userRepository.save(wallet.getUser());
 
+        // Gửi email thông báo cho học viên về việc đặt lớp thành công
         Context context = new Context();
         context.setVariable("username", username);
         context.setVariable("class", scheduleClass);
         context.setVariable("teacherName", scheduleClass.getTeacher().getTeacherName());
         emailService.sendEmail(order.getUser().getEmail(), "Booking successful", "order-email", context);
 
-        // Tạo thông báo
+        // Tạo thông báo trong hệ thống
         notificationService.createNotification(NotificationDTO.builder()
                 .title("Class " + scheduleClass.getName() + " has been booked.")
                 .description("Class " + scheduleClass.getName() + " has been successfully booked. Your new balance " + formatToVND(wallet.getBalance()) + "(-" + formatToVND(order.getTotalPrice()) + ")")
@@ -163,6 +181,12 @@ public class OrderService implements IOrderService {
                 .type("Create Order")
                 .name("Order Notification")
                 .build());
+
+        // Lấy Google Meet link và thêm học viên vào sự kiện Google Calendar
+        String googleMeetLink = scheduleClass.getLocation(); // Đảm bảo rằng location lưu trữ Google Meet link
+        if (googleMeetLink != null && !googleMeetLink.isEmpty()) {
+            addStudentToGoogleMeet(googleMeetLink, user.getEmail()); // Thêm học viên vào Google Meet
+        }
 
         return OrderDTO.builder()
                 .orderId(order.getOrderId())
@@ -206,6 +230,39 @@ public class OrderService implements IOrderService {
         }
         return false; // Không trùng lịch
     }
+
+
+    private void addStudentToGoogleMeet(String googleMeetLink, String studentEmail) {
+        try {
+            // Lấy sự kiện từ Google Calendar theo Google Meet link
+            Event event = GoogleCalendarService.getEventByGoogleMeetLink(googleMeetLink);
+
+            if (event == null) {
+                throw new RuntimeException("Google Meet link không hợp lệ hoặc không tìm thấy sự kiện.");
+            }
+
+            // Lấy danh sách người tham gia của sự kiện
+            List<EventAttendee> attendees = event.getAttendees();
+
+            if (attendees == null) {
+                attendees = new ArrayList<>();
+            }
+
+            // Thêm học viên vào danh sách tham gia
+            attendees.add(new EventAttendee().setEmail(studentEmail));
+
+            // Cập nhật lại danh sách attendees vào sự kiện
+            event.setAttendees(attendees);
+
+            // Cập nhật sự kiện với danh sách attendees mới
+            Calendar service = GoogleCalendarService.getCalendarService();
+            service.events().update("primary", event.getId(), event).execute();
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Lỗi khi thêm học viên vào sự kiện Google Meet: " + e.getMessage());
+        }
+    }
+
 
 
     @Transactional
@@ -665,15 +722,30 @@ public class OrderService implements IOrderService {
 
     @Transactional
     public void completeClassImmediately(Long classId) {
-        // Tìm lớp học theo ID
         Class scheduledClass = classRepository.findById(classId)
                 .orElseThrow(() -> new RuntimeException("Class not found"));
 
-        // Cập nhật trạng thái lớp học thành COMPLETED
         scheduledClass.setStatus(ClassStatus.COMPLETED);
         classRepository.save(scheduledClass);
+
+        // Lấy tỷ lệ giảm giá từ hệ thống
         System discountPercentage = systemRepository.findByName("discount_percentage");
         double discount = discountPercentage != null ? Double.parseDouble(discountPercentage.getValue()) : 0;
+        // Kiểm tra vi phạm của giảng viên
+        Teacher teacher = scheduledClass.getTeacher();
+        Violation violation = violationRepository.findByTeacher(teacher);
+
+        // Nếu giảng viên có vi phạm, trừ 10% vào tổng discount
+        if (violation != null && violation.getViolationCount() > 0) {
+            // Tính số tiền trừ cho 1 lần vi phạm
+            double penalty = violation.getPenaltyPercentage();  // 10% cho mỗi lần vi phạm
+            discount *= (1-penalty); // Trừ tiền vào discount tổng
+
+            // Giảm số lần vi phạm đi 1
+            violation.setViolationCount(violation.getViolationCount() - 1);
+            violationRepository.save(violation);
+        }
+
         // Lấy tất cả các OrderDetail liên quan đến lớp
         Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(classId, Pageable.unpaged());
 
@@ -685,13 +757,14 @@ public class OrderService implements IOrderService {
 
         // Xử lý thanh toán: trừ tiền từ SystemWallet và thêm vào ví của giáo viên
         saveTeacherWallet(discount, scheduledClass);
+
         // Gửi thông báo cho giáo viên
         notificationService.createNotification(NotificationDTO.builder()
                 .title("Class " + scheduledClass.getCode() + " has been completed")
                 .name("Notification")
                 .description("Your class " + scheduledClass.getCode() + " has been successfully completed.")
                 .type("Class Completed")
-                .username(scheduledClass.getTeacher().getTeacherName())
+                .username(teacher.getTeacherName())
                 .build());
 
         // Log kết quả

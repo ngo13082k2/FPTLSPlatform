@@ -99,6 +99,7 @@ public class ApplicationUserService implements IApplicationUserService {
                 .build();
         transactionHistoryRepository.save(transactionHistory);
         ApplicationUser applicationUser = mapWithdrawalDtoToEntity(withdrawalRequestDto, applicationType, userOrTeacher);
+        applicationUser.setCreatedDate(LocalDateTime.now());
         if (applicationUser.getUser() != null) {
             notificationService.createNotification(NotificationDTO.builder()
                     .title("Create withdraw application successful")
@@ -185,9 +186,10 @@ public class ApplicationUserService implements IApplicationUserService {
 
 
     @Override
-    public String approveApplication(Long applicationId) {
+    public String approveApplication(Long applicationId, MultipartFile approvalImage) throws IOException {
         ApplicationUser applicationUser = applicationUserRepository.findById(applicationId)
                 .orElseThrow(() -> new RuntimeException("Application not found"));
+
         String username;
         String email;
         if (applicationUser.getUser() != null) {
@@ -199,8 +201,26 @@ public class ApplicationUserService implements IApplicationUserService {
         } else {
             throw new RuntimeException("Invalid application user type: no associated User or Teacher.");
         }
+
+        // Cập nhật trạng thái đơn xin
         applicationUser.setStatus("completed");
         applicationUserRepository.save(applicationUser);
+
+        // Xử lý nếu có hình ảnh phê duyệt
+        if (approvalImage != null && !approvalImage.isEmpty()) {
+            String approvalImageUrl = cloudinaryService.uploadImage(approvalImage);
+
+            // Lưu thông tin phê duyệt vào ApprovalRecord
+            ApprovalRecord approvalRecord = ApprovalRecord.builder()
+                    .applicationUser(applicationUser)
+                    .approvedBy(getCurrentUsername())  // Lấy người phê duyệt
+                    .approvalImage(approvalImageUrl)
+                    .approvalDate(LocalDateTime.now())
+                    .build();
+            approvalRecordRepository.save(approvalRecord);
+        }
+
+        // Tạo thông báo cho người dùng
         notificationService.createNotification(NotificationDTO.builder()
                 .title("Application approved")
                 .description("Your application " + username + " has been approved.")
@@ -208,7 +228,10 @@ public class ApplicationUserService implements IApplicationUserService {
                 .username(username)
                 .type("Other application")
                 .build());
+
+        // Gửi email cho người dùng
         sendEmail(applicationUser, email, username);
+
         return "Your application has been approved.";
     }
 
@@ -373,6 +396,7 @@ public class ApplicationUserService implements IApplicationUserService {
         Object userOrTeacher = getLoggedInUserOrTeacher();
 
         ApplicationUser applicationUser = mapOtherDtoToEntity(otherRequestDto, applicationType, userOrTeacher);
+        applicationUser.setCreatedDate(LocalDateTime.now());
         applicationUserRepository.save(applicationUser);
     }
 

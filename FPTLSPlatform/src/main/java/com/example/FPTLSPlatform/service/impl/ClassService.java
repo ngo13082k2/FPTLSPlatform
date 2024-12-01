@@ -43,6 +43,7 @@ public class ClassService implements IClassService {
     private final UserRepository userRepository;
     private final WalletRepository walletRepository;
     private final OrderRepository orderRepository;
+    private final ViolationRepository violationRepository;
 
     @Autowired
     public ClassService(ClassRepository classRepository,
@@ -51,7 +52,7 @@ public class ClassService implements IClassService {
                         OrderDetailRepository orderDetailRepository,
                         CloudinaryService cloudinaryService,
                         SlotRepository slotRepository,
-                        UserRepository userRepository, WalletRepository walletRepository, OrderRepository orderRepository
+                        UserRepository userRepository, WalletRepository walletRepository, OrderRepository orderRepository, ViolationRepository violationRepository
     ) {
         this.classRepository = classRepository;
         this.courseRepository = courseRepository;
@@ -64,6 +65,7 @@ public class ClassService implements IClassService {
 
         this.walletRepository = walletRepository;
         this.orderRepository = orderRepository;
+        this.violationRepository = violationRepository;
     }
 
     private static final Logger log = LoggerFactory.getLogger(ClassService.class);
@@ -409,6 +411,7 @@ public class ClassService implements IClassService {
         result.put("ONGOING", getClassesByStatusAndMonth(ClassStatus.ONGOING, year));
         result.put("COMPLETED", getClassesByStatusAndMonth(ClassStatus.COMPLETED, year));
         result.put("CANCELED", getClassesByStatusAndMonth(ClassStatus.CANCELED, year));
+        result.put("PENDING", getClassesByStatusAndMonth(ClassStatus.PENDING, year));
 
         return result;
     }
@@ -431,10 +434,33 @@ public class ClassService implements IClassService {
         Class classToCancel = classRepository.findById(classId)
                 .orElseThrow(() -> new RuntimeException("Class not found with ID: " + classId));
 
-        if (classToCancel.getStatus() == ClassStatus.COMPLETED) {
+        // Kiểm tra trạng thái lớp học
+        if (classToCancel.getStatus() == ClassStatus.COMPLETED && classToCancel.getStatus() == ClassStatus.ACTIVE) {
             throw new RuntimeException("Cannot cancel a class that is already completed.");
         } else if (classToCancel.getStatus() == ClassStatus.CANCELED) {
             throw new RuntimeException("This class has already been canceled.");
+        }
+
+        // Lấy tên giảng viên đang đăng nhập
+        String currentUsername = getCurrentUsername();
+        Teacher teacher = teacherRepository.findByTeacherName(currentUsername)
+                .orElseThrow(() -> new RuntimeException("Teacher not found with username: " + currentUsername));
+
+        // Ghi nhận vi phạm nếu giảng viên hủy lớp
+        Violation violation = violationRepository.findByTeacher(teacher);
+        if (violation == null) {
+            // Nếu chưa có vi phạm nào, tạo mới một vi phạm
+            violation = new Violation();
+            violation.setTeacher(teacher);
+            violation.setViolationCount(1);  // Tăng số lần vi phạm
+            violation.setPenaltyPercentage(0.1);  // Tỉ lệ trừ (ví dụ là 10%)
+            violation.setLastViolationDate(LocalDateTime.now());
+            violation.setDescription("Teacher cancelled a class.");
+            violationRepository.save(violation);
+        } else {
+            violation.setViolationCount(violation.getViolationCount() + 1);
+            violation.setLastViolationDate(LocalDateTime.now());
+            violationRepository.save(violation);
         }
 
         List<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(classId);
@@ -459,6 +485,7 @@ public class ClassService implements IClassService {
 
         return "Class with ID " + classId + " has been successfully canceled, and refunds have been processed.";
     }
+
 
 
 }

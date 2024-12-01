@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -42,7 +43,8 @@ public class ApplicationUser {
     @ManyToOne
     @JoinColumn(name = "teacher", nullable = true)
     private Teacher teacher;
-
+    @Column(name = "created_date")
+    private LocalDateTime createdDate;
     public Double getAmountFromDescription() {
         if (description == null || !description.contains("Amount:")) {
             return null;
