@@ -434,19 +434,16 @@ public class ClassService implements IClassService {
         Class classToCancel = classRepository.findById(classId)
                 .orElseThrow(() -> new RuntimeException("Class not found with ID: " + classId));
 
-        // Kiểm tra trạng thái lớp học
-        if (classToCancel.getStatus() == ClassStatus.COMPLETED && classToCancel.getStatus() == ClassStatus.ACTIVE) {
+        if (classToCancel.getStatus() == ClassStatus.COMPLETED) {
             throw new RuntimeException("Cannot cancel a class that is already completed.");
         } else if (classToCancel.getStatus() == ClassStatus.CANCELED) {
             throw new RuntimeException("This class has already been canceled.");
         }
 
-        // Lấy tên giảng viên đang đăng nhập
         String currentUsername = getCurrentUsername();
         Teacher teacher = teacherRepository.findByTeacherName(currentUsername)
                 .orElseThrow(() -> new RuntimeException("Teacher not found with username: " + currentUsername));
 
-        // Ghi nhận vi phạm nếu giảng viên hủy lớp
         Violation violation = violationRepository.findByTeacher(teacher);
         if (violation == null) {
             // Nếu chưa có vi phạm nào, tạo mới một vi phạm
@@ -485,7 +482,6 @@ public class ClassService implements IClassService {
 
         return "Class with ID " + classId + " has been successfully canceled, and refunds have been processed.";
     }
-
 
 
 }

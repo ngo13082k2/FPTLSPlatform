@@ -23,6 +23,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 
@@ -53,15 +55,16 @@ public class OrderService implements IOrderService {
 
     private final TransactionHistoryRepository transactionHistoryRepository;
 
+    private final TeacherRepository teacherRepository;
 
     private final ClassService classService;
 
     private final SystemRepository systemRepository;
+
     private final ViolationRepository violationRepository;
 
-//    private final ClassStatusController classStatusController;
-
     private static final Logger log = LoggerFactory.getLogger(OrderService.class);
+
     private final WalletRepository walletRepository;
 
     @Autowired
@@ -72,10 +75,9 @@ public class OrderService implements IOrderService {
                         IWalletService walletService,
                         IEmailService emailService,
                         INotificationService notificationService,
-                        TransactionHistoryRepository transactionHistoryRepository,
+                        TransactionHistoryRepository transactionHistoryRepository, TeacherRepository teacherRepository,
                         ClassService classService,
                         SystemRepository systemRepository, ViolationRepository violationRepository,
-//                        ClassStatusController classStatusController
                         WalletRepository walletRepository) {
         this.orderRepository = orderRepository;
         this.classRepository = classRepository;
@@ -85,11 +87,11 @@ public class OrderService implements IOrderService {
         this.emailService = emailService;
         this.notificationService = notificationService;
         this.transactionHistoryRepository = transactionHistoryRepository;
+        this.teacherRepository = teacherRepository;
 
         this.classService = classService;
         this.systemRepository = systemRepository;
         this.violationRepository = violationRepository;
-//        this.classStatusController = classStatusController;
         this.walletRepository = walletRepository;
     }
 
@@ -258,11 +260,9 @@ public class OrderService implements IOrderService {
             Calendar service = GoogleCalendarService.getCalendarService();
             service.events().update("primary", event.getId(), event).execute();
         } catch (IOException e) {
-            e.printStackTrace();
             throw new RuntimeException("Lỗi khi thêm học viên vào sự kiện Google Meet: " + e.getMessage());
         }
     }
-
 
 
     @Transactional
@@ -426,7 +426,7 @@ public class OrderService implements IOrderService {
     }
 
 
-    private TransactionHistory  saveTransactionHistory(String email, double amount, Wallet wallet) {
+    private TransactionHistory saveTransactionHistory(String email, double amount, Wallet wallet) {
         TransactionHistory transactionHistory = new TransactionHistory();
         transactionHistory.setAmount(amount);
         transactionHistory.setTransactionDate(LocalDateTime.now());
@@ -717,7 +717,7 @@ public class OrderService implements IOrderService {
     private void saveTeacherWallet(double discount, Class scheduledClass, double violationDiscount) {
         List<StudentDTO> studentDTOS = classRepository.findStudentsByClassId(scheduledClass.getClassId());
 
-        double totalAmount = (scheduledClass.getPrice() * (1 - discount )) * studentDTOS.size();
+        double totalAmount = (scheduledClass.getPrice() * (1 - discount)) * studentDTOS.size();
 
         totalAmount *= (1 - violationDiscount);
 
@@ -776,8 +776,6 @@ public class OrderService implements IOrderService {
             violationDiscount = violation.getPenaltyPercentage();
 
 
-
-
             violation.setViolationCount(violation.getViolationCount() - 1);
             violationRepository.save(violation);
         }
@@ -807,8 +805,6 @@ public class OrderService implements IOrderService {
     }
 
 
-
-
     @Transactional
     public String cancelClass(Long classId) {
         Class classToCancel = classRepository.findById(classId)
@@ -821,6 +817,25 @@ public class OrderService implements IOrderService {
         }
 
         List<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(classId);
+        String currentUsername = getCurrentUsername();
+        Teacher teacher = teacherRepository.findByTeacherName(currentUsername)
+                .orElseThrow(() -> new RuntimeException("Teacher not found with username: " + currentUsername));
+
+        Violation violation = violationRepository.findByTeacher(teacher);
+        if (violation == null) {
+            // Nếu chưa có vi phạm nào, tạo mới một vi phạm
+            violation = new Violation();
+            violation.setTeacher(teacher);
+            violation.setViolationCount(1);  // Tăng số lần vi phạm
+            violation.setPenaltyPercentage(0.1);  // Tỉ lệ trừ (ví dụ là 10%)
+            violation.setLastViolationDate(LocalDateTime.now());
+            violation.setDescription("Teacher cancelled a class.");
+            violationRepository.save(violation);
+        } else {
+            violation.setViolationCount(violation.getViolationCount() + 1);
+            violation.setLastViolationDate(LocalDateTime.now());
+            violationRepository.save(violation);
+        }
 
         for (OrderDetail orderDetail : orderDetails) {
             Order order = orderDetail.getOrder();
@@ -852,4 +867,12 @@ public class OrderService implements IOrderService {
         return "Class with ID " + classId + " has been successfully canceled, and refunds have been processed.";
     }
 
+    private String getCurrentUsername() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof UserDetails) {
+            return ((UserDetails) principal).getUsername();
+        } else {
+            return principal.toString();
+        }
+    }
 }
