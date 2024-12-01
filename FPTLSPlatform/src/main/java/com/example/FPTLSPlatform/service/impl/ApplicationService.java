@@ -247,18 +247,31 @@ public class ApplicationService implements IApplicationService {
         if (allStaff.isEmpty()) {
             throw new ResourceNotFoundException("No staff members available for assignment.");
         }
+
         List<Application> pendingApplications = applicationRepository.findByStatus("PENDING");
 
         if (pendingApplications.isEmpty()) {
             throw new ResourceNotFoundException("No pending applications available for assignment.");
         }
 
-        int staffCount = allStaff.size();
         int index = 0;
         for (Application application : pendingApplications) {
-            User staff = allStaff.get(index % staffCount);
+            Set<Category> applicationMajors = application.getTeacher().getMajor();
 
-            application.setAssignedStaff(staff);
+            List<User> eligibleStaff = allStaff.stream()
+                    .filter(staff -> staff.getMajor().stream()
+                            .anyMatch(applicationMajors::contains))
+                    .toList();
+
+            if (eligibleStaff.isEmpty()) {
+                throw new ResourceNotFoundException(
+                        "No staff members available for application with majors: " + applicationMajors
+                );
+            }
+
+            User assignedStaff = eligibleStaff.get(index % eligibleStaff.size());
+
+            application.setAssignedStaff(assignedStaff);
             application.setStatus("ASSIGNED");
 
             applicationRepository.save(application);
@@ -266,6 +279,7 @@ public class ApplicationService implements IApplicationService {
             index++;
         }
     }
+
 
     @Override
     public ApplicationDTO rejectApplication(Long id, String rejectionReason) {
