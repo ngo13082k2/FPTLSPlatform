@@ -23,8 +23,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 
@@ -55,16 +53,15 @@ public class OrderService implements IOrderService {
 
     private final TransactionHistoryRepository transactionHistoryRepository;
 
-    private final TeacherRepository teacherRepository;
 
     private final ClassService classService;
 
     private final SystemRepository systemRepository;
-
     private final ViolationRepository violationRepository;
 
-    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
+//    private final ClassStatusController classStatusController;
 
+    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
     private final WalletRepository walletRepository;
 
     @Autowired
@@ -75,9 +72,10 @@ public class OrderService implements IOrderService {
                         IWalletService walletService,
                         IEmailService emailService,
                         INotificationService notificationService,
-                        TransactionHistoryRepository transactionHistoryRepository, TeacherRepository teacherRepository,
+                        TransactionHistoryRepository transactionHistoryRepository,
                         ClassService classService,
                         SystemRepository systemRepository, ViolationRepository violationRepository,
+//                        ClassStatusController classStatusController
                         WalletRepository walletRepository) {
         this.orderRepository = orderRepository;
         this.classRepository = classRepository;
@@ -87,10 +85,11 @@ public class OrderService implements IOrderService {
         this.emailService = emailService;
         this.notificationService = notificationService;
         this.transactionHistoryRepository = transactionHistoryRepository;
-        this.teacherRepository = teacherRepository;
+
         this.classService = classService;
         this.systemRepository = systemRepository;
         this.violationRepository = violationRepository;
+//        this.classStatusController = classStatusController;
         this.walletRepository = walletRepository;
     }
 
@@ -259,9 +258,11 @@ public class OrderService implements IOrderService {
             Calendar service = GoogleCalendarService.getCalendarService();
             service.events().update("primary", event.getId(), event).execute();
         } catch (IOException e) {
+            e.printStackTrace();
             throw new RuntimeException("Lỗi khi thêm học viên vào sự kiện Google Meet: " + e.getMessage());
         }
     }
+
 
 
     @Transactional
@@ -425,7 +426,7 @@ public class OrderService implements IOrderService {
     }
 
 
-    private TransactionHistory saveTransactionHistory(String email, double amount, Wallet wallet) {
+    private TransactionHistory  saveTransactionHistory(String email, double amount, Wallet wallet) {
         TransactionHistory transactionHistory = new TransactionHistory();
         transactionHistory.setAmount(amount);
         transactionHistory.setTransactionDate(LocalDateTime.now());
@@ -659,8 +660,10 @@ public class OrderService implements IOrderService {
 
         System demoAdjustEndTime = systemRepository.findByName("demo_adjust_end_time");
         int adjustEndTime = demoAdjustEndTime != null ? Integer.parseInt(demoAdjustEndTime.getValue()) : 0;
+
         System discountPercentage = systemRepository.findByName("discount_percentage");
         double discount = discountPercentage != null ? Double.parseDouble(discountPercentage.getValue()) : 0;
+
         List<Class> classesToComplete = classRepository.findByStartDateAndStatus(now.toLocalDate(), ClassStatus.ONGOING);
 
         for (Class scheduledClass : classesToComplete) {
@@ -673,27 +676,58 @@ public class OrderService implements IOrderService {
             if (now.isAfter(endTime)) {
                 scheduledClass.setStatus(ClassStatus.COMPLETED);
                 classRepository.save(scheduledClass);
+
+                Teacher teacher = scheduledClass.getTeacher();
+
+                Violation violation = violationRepository.findByTeacher(teacher);
+                double violationDiscount = 0;
+
+                if (violation != null && violation.getViolationCount() > 0) {
+                    violationDiscount = violation.getPenaltyPercentage();
+                    violation.setViolationCount(violation.getViolationCount() - 1);
+                    violationRepository.save(violation);
+                }
+
                 Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(scheduledClass.getClassId(), Pageable.unpaged());
+
                 for (OrderDetail orderDetail : orderDetails) {
                     if (orderDetail.getOrder().getStatus().equals(OrderStatus.ONGOING)) {
                         orderDetail.getOrder().setStatus(OrderStatus.COMPLETED);
                         orderDetailRepository.save(orderDetail);
                     }
                 }
-                saveTeacherWallet(discount, scheduledClass);
 
+                saveTeacherWallet(discount, scheduledClass, violationDiscount);
+
+                notificationService.createNotification(NotificationDTO.builder()
+                        .title("Class " + scheduledClass.getCode() + " has been completed")
+                        .name("Notification")
+                        .description("Your class " + scheduledClass.getCode() + " has been successfully completed.")
+                        .type("Class Completed")
+                        .username(teacher.getTeacherName())
+                        .build());
+
+                // Log thông tin
                 log.info("Class with ID {} has started and is now COMPLETED.", scheduledClass.getClassId());
             }
         }
     }
 
-    private void saveTeacherWallet(double discount, Class scheduledClass) {
+
+    private void saveTeacherWallet(double discount, Class scheduledClass, double violationDiscount) {
         List<StudentDTO> studentDTOS = classRepository.findStudentsByClassId(scheduledClass.getClassId());
-        double totalAmount = (scheduledClass.getPrice() * (1 - discount)) * studentDTOS.size();
+
+        double totalAmount = (scheduledClass.getPrice() * (1 - discount )) * studentDTOS.size();
+
+        totalAmount *= (1 - violationDiscount);
+
         Wallet wallet = scheduledClass.getTeacher().getWallet();
+
         wallet.setBalance(wallet.getBalance() + totalAmount);
+
         TransactionHistory transactionHistory = saveTransactionHistory(scheduledClass.getTeacher().getEmail(), totalAmount, wallet);
         transactionHistory.setNote("Salary");
+
     }
 
 
@@ -721,6 +755,7 @@ public class OrderService implements IOrderService {
 
     @Transactional
     public void completeClassImmediately(Long classId) {
+        // Lấy lớp học theo ID
         Class scheduledClass = classRepository.findById(classId)
                 .orElseThrow(() -> new RuntimeException("Class not found"));
 
@@ -730,17 +765,19 @@ public class OrderService implements IOrderService {
         // Lấy tỷ lệ giảm giá từ hệ thống
         System discountPercentage = systemRepository.findByName("discount_percentage");
         double discount = discountPercentage != null ? Double.parseDouble(discountPercentage.getValue()) : 0;
+
         // Kiểm tra vi phạm của giảng viên
         Teacher teacher = scheduledClass.getTeacher();
         Violation violation = violationRepository.findByTeacher(teacher);
 
-        // Nếu giảng viên có vi phạm, trừ 10% vào tổng discount
-        if (violation != null && violation.getViolationCount() > 0) {
-            // Tính số tiền trừ cho 1 lần vi phạm
-            double penalty = violation.getPenaltyPercentage();  // 10% cho mỗi lần vi phạm
-            discount *= (1 - penalty); // Trừ tiền vào discount tổng
+        double violationDiscount = 0;
 
-            // Giảm số lần vi phạm đi 1
+        if (violation != null && violation.getViolationCount() > 0) {
+            violationDiscount = violation.getPenaltyPercentage();
+
+
+
+
             violation.setViolationCount(violation.getViolationCount() - 1);
             violationRepository.save(violation);
         }
@@ -755,9 +792,8 @@ public class OrderService implements IOrderService {
         }
 
         // Xử lý thanh toán: trừ tiền từ SystemWallet và thêm vào ví của giáo viên
-        saveTeacherWallet(discount, scheduledClass);
+        saveTeacherWallet(discount, scheduledClass, violationDiscount);
 
-        // Gửi thông báo cho giáo viên
         notificationService.createNotification(NotificationDTO.builder()
                 .title("Class " + scheduledClass.getCode() + " has been completed")
                 .name("Notification")
@@ -771,6 +807,8 @@ public class OrderService implements IOrderService {
     }
 
 
+
+
     @Transactional
     public String cancelClass(Long classId) {
         Class classToCancel = classRepository.findById(classId)
@@ -780,26 +818,6 @@ public class OrderService implements IOrderService {
             throw new RuntimeException("Cannot cancel a class that is already completed.");
         } else if (classToCancel.getStatus() == ClassStatus.CANCELED) {
             throw new RuntimeException("This class has already been canceled.");
-        }
-
-        String currentUsername = getCurrentUsername();
-        Teacher teacher = teacherRepository.findByTeacherName(currentUsername)
-                .orElseThrow(() -> new RuntimeException("Teacher not found with username: " + currentUsername));
-
-        Violation violation = violationRepository.findByTeacher(teacher);
-        if (violation == null) {
-            // Nếu chưa có vi phạm nào, tạo mới một vi phạm
-            violation = new Violation();
-            violation.setTeacher(teacher);
-            violation.setViolationCount(1);  // Tăng số lần vi phạm
-            violation.setPenaltyPercentage(0.1);  // Tỉ lệ trừ (ví dụ là 10%)
-            violation.setLastViolationDate(LocalDateTime.now());
-            violation.setDescription("Teacher cancelled a class.");
-            violationRepository.save(violation);
-        } else {
-            violation.setViolationCount(violation.getViolationCount() + 1);
-            violation.setLastViolationDate(LocalDateTime.now());
-            violationRepository.save(violation);
         }
 
         List<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(classId);
@@ -832,15 +850,6 @@ public class OrderService implements IOrderService {
         classRepository.save(classToCancel);
         sendCancelEmail(classToCancel);
         return "Class with ID " + classId + " has been successfully canceled, and refunds have been processed.";
-    }
-
-    private String getCurrentUsername() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal instanceof UserDetails) {
-            return ((UserDetails) principal).getUsername();
-        } else {
-            return principal.toString();
-        }
     }
 
 }
