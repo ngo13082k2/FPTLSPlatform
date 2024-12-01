@@ -12,9 +12,6 @@ import com.example.FPTLSPlatform.service.IEmailService;
 import com.example.FPTLSPlatform.service.INotificationService;
 import com.example.FPTLSPlatform.service.IOrderService;
 import com.example.FPTLSPlatform.service.IWalletService;
-import com.google.api.services.calendar.Calendar;
-import com.google.api.services.calendar.model.Event;
-import com.google.api.services.calendar.model.EventAttendee;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +25,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 
-import java.io.IOException;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -184,11 +180,6 @@ public class OrderService implements IOrderService {
                 .name("Order Notification")
                 .build());
 
-        // Lấy Google Meet link và thêm học viên vào sự kiện Google Calendar
-        String googleMeetLink = scheduleClass.getLocation(); // Đảm bảo rằng location lưu trữ Google Meet link
-        if (googleMeetLink != null && !googleMeetLink.isEmpty()) {
-            addStudentToGoogleMeet(googleMeetLink, user.getEmail()); // Thêm học viên vào Google Meet
-        }
 
         return OrderDTO.builder()
                 .orderId(order.getOrderId())
@@ -231,37 +222,6 @@ public class OrderService implements IOrderService {
             }
         }
         return false; // Không trùng lịch
-    }
-
-
-    private void addStudentToGoogleMeet(String googleMeetLink, String studentEmail) {
-        try {
-            // Lấy sự kiện từ Google Calendar theo Google Meet link
-            Event event = GoogleCalendarService.getEventByGoogleMeetLink(googleMeetLink);
-
-            if (event == null) {
-                throw new RuntimeException("Google Meet link không hợp lệ hoặc không tìm thấy sự kiện.");
-            }
-
-            // Lấy danh sách người tham gia của sự kiện
-            List<EventAttendee> attendees = event.getAttendees();
-
-            if (attendees == null) {
-                attendees = new ArrayList<>();
-            }
-
-            // Thêm học viên vào danh sách tham gia
-            attendees.add(new EventAttendee().setEmail(studentEmail));
-
-            // Cập nhật lại danh sách attendees vào sự kiện
-            event.setAttendees(attendees);
-
-            // Cập nhật sự kiện với danh sách attendees mới
-            Calendar service = GoogleCalendarService.getCalendarService();
-            service.events().update("primary", event.getId(), event).execute();
-        } catch (IOException e) {
-            throw new RuntimeException("Lỗi khi thêm học viên vào sự kiện Google Meet: " + e.getMessage());
-        }
     }
 
 
