@@ -90,12 +90,12 @@ public class ApplicationUserService implements IApplicationUserService {
         walletRepository.save(wallet);
 
         TransactionHistory transactionHistory = TransactionHistory.builder()
-                .amount(withdrawalAmount)
+                .amount(-withdrawalAmount)
                 .transactionDate(LocalDateTime.now())
                 .transactionBalance(wallet.getBalance())
                 .user(userOrTeacher instanceof User ? (User) userOrTeacher : null)
                 .teacher(userOrTeacher instanceof Teacher ? (Teacher) userOrTeacher : null)
-                .note("WithdrawalRequest")
+                .note("Withdrawal")
                 .build();
         transactionHistoryRepository.save(transactionHistory);
         ApplicationUser applicationUser = mapWithdrawalDtoToEntity(withdrawalRequestDto, applicationType, userOrTeacher);
@@ -154,7 +154,7 @@ public class ApplicationUserService implements IApplicationUserService {
                 .transactionBalance(wallet.getBalance())
                 .user(userOrTeacher instanceof User ? (User) userOrTeacher : null)
                 .teacher(userOrTeacher instanceof Teacher ? (Teacher) userOrTeacher : null)
-                .note("WithdrawalRequest Canceled")
+                .note("Withdrawal - Canceled")
                 .build();
         transactionHistoryRepository.save(transactionHistory);
         if (applicationUser.getUser() != null) {
