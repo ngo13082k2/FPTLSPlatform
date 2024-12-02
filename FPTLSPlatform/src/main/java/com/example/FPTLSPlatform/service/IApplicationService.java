@@ -2,7 +2,6 @@ package com.example.FPTLSPlatform.service;
 
 import com.example.FPTLSPlatform.dto.ApplicationDTO;
 import com.example.FPTLSPlatform.model.Application;
-import com.example.FPTLSPlatform.model.Certificate;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.data.domain.Page;

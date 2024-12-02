@@ -62,7 +62,6 @@ public class ApplicationService implements IApplicationService {
             throw new ApplicationAlreadyApprovedException("Application has already been approved and cannot be modified.");
         }
 
-        // Kiểm tra đơn cũ của giáo viên
         Optional<Application> existingApplication = applicationRepository
                 .findByTeacher_TeacherNameAndStatusNot(teacher.getTeacherName(), "APPROVED");
 
@@ -71,14 +70,11 @@ public class ApplicationService implements IApplicationService {
             application = existingApplication.get();
 
             if (application.getStatus().equalsIgnoreCase("REJECTED")) {
-                // Nếu đơn bị từ chối, cập nhật thay vì tạo mới
                 application.setDescription(applicationDTO.getDescription());
                 application.setStatus("PENDING");
 
-                // Cập nhật chứng chỉ: chỉ thêm mới chứng chỉ
-                List<Certificate> certificates = application.getCertificates(); // Lấy chứng chỉ hiện tại
+                List<Certificate> certificates = application.getCertificates();
 
-                // Thêm chứng chỉ mới từ file lên
                 for (int i = 0; i < certificateFiles.size(); i++) {
                     MultipartFile file = certificateFiles.get(i);
                     String name = certificateNames.get(i);
@@ -97,13 +93,11 @@ public class ApplicationService implements IApplicationService {
                     }
                 }
 
-                // Gán lại danh sách chứng chỉ vào đơn ứng tuyển
                 application.setCertificates(certificates);
             } else {
                 throw new RuntimeException("A previous application exists and cannot be modified.");
             }
         } else {
-            // Nếu không có đơn cũ, tạo mới đơn ứng tuyển
             application = Application.builder()
                     .description(applicationDTO.getDescription())
                     .teacher(teacherRepository.getTeacherByTeacherName(teacher.getTeacherName()))
@@ -130,14 +124,11 @@ public class ApplicationService implements IApplicationService {
                 }
             }
 
-            // Gán lại danh sách chứng chỉ vào đơn ứng tuyển
             application.setCertificates(certificates);
         }
 
-        // Lưu đơn ứng tuyển với chứng chỉ mới
         application = applicationRepository.save(application);
 
-        // Chuyển đổi sang DTO để trả về cho client
         return convertToDTO(application);
     }
 
@@ -204,7 +195,7 @@ public class ApplicationService implements IApplicationService {
                 .certificate(certificateDTOList)
                 .status(application.getStatus())
                 .teacherName(application.getTeacher().getTeacherName())
-                .assignedStaff(application.getAssignedStaff().getUserName())
+                .assignedStaff(application.getAssignedStaff() == null ? null : application.getAssignedStaff().getUserName())
                 .rejectionReason(application.getRejectionReason() == null ? "" : application.getRejectionReason())
                 .build();
     }
