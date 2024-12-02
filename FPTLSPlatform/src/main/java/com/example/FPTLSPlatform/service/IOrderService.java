@@ -2,6 +2,7 @@ package com.example.FPTLSPlatform.service;
 
 import com.example.FPTLSPlatform.dto.*;
 import com.example.FPTLSPlatform.model.Class;
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -29,4 +30,6 @@ public interface IOrderService {
     void sendCancelEmail(Class scheduledClass);
 
     void completeClassImmediately(Long classId);
+
+    void activeClass(Long classId);
 }

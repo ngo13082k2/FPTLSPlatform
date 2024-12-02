@@ -160,7 +160,7 @@ public class OrderService implements IOrderService {
 
         // Trừ số dư ví của người dùng sau khi đặt lớp
         wallet.setBalance(wallet.getBalance() - scheduleClass.getPrice());
-        TransactionHistory transactionHistory = saveTransactionHistory(user.getEmail(), -order.getTotalPrice(), wallet);
+        TransactionHistory transactionHistory = saveTransactionHistory(user.getEmail(), -order.getTotalPrice(), wallet, "Booking lesson " + scheduleClass.getName() + " successful!");
         transactionHistory.setNote("Order");
         userRepository.save(wallet.getUser());
 
@@ -363,7 +363,7 @@ public class OrderService implements IOrderService {
             wallet.setBalance(student.getWallet().getBalance() + (orderDetail.getPrice()));
             userRepository.save(student);
 
-            TransactionHistory transactionHistory = saveTransactionHistory(student.getEmail(), orderDetail.getPrice(), wallet);
+            TransactionHistory transactionHistory = saveTransactionHistory(student.getEmail(), orderDetail.getPrice(), wallet, "Your booked class " + cancelledClass.getName() + " has been cancelled" + "Refund to your wallet " + formatToVND(order.getTotalPrice()));
             transactionHistory.setNote("Refunded");
             notificationService.createNotification(NotificationDTO.builder()
                     .title("Refund for Order " + order.getOrderId() + " has been processed")
@@ -386,7 +386,7 @@ public class OrderService implements IOrderService {
     }
 
 
-    private TransactionHistory saveTransactionHistory(String email, double amount, Wallet wallet) {
+    private TransactionHistory saveTransactionHistory(String email, double amount, Wallet wallet, String reason) {
         TransactionHistory transactionHistory = new TransactionHistory();
         transactionHistory.setAmount(amount);
         transactionHistory.setTransactionDate(LocalDateTime.now());
@@ -409,7 +409,7 @@ public class OrderService implements IOrderService {
         Context context = new Context();
         context.setVariable("transactionHistory", transactionHistory);
         context.setVariable("name", recipientName);
-
+        context.setVariable("reason", reason);
         emailService.sendEmail(email, "Transaction", "transaction-email", context);
 
         return transactionHistory;
@@ -679,15 +679,17 @@ public class OrderService implements IOrderService {
 
         double totalAmount = (scheduledClass.getPrice() * (1 - discount)) * studentDTOS.size();
 
-        totalAmount *= (1 - violationDiscount);
+        double violationAmount = totalAmount * violationDiscount;
 
         Wallet wallet = scheduledClass.getTeacher().getWallet();
 
-        wallet.setBalance(wallet.getBalance() + totalAmount);
+        wallet.setBalance(wallet.getBalance() + (totalAmount - violationAmount));
 
-        TransactionHistory transactionHistory = saveTransactionHistory(scheduledClass.getTeacher().getEmail(), totalAmount, wallet);
+        TransactionHistory transactionHistory = saveTransactionHistory(scheduledClass.getTeacher().getEmail(), totalAmount, wallet, "Your class has completed. This your class had updated your salary");
         transactionHistory.setNote("Salary");
 
+        TransactionHistory transactionHistory2 = saveTransactionHistory(scheduledClass.getTeacher().getEmail(), violationAmount, wallet, "Your salary had discount because your violation!");
+        transactionHistory2.setNote("Violation - Discount");
     }
 
 
@@ -759,9 +761,6 @@ public class OrderService implements IOrderService {
                 .type("Class Completed")
                 .username(teacher.getTeacherName())
                 .build());
-
-        // Log kết quả
-        log.info("Class with ID {} has been completed immediately by admin.", classId);
     }
 
 
@@ -807,10 +806,10 @@ public class OrderService implements IOrderService {
             }
             studentWallet.setBalance(studentWallet.getBalance() + orderDetail.getPrice());
             walletRepository.save(studentWallet);
-            notificationService.createNotification(buildNotificationDTO("Your booked lesson " + classToCancel.getCode() + " has been cancelled",
+            notificationService.createNotification(buildNotificationDTO("Your booked lesson " + classToCancel.getName() + " has been cancelled",
                     "Your lesson " + classToCancel.getCode() + " has been cancelled. " + "Refund to your wallet " + formatToVND(order.getTotalPrice()),
                     student.getUserName(), "Cancel class - Refund"));
-            TransactionHistory transactionHistory = saveTransactionHistory(student.getEmail(), order.getTotalPrice(), studentWallet);
+            TransactionHistory transactionHistory = saveTransactionHistory(student.getEmail(), order.getTotalPrice(), studentWallet, "Your booked lesson " + classToCancel.getName() + "has been cancelled. " + "Refund to your wallet " + formatToVND(order.getTotalPrice()));
             transactionHistory.setNote("Refunded");
             order.setStatus(OrderStatus.CANCELLED);
             orderRepository.save(order);
@@ -825,6 +824,39 @@ public class OrderService implements IOrderService {
         classRepository.save(classToCancel);
         sendCancelEmail(classToCancel);
         return "Class with ID " + classId + " has been successfully canceled, and refunds have been processed.";
+    }
+
+    @Transactional
+    public void activeClass(Long classId) {
+        Class activeClass = classRepository.findById(classId)
+                .orElseThrow(() -> new RuntimeException("Lesson not found with ID: " + classId));
+
+        if (activeClass.getStatus() == ClassStatus.COMPLETED) {
+            throw new RuntimeException("Cannot active a lesson that is already completed.");
+        } else if (activeClass.getStatus() == ClassStatus.CANCELED) {
+            throw new RuntimeException("This lesson has already been active.");
+        }
+
+        List<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(classId);
+
+        for (OrderDetail orderDetail : orderDetails) {
+
+            Order order = orderDetail.getOrder();
+            notificationService.createNotification(buildNotificationDTO("Your booked lesson " + activeClass.getName() + " has been active",
+                    "Your lesson " + activeClass.getCode() + " has been active.",
+                    order.getUser().getUserName(), "Active class"));
+            order.setStatus(OrderStatus.ACTIVE);
+            orderRepository.save(order);
+
+        }
+        notificationService.createNotification(buildNotificationDTO("Your lesson " + activeClass.getCode() + " has been active",
+                "Your lesson " + activeClass.getCode() + " has been active.",
+                activeClass.getTeacher().getTeacherName(), "Active class"));
+
+
+        activeClass.setStatus(ClassStatus.ACTIVE);
+        classRepository.save(activeClass);
+        sendCancelEmail(activeClass);
     }
 
     private String getCurrentUsername() {

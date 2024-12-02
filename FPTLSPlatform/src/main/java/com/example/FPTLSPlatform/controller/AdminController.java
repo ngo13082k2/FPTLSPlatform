@@ -196,6 +196,18 @@ public class AdminController {
         }
     }
 
+    @PutMapping("/{classId}/active")
+    public ResponseEntity<String> activeClassImmediately(@PathVariable Long classId) {
+        try {
+            orderService.activeClass(classId);
+            return ResponseEntity.ok("Class active successfully.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while active the class.");
+        }
+    }
+
     @GetMapping("/getAprroveRecord/{applicationUserId}")
     public ResponseEntity<ApprovalRecord> getApprovalRecordByApplicationUserId(@PathVariable Long applicationUserId) {
         ApprovalRecord approvalRecord = applicationUserService.getApprovalRecordByApplicationUserId(applicationUserId);
