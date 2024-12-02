@@ -23,5 +23,8 @@ public class ApplicationDTO {
 
     private String teacherName;
 
+    private String assignedStaff;
+
     private String rejectionReason;
+
 }

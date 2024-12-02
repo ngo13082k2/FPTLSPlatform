@@ -827,14 +827,14 @@ public class OrderService implements IOrderService {
     }
 
     @Transactional
-    public void activeClass(Long classId) {
+    public void startClass(Long classId) {
         Class activeClass = classRepository.findById(classId)
                 .orElseThrow(() -> new RuntimeException("Lesson not found with ID: " + classId));
 
         if (activeClass.getStatus() == ClassStatus.COMPLETED) {
             throw new RuntimeException("Cannot active a lesson that is already completed.");
         } else if (activeClass.getStatus() == ClassStatus.CANCELED) {
-            throw new RuntimeException("This lesson has already been active.");
+            throw new RuntimeException("This lesson has already been start.");
         }
 
         List<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(classId);
@@ -842,19 +842,19 @@ public class OrderService implements IOrderService {
         for (OrderDetail orderDetail : orderDetails) {
 
             Order order = orderDetail.getOrder();
-            notificationService.createNotification(buildNotificationDTO("Your booked lesson " + activeClass.getName() + " has been active",
-                    "Your lesson " + activeClass.getCode() + " has been active.",
-                    order.getUser().getUserName(), "Active class"));
-            order.setStatus(OrderStatus.ACTIVE);
+            notificationService.createNotification(buildNotificationDTO("Your booked lesson " + activeClass.getName() + " has been start",
+                    "Your lesson " + activeClass.getCode() + " has been start.",
+                    order.getUser().getUserName(), "Start class"));
+            order.setStatus(OrderStatus.ONGOING);
             orderRepository.save(order);
 
         }
-        notificationService.createNotification(buildNotificationDTO("Your lesson " + activeClass.getCode() + " has been active",
-                "Your lesson " + activeClass.getCode() + " has been active.",
-                activeClass.getTeacher().getTeacherName(), "Active class"));
+        notificationService.createNotification(buildNotificationDTO("Your lesson " + activeClass.getCode() + " has been start",
+                "Your lesson " + activeClass.getCode() + " has been start.",
+                activeClass.getTeacher().getTeacherName(), "Start class"));
 
 
-        activeClass.setStatus(ClassStatus.ACTIVE);
+        activeClass.setStatus(ClassStatus.ONGOING);
         classRepository.save(activeClass);
         sendCancelEmail(activeClass);
     }

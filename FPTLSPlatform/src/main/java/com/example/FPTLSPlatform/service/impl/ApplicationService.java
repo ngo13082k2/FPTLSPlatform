@@ -204,6 +204,7 @@ public class ApplicationService implements IApplicationService {
                 .certificate(certificateDTOList)
                 .status(application.getStatus())
                 .teacherName(application.getTeacher().getTeacherName())
+                .assignedStaff(application.getAssignedStaff().getUserName())
                 .rejectionReason(application.getRejectionReason() == null ? "" : application.getRejectionReason())
                 .build();
     }
