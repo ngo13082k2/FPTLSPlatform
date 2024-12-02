@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.thymeleaf.context.Context;
@@ -233,6 +234,7 @@ public class ApplicationService implements IApplicationService {
     }
 
     @Override
+    @Scheduled(cron = "0 0 0 * * ?")
     public void assignApplicationsToAllStaff() {
         List<User> allStaff = userRepository.findByRole(Role.STAFF);
 
