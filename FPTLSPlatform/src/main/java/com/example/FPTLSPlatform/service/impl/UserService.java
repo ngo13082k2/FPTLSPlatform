@@ -1,14 +1,8 @@
 package com.example.FPTLSPlatform.service.impl;
 
-import com.example.FPTLSPlatform.model.SystemWallet;
-import com.example.FPTLSPlatform.model.Teacher;
-import com.example.FPTLSPlatform.model.User;
-import com.example.FPTLSPlatform.model.Wallet;
+import com.example.FPTLSPlatform.model.*;
 import com.example.FPTLSPlatform.model.enums.Role;
-import com.example.FPTLSPlatform.repository.SystemWalletRepository;
-import com.example.FPTLSPlatform.repository.TeacherRepository;
-import com.example.FPTLSPlatform.repository.UserRepository;
-import com.example.FPTLSPlatform.repository.WalletRepository;
+import com.example.FPTLSPlatform.repository.*;
 import com.example.FPTLSPlatform.request.RegisterRequest;
 import com.example.FPTLSPlatform.service.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,9 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,6 +26,8 @@ public class UserService implements IUserService {
     private final PasswordEncoder passwordEncoder;
     @Autowired
     private WalletRepository walletRepository;
+    @Autowired
+    private CategoryRepository categoryRepository;
 
     public UserService(PasswordEncoder passwordEncoder) {
         this.passwordEncoder = passwordEncoder;
@@ -108,6 +102,9 @@ public class UserService implements IUserService {
                 .build();
         walletRepository.save(wallet);
 
+        // Get categories for the major
+        List<Category> selectedCategoriesList = categoryRepository.findAllById(request.getCategoryIds());
+        Set<Category> selectedCategories = new HashSet<>(selectedCategoriesList);
 
         User user = User.builder()
                 .userName(request.getUsername())
@@ -120,10 +117,12 @@ public class UserService implements IUserService {
                 .wallet(wallet)
                 .role(Role.STAFF)
                 .status("ACTIVE")
+                .major(selectedCategories)  // Set major categories
                 .build();
 
         return userRepository.save(user); // Lưu User cùng Wallet
     }
+
 
     public Teacher getTeacher(String teacherName) {
         return teacherRepository.findByTeacherName(teacherName)
