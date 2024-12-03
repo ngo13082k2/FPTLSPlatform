@@ -29,6 +29,7 @@
         private String code;
 
         @Column(name = "description", length = 1000)
+        @Size(max = 1000, message = "Description cannot exceed 1000 characters")
         private String description;
 
 
