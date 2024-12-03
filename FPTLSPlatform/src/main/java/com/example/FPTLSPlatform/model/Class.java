@@ -28,9 +28,9 @@
         @Column(name = "code", nullable = false, unique = true)
         private String code;
 
-        @Column(name = "description")
-        @Size(max = 1000, message = "Description cannot exceed 1000 characters")
+        @Column(name = "description", length = 1000)
         private String description;
+
 
         @Enumerated(EnumType.STRING)
         @Column(name = "status")
