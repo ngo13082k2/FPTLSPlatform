@@ -6,6 +6,7 @@ import com.example.FPTLSPlatform.model.Teacher;
 import com.example.FPTLSPlatform.model.enums.ClassStatus;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.Column;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -24,8 +25,8 @@ public class ClassDTO {
 
     private String code;
 
+    @Size(max = 1000, message = "Description cannot exceed 1000 characters")
     private String description;
-
     private ClassStatus status;
 
     private String location;
