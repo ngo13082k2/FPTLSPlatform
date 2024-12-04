@@ -1,6 +1,7 @@
 package com.example.FPTLSPlatform.dto;
 
 import com.example.FPTLSPlatform.model.Certificate;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,6 +20,7 @@ public class ApplicationDTO {
 
     private List<CertificateDTO> certificate;
 
+    @Size(max = 1000, message = "Description cannot exceed 1000 characters")
     private String description;
 
     private String teacherName;

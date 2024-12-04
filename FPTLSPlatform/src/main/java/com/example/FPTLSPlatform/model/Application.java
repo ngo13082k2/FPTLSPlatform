@@ -1,6 +1,7 @@
 package com.example.FPTLSPlatform.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.util.ArrayList;
@@ -24,6 +25,7 @@ public class Application {
     private String status;
 
     @Column(name = "description", columnDefinition = "NVARCHAR(MAX)")
+    @Size(max = 1000, message = "Description cannot exceed 1000 characters")
     private String description;
 
     @OneToMany(mappedBy = "application", cascade = CascadeType.ALL, orphanRemoval = true)
