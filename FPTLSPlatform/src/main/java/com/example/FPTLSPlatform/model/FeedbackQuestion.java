@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.Set;
+
 @Getter
 @Setter
 @Builder
@@ -17,13 +18,12 @@ public class FeedbackQuestion {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "NVARCHAR(MAX)")
     private String questionText;
 
     @ManyToOne
     @JoinColumn(name = "category_id", nullable = false)
     private FeedbackCategory feedbackCategory;
-
 
 
 }

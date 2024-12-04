@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @Builder
@@ -32,8 +33,9 @@ public class Feedback {
     @Column(nullable = false)
     private int rating;
 
-    @Column(length = 1000)
+    @Column(length = 1000, columnDefinition = "NVARCHAR(MAX)")
     private String comment;
+
     @Column(name = "is_feedback", nullable = false)
     private Boolean isFeedback;
 

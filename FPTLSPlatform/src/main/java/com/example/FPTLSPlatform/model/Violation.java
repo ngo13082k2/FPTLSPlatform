@@ -31,6 +31,6 @@ public class Violation {
     @Column(name = "last_violation_date")
     private LocalDateTime lastViolationDate;
 
-    @Column(name = "description")
+    @Column(name = "description", columnDefinition = "NVARCHAR(MAX)")
     private String description;
 }

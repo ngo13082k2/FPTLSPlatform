@@ -28,7 +28,7 @@ public class User {
     @Column(name = "email", nullable = false, unique = false)
     private String email;
 
-    @Column(name = "full_name", nullable = false)
+    @Column(name = "full_name", nullable = false, columnDefinition = "NVARCHAR(MAX)")
     private String fullName;
 
     @Column(name = "password", nullable = false)
@@ -43,7 +43,7 @@ public class User {
     @Column(name = "modified_date")
     private LocalDateTime modifiedDate;
 
-    @Column(name = "address")
+    @Column(name = "address", columnDefinition = "NVARCHAR(MAX)")
     private String address;
 
     @OneToOne(cascade = CascadeType.ALL)

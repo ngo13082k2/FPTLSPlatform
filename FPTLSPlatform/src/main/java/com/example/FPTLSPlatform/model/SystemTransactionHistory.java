@@ -26,8 +26,10 @@ public class SystemTransactionHistory {
 
     @Column(name = "balance_after_transaction", nullable = false)
     private Double balanceAfterTransaction;
+
     @Column(name = "username", nullable = false)
     private String username;
+
     @Column(name = "note")
     private String note;
 }

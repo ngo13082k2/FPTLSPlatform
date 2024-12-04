@@ -21,13 +21,13 @@ public class Class {
     @Column(name = "class_id")
     private Long classId;
 
-    @Column(name = "name", nullable = false)
+    @Column(name = "name", nullable = false, columnDefinition = "NVARCHAR(MAX)")
     private String name;
 
     @Column(name = "code", nullable = false, unique = true)
     private String code;
 
-    @Column(name = "description")
+    @Column(name = "description", columnDefinition = "NVARCHAR(MAX)")
     private String description;
 
     @Enumerated(EnumType.STRING)

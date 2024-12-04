@@ -20,8 +20,9 @@ public class Category {
     @Column(name = "category_id")
     private Long categoryId;
 
-    @Column(nullable = false)
+    @Column(name = "name", nullable = false, columnDefinition = "NVARCHAR(MAX)")
     private String name;
+
     @ManyToMany(mappedBy = "major")
     @JsonIgnore
     private List<User> users;

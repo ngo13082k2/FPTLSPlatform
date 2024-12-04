@@ -36,7 +36,7 @@ public class Teacher {
     @Column(name = "phone_number")
     private String phoneNumber;
 
-    @Column(name = "address")
+    @Column(name = "address", columnDefinition = "NVARCHAR(MAX)")
     private String address;
 
     @Column(name = "email")
@@ -48,7 +48,7 @@ public class Teacher {
     @Column(name = "modified_date")
     private LocalDateTime modifiedDate;
 
-    @Column(name = "fullname", nullable = false)
+    @Column(name = "fullname", nullable = false, columnDefinition = "NVARCHAR(MAX)")
     private String fullName;
 
     @OneToMany(mappedBy = "teacher", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -71,7 +71,7 @@ public class Teacher {
     @Column(name = "avatar_image")
     private String avatarImage;
 
-    @Column(name = "description", length = 2000)
+    @Column(name = "description", length = 2000, columnDefinition = "NVARCHAR(MAX)")
     private String description;
 
 }

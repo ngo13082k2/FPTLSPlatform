@@ -19,6 +19,7 @@ public class Slot {
     @Column(name = "slot_id")
     private Long slotId;
 
+    @Column(name = "period", nullable = false, columnDefinition = "NVARCHAR(MAX)")
     private String period;
 
     @JsonFormat(pattern = "HH:mm")
