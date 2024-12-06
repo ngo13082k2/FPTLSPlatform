@@ -33,7 +33,7 @@ public class Feedback {
     @Column(nullable = false)
     private int rating;
 
-    @Column(length = 1000, columnDefinition = "NVARCHAR(MAX)")
+    @Column(length = 1000)
     private String comment;
 
     @Column(name = "is_feedback", nullable = false)

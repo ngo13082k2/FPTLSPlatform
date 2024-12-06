@@ -16,7 +16,7 @@ public class Certificate {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "name", nullable = false, columnDefinition = "NVARCHAR(MAX)")
+    @Column(name = "name", nullable = false)
     private String name;
 
     @Column(name = "file_url", nullable = false)

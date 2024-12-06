@@ -26,6 +26,6 @@ public class Rating {
     @Column(name = "score", nullable = false)
     private Integer score;
 
-    @Column(name = "description", columnDefinition = "NVARCHAR(MAX)")
+    @Column(name = "description")
     private String description;
 }

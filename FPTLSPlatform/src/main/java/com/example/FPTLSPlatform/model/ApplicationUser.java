@@ -22,10 +22,10 @@ public class ApplicationUser {
     @Column(name = "application_user_id")
     private Long applicationUserId;
 
-    @Column(nullable = false, columnDefinition = "NVARCHAR(MAX)")
+    @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false, columnDefinition = "NVARCHAR(MAX)")
+    @Column(nullable = false)
     private String title;
 
     private String description;

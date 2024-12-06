@@ -24,14 +24,14 @@ public class Application {
     @Column(name = "status", nullable = false)
     private String status;
 
-    @Column(name = "description", columnDefinition = "NVARCHAR(MAX)")
+    @Column(name = "description")
     @Size(max = 1000, message = "Description cannot exceed 1000 characters")
     private String description;
 
     @OneToMany(mappedBy = "application", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Certificate> certificates = new ArrayList<>();
 
-    @Column(name = "rejection_reason", columnDefinition = "NVARCHAR(MAX)")
+    @Column(name = "rejection_reason")
     private String rejectionReason;
 
     @OneToOne(cascade = CascadeType.ALL)

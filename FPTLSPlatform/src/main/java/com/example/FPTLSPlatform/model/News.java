@@ -24,9 +24,9 @@ public class News {
     @Column(name = "time", nullable = false)
     private LocalTime time;
 
-    @Column(name = "title", nullable = false, columnDefinition = "NVARCHAR(MAX)")
+    @Column(name = "title", nullable = false)
     private String title;
 
-    @Column(name = "content", nullable = false, length = 1000, columnDefinition = "NVARCHAR(MAX)")
+    @Column(name = "content", nullable = false, length = 1000)
     private String content;
 }

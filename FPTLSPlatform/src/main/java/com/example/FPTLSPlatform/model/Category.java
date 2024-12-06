@@ -20,7 +20,7 @@ public class Category {
     @Column(name = "category_id")
     private Long categoryId;
 
-    @Column(name = "name", nullable = false, columnDefinition = "NVARCHAR(MAX)")
+    @Column(name = "name", nullable = false)
     private String name;
 
     @ManyToMany(mappedBy = "major")

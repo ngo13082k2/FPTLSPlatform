@@ -17,6 +17,6 @@ public class ApplicationType {
     @Column(name = "application_type_id")
     private Long id;
 
-    @Column(name = "name", nullable = false, unique = true, columnDefinition = "NVARCHAR(MAX)")
+    @Column(name = "name", nullable = false, unique = true)
     private String name;
 }

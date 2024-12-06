@@ -18,10 +18,10 @@ public class Course {
     @Column(name = "course_code", nullable = false, unique = true)
     private String courseCode;
 
-    @Column(name = "name", nullable = false, columnDefinition = "NVARCHAR(MAX)")
+    @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "description", columnDefinition = "NVARCHAR(MAX)")
+    @Column(name = "description")
     private String description;
 
     @Column(name = "status")

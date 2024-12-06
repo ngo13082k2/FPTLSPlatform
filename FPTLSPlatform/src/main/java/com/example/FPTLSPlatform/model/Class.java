@@ -22,13 +22,13 @@ public class Class {
     @Column(name = "class_id")
     private Long classId;
 
-    @Column(name = "name", nullable = false, columnDefinition = "NVARCHAR(MAX)")
+    @Column(name = "name", nullable = false)
     private String name;
 
     @Column(name = "code", nullable = false, unique = true)
     private String code;
 
-    @Column(name = "description", columnDefinition = "NVARCHAR(MAX)")
+    @Column(name = "description")
     @Size(max = 1000, message = "Description cannot exceed 1000 characters")
     private String description;
 

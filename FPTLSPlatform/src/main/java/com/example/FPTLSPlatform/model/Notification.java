@@ -19,13 +19,13 @@ public class Notification {
     @Column(name = "notification_id")
     private Long notificationId;
 
-    @Column(nullable = false, columnDefinition = "NVARCHAR(MAX)")
+    @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false, columnDefinition = "NVARCHAR(MAX)")
+    @Column(nullable = false)
     private String title;
 
-    @Column(nullable = false, columnDefinition = "NVARCHAR(MAX)")
+    @Column(nullable = false)
     private String description;
 
     private String type;

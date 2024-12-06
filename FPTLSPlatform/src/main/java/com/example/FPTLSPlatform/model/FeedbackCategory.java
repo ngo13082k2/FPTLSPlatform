@@ -18,7 +18,7 @@ public class FeedbackCategory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, columnDefinition = "NVARCHAR(MAX)")
+    @Column(nullable = false)
     private String categoryName;
 
 
