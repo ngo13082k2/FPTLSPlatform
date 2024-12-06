@@ -36,7 +36,7 @@ public class Teacher {
     @Column(name = "phone_number")
     private String phoneNumber;
 
-    @Column(name = "address", columnDefinition = "NVARCHAR(MAX)")
+    @Column(name = "address")
     private String address;
 
     @Column(name = "email")
