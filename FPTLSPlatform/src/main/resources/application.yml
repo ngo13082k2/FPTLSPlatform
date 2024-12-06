@@ -1,7 +1,7 @@
 spring:
   datasource:
-    url: jdbc:mysql://fptslsplatform.mysql.database.azure.com:3306/fptslsplatform?useSSL=true&requireSSL=true
-    username: ngolam
+    url: jdbc:mysql://lamngo.mysql.database.azure.com:3306/fsls?useSSL=true&requireSSL=true
+    username: lamtrannhungo
     password: Ngo098867915712nn
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
