@@ -1,6 +1,11 @@
 spring:
+  devtools:
+    restart:
+      enabled: false # Tắt hot reload nếu không cần thiết
+    livereload:
+      enabled: false # Tắt livereload nếu không dùng
   datasource:
-    url: jdbc:mysql://lamngo.mysql.database.azure.com:3306/fsls?useSSL=true&requireSSL=true
+    url: jdbc:mysql://lamngo.mysql.database.azure.com:3306/fsls
     username: lamtrannhungo
     password: Ngo098867915712nn
     driver-class-name: com.mysql.cj.jdbc.Driver
