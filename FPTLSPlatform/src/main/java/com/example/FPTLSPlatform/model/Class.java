@@ -2,6 +2,7 @@ package com.example.FPTLSPlatform.model;
 
 import com.example.FPTLSPlatform.model.enums.ClassStatus;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -28,6 +29,7 @@ public class Class {
     private String code;
 
     @Column(name = "description", columnDefinition = "NVARCHAR(MAX)")
+    @Size(max = 1000, message = "Description cannot exceed 1000 characters")
     private String description;
 
     @Enumerated(EnumType.STRING)

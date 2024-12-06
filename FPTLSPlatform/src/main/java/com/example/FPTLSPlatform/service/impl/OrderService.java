@@ -675,21 +675,41 @@ public class OrderService implements IOrderService {
 
 
     private void saveTeacherWallet(double discount, Class scheduledClass, double violationDiscount) {
+        // Lấy danh sách học sinh tham gia lớp
         List<StudentDTO> studentDTOS = classRepository.findStudentsByClassId(scheduledClass.getClassId());
 
+        // Tính tổng số tiền trước khi xử lý
         double totalAmount = (scheduledClass.getPrice() * (1 - discount)) * studentDTOS.size();
-
         double violationAmount = totalAmount * violationDiscount;
 
+        // Lấy ví của giáo viên
         Wallet wallet = scheduledClass.getTeacher().getWallet();
 
-        wallet.setBalance(wallet.getBalance() + (totalAmount - violationAmount));
+        // 1. Cộng lương chính thức vào số dư ví
+        double updatedBalance = wallet.getBalance() + totalAmount;
+        wallet.setBalance(updatedBalance);
 
-        TransactionHistory transactionHistory = saveTransactionHistory(scheduledClass.getTeacher().getEmail(), totalAmount, wallet, "Your class has completed. This your class had updated your salary");
-        transactionHistory.setNote("Salary");
+        // Lưu giao dịch lương chính thức
+        TransactionHistory salaryTransaction = saveTransactionHistory(
+                scheduledClass.getTeacher().getEmail(),
+                totalAmount,
+                wallet,
+                "Your class has completed. Your salary has been updated."
+        );
+        salaryTransaction.setNote("Salary");
 
-        TransactionHistory transactionHistory2 = saveTransactionHistory(scheduledClass.getTeacher().getEmail(), violationAmount, wallet, "Your salary had discount because your violation!");
-        transactionHistory2.setNote("Violation - Discount");
+        // 2. Trừ tiền phạt từ số dư ví đã cập nhật
+        double finalBalance = updatedBalance - violationAmount;
+        wallet.setBalance(finalBalance);
+
+        // Lưu giao dịch tiền phạt
+        TransactionHistory violationTransaction = saveTransactionHistory(
+                scheduledClass.getTeacher().getEmail(),
+                -violationAmount,
+                wallet,
+                "Your salary had a discount due to your violation!"
+        );
+        violationTransaction.setNote("Violation - Discount");
     }
 
 
