@@ -71,5 +71,5 @@ jobs:
         with:
           app-name: 'FSLS'
           slot-name: 'Production'
-          package: '*.jar'
+          package: 'app.jar'
           
