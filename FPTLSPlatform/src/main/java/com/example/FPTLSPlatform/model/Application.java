@@ -29,6 +29,7 @@ public class Application {
     private String description;
 
     @OneToMany(mappedBy = "application", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<Certificate> certificates = new ArrayList<>();
 
     @Column(name = "rejection_reason")

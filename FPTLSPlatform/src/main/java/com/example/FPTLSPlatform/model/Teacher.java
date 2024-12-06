@@ -52,6 +52,7 @@ public class Teacher {
     private String fullName;
 
     @OneToMany(mappedBy = "teacher", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<Certificate> certificates = new ArrayList<>();
 
     @Column(name = "status")
