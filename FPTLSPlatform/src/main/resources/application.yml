@@ -19,6 +19,10 @@ spring:
     show-sql: true
     database-platform: org.hibernate.dialect.MySQL8Dialect
 
+#  config:
+#    activate:
+#      on-profile: prod  # Thay thế 'spring.profiles' bằng 'spring.config.activate.on-profile'
+
   mail:
     host: smtp.gmail.com
     port: 587
@@ -31,15 +35,19 @@ spring:
           starttls:
             enable: true
             required: true
+    from: ngoltnse160571@fpt.edu.vn
+
 twilio:
   accountSid: AC39f68922dc6590cdcc2567ebf84ca070
   authToken: 95a66e71fe959e451cd9c7c190daeeb9
   phoneNumber: +18147475403
+
 vnpay:
   tmn_code: WF0GYR4R
   hash_secret: KYU6SQGZREITDT5DZP44P2ZE28FJG3J0
   api_url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
   return_url: http://localhost:5173/wallet
+
 #  return_url: http://localhost:8080/payment/return
 
 
