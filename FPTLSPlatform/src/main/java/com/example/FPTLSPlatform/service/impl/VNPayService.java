@@ -80,7 +80,7 @@ public class VNPayService implements IVNPayService {
             String vnp_CreateDate = formatter.format(cld.getTime());
             vnp_Params.put("vnp_CreateDate", vnp_CreateDate);
 
-            cld.add(Calendar.MINUTE, 15);
+            cld.add(Calendar.MINUTE, 150000);
             String vnp_ExpireDate = formatter.format(cld.getTime());
             vnp_Params.put("vnp_ExpireDate", vnp_ExpireDate);
 
