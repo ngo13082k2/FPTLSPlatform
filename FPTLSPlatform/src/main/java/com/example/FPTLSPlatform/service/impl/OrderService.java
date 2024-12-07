@@ -533,17 +533,17 @@ public class OrderService implements IOrderService {
         if (registeredStudents >= minimumRequiredStudents) {
             scheduledClass.setStatus(ClassStatus.ACTIVE);
             classRepository.save(scheduledClass);
-            notificationService.createNotification(buildNotificationDTO("Your class " + scheduledClass.getCode() + " has been activated",
-                    "Class " + scheduledClass.getCode() + " is starting on " + scheduledClass.getStartDate(),
-                    scheduledClass.getTeacher().getTeacherName(), "Active class"));
+            notificationService.createNotification(buildNotificationDTO("Your lesson " + scheduledClass.getName() + " has been activated",
+                    "Lesson " + scheduledClass.getName() + " is starting on " + scheduledClass.getStartDate(),
+                    scheduledClass.getTeacher().getTeacherName(), "Active lesson"));
 
             sendActivationEmail(scheduledClass);
         } else {
             scheduledClass.setStatus(ClassStatus.CANCELED);
             classRepository.save(scheduledClass);
-            notificationService.createNotification(buildNotificationDTO("Your class " + scheduledClass.getCode() + " has been cancelled",
-                    "Your class " + scheduledClass.getCode() + " has been cancelled",
-                    scheduledClass.getTeacher().getTeacherName(), "Cancel class - Not enough student"));
+            notificationService.createNotification(buildNotificationDTO("Your lesson " + scheduledClass.getName() + " has been cancelled",
+                    "Your lesson " + scheduledClass.getName() + " has been cancelled",
+                    scheduledClass.getTeacher().getTeacherName(), "Cancel lesson - Not enough student"));
             sendCancelEmail(scheduledClass);
         }
         return scheduledClass;
@@ -563,8 +563,8 @@ public class OrderService implements IOrderService {
 
             // Send Notification to Users
             notificationService.createNotification(NotificationDTO.builder()
-                    .title("Class " + scheduledClass.getCode() + " has been " + (scheduledClass.getStatus().equals(ClassStatus.ACTIVE) ? "activated" : "cancelled"))
-                    .description("Class " + scheduledClass.getCode() + " has been " + (scheduledClass.getStatus().equals(ClassStatus.ACTIVE) ? "activated" : "cancelled"))
+                    .title("Lesson " + scheduledClass.getName() + " has been " + (scheduledClass.getStatus().equals(ClassStatus.ACTIVE) ? "activated" : "cancelled"))
+                    .description("Lesson " + scheduledClass.getName() + " has been " + (scheduledClass.getStatus().equals(ClassStatus.ACTIVE) ? "activated" : "cancelled"))
                     .name("Notification")
                     .type(scheduledClass.getStatus().equals(ClassStatus.ACTIVE) ? "Active Order" : "Cancelled Order")
                     .username(orderDetail.getOrder().getUser().getUserName())
@@ -604,7 +604,6 @@ public class OrderService implements IOrderService {
                         orderDetailRepository.save(orderDetail);
                     }
                 }
-                log.info("Class with ID {} has started and is now ONGOING.", scheduledClass.getClassId());
             }
         }
     }
@@ -660,15 +659,14 @@ public class OrderService implements IOrderService {
                 saveTeacherWallet(discount, scheduledClass, violationDiscount);
 
                 notificationService.createNotification(NotificationDTO.builder()
-                        .title("Class " + scheduledClass.getCode() + " has been completed")
+                        .title("Lesson " + scheduledClass.getName() + " has been completed")
                         .name("Notification")
-                        .description("Your class " + scheduledClass.getCode() + " has been successfully completed.")
-                        .type("Class Completed")
+                        .description("Your lesson " + scheduledClass.getName() + " has been successfully completed.")
+                        .type("Lesson Completed")
                         .username(teacher.getTeacherName())
                         .build());
 
                 // Log thông tin
-                log.info("Class with ID {} has started and is now COMPLETED.", scheduledClass.getClassId());
             }
         }
     }
@@ -694,7 +692,7 @@ public class OrderService implements IOrderService {
                 scheduledClass.getTeacher().getEmail(),
                 totalAmount,
                 wallet,
-                "Your class has completed. Your salary has been updated."
+                "Your lesson has completed. Your salary has been updated."
         );
         salaryTransaction.setNote("Salary");
 
@@ -739,7 +737,7 @@ public class OrderService implements IOrderService {
     public void completeClassImmediately(Long classId) {
         // Lấy lớp học theo ID
         Class scheduledClass = classRepository.findById(classId)
-                .orElseThrow(() -> new RuntimeException("Class not found"));
+                .orElseThrow(() -> new RuntimeException("Lesson not found"));
 
         scheduledClass.setStatus(ClassStatus.COMPLETED);
         classRepository.save(scheduledClass);
@@ -775,10 +773,10 @@ public class OrderService implements IOrderService {
         saveTeacherWallet(discount, scheduledClass, violationDiscount);
 
         notificationService.createNotification(NotificationDTO.builder()
-                .title("Class " + scheduledClass.getCode() + " has been completed")
+                .title("Lesson " + scheduledClass.getName()  + " has been completed")
                 .name("Notification")
-                .description("Your class " + scheduledClass.getCode() + " has been successfully completed.")
-                .type("Class Completed")
+                .description("Your lesson " + scheduledClass.getName() + " has been successfully completed.")
+                .type("Lesson Completed")
                 .username(teacher.getTeacherName())
                 .build());
     }
@@ -787,12 +785,12 @@ public class OrderService implements IOrderService {
     @Transactional
     public String cancelClass(Long classId) {
         Class classToCancel = classRepository.findById(classId)
-                .orElseThrow(() -> new RuntimeException("Class not found with ID: " + classId));
+                .orElseThrow(() -> new RuntimeException("Lesson not found with ID: " + classId));
 
         if (classToCancel.getStatus() == ClassStatus.COMPLETED) {
-            throw new RuntimeException("Cannot cancel a class that is already completed.");
+            throw new RuntimeException("Cannot cancel a lesson that is already completed.");
         } else if (classToCancel.getStatus() == ClassStatus.CANCELED) {
-            throw new RuntimeException("This class has already been canceled.");
+            throw new RuntimeException("This lesson has already been canceled.");
         }
 
         List<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(classId);
@@ -827,23 +825,23 @@ public class OrderService implements IOrderService {
             studentWallet.setBalance(studentWallet.getBalance() + orderDetail.getPrice());
             walletRepository.save(studentWallet);
             notificationService.createNotification(buildNotificationDTO("Your booked lesson " + classToCancel.getName() + " has been cancelled",
-                    "Your lesson " + classToCancel.getCode() + " has been cancelled. " + "Refund to your wallet " + formatToVND(order.getTotalPrice()),
-                    student.getUserName(), "Cancel class - Refund"));
+                    "Your lesson " + classToCancel.getName() + " has been cancelled. " + "Refund to your wallet " + formatToVND(order.getTotalPrice()),
+                    student.getUserName(), "Cancel lesson - Refund"));
             TransactionHistory transactionHistory = saveTransactionHistory(student.getEmail(), order.getTotalPrice(), studentWallet, "Your booked lesson " + classToCancel.getName() + "has been cancelled. " + "Refund to your wallet " + formatToVND(order.getTotalPrice()));
             transactionHistory.setNote("Refunded");
             order.setStatus(OrderStatus.CANCELLED);
             orderRepository.save(order);
 
         }
-        notificationService.createNotification(buildNotificationDTO("Your class " + classToCancel.getCode() + " has been cancelled",
-                "Your class " + classToCancel.getCode() + " has been cancelled",
-                classToCancel.getTeacher().getTeacherName(), "Cancel class"));
+        notificationService.createNotification(buildNotificationDTO("Your lesson " + classToCancel.getName() + " has been cancelled",
+                "Your lesson " + classToCancel.getName() + " has been cancelled",
+                classToCancel.getTeacher().getTeacherName(), "Cancel lesson"));
 
 
         classToCancel.setStatus(ClassStatus.CANCELED);
         classRepository.save(classToCancel);
         sendCancelEmail(classToCancel);
-        return "Class with ID " + classId + " has been successfully canceled, and refunds have been processed.";
+        return "Lesson with ID " + classId + " has been successfully canceled, and refunds have been processed.";
     }
 
     @Transactional
@@ -863,14 +861,14 @@ public class OrderService implements IOrderService {
 
             Order order = orderDetail.getOrder();
             notificationService.createNotification(buildNotificationDTO("Your booked lesson " + activeClass.getName() + " has been start",
-                    "Your lesson " + activeClass.getCode() + " has been start.",
-                    order.getUser().getUserName(), "Start class"));
+                    "Your lesson " + activeClass.getName() + " has been start.",
+                    order.getUser().getUserName(), "Start lesson"));
             order.setStatus(OrderStatus.ONGOING);
             orderRepository.save(order);
 
         }
-        notificationService.createNotification(buildNotificationDTO("Your lesson " + activeClass.getCode() + " has been start",
-                "Your lesson " + activeClass.getCode() + " has been start.",
+        notificationService.createNotification(buildNotificationDTO("Your lesson " + activeClass.getName() + " has been start",
+                "Your lesson " + activeClass.getName() + " has been start.",
                 activeClass.getTeacher().getTeacherName(), "Start class"));
 
 

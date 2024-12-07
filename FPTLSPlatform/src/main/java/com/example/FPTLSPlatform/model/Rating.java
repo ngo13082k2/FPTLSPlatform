@@ -26,6 +26,6 @@ public class Rating {
     @Column(name = "score", nullable = false)
     private Integer score;
 
-    @Column(name = "description")
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 }

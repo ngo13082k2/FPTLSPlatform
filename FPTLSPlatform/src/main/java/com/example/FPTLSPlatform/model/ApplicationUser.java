@@ -28,6 +28,7 @@ public class ApplicationUser {
     @Column(nullable = false)
     private String title;
 
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
     @Column(nullable = false)
