@@ -59,7 +59,7 @@ public class EmailService implements IEmailService {
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(htmlContent, true);
-
+            helper.setFrom("ngoltnse160571@fpt.edu.vn");
             mailSender.send(message);
         } catch (MessagingException e) {
             log.warn("Error sending email to {}: {}", to, e.getMessage());
@@ -73,6 +73,7 @@ public class EmailService implements IEmailService {
         helper.setTo(toEmail);
         helper.setSubject("OTP for Email Verification");
         helper.setText("Your OTP for email verification is: " + otp);
+        helper.setFrom("ngoltnse160571@fpt.edu.vn");
 
         mailSender.send(message);
     }
