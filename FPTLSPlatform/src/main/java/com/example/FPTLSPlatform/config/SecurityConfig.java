@@ -87,7 +87,6 @@ public class SecurityConfig {
 @Bean
 public SecurityFilterChain configure(HttpSecurity http) throws Exception {
     http.cors().configurationSource(new CorsConfigurationSource() {
-
                 @Override
                 public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
                     CorsConfiguration configuration = new CorsConfiguration();
@@ -99,10 +98,58 @@ public SecurityFilterChain configure(HttpSecurity http) throws Exception {
                 }
             }).and() // Enable CORS globally
             .authorizeRequests()
-            .anyRequest().permitAll()
-            .and().sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.NEVER))
-            .csrf(AbstractHttpConfigurer::disable);
+            // Các endpoint công cộng, không cần xác thực
+            .requestMatchers("/auth/login", "/applications/**", "/auth/register-student", "/auth/register-teacher", "/forgotpassword/**", "api/**", "/auth/confirm-otp", "/feedback/comments", "/auth/forgot-password", "/auth/confirm-otpForgot", "/auth/reset-password", "/ws/**").permitAll()
+
+            // Các endpoint cho STAFF
+            .requestMatchers("/staff/**").hasAuthority("STAFF")
+            .requestMatchers("/applications/staff").hasAuthority("STAFF")
+            .requestMatchers(HttpMethod.POST, "/courses").hasAuthority("STAFF")
+            .requestMatchers(HttpMethod.PUT, "/courses/{courseCode}").hasAuthority("STAFF")
+            .requestMatchers(HttpMethod.DELETE, "/courses/{courseCode}").hasAuthority("STAFF")
+            .requestMatchers(HttpMethod.POST, "/categories").hasAuthority("STAFF")
+            .requestMatchers(HttpMethod.PUT, "/categories").hasAuthority("STAFF")
+            .requestMatchers("/api/feedback-question").hasAuthority("STAFF")
+            .requestMatchers("/api/feedback-category").hasAuthority("STAFF")
+            .requestMatchers(HttpMethod.POST, "/slots").hasAuthority("STAFF")
+            .requestMatchers(HttpMethod.PUT, "/slots/{slotId}").hasAuthority("STAFF")
+            .requestMatchers(HttpMethod.DELETE, "/slots/{slotId}").hasAuthority("STAFF")
+            .requestMatchers("/admin/**").hasAuthority("ADMIN")
+
+            // Các endpoint cho TEACHER
+            .requestMatchers("/teacher/**").hasAuthority("TEACHER")
+            .requestMatchers("/classes/byCourse/{courseCode}").hasAnyAuthority("STUDENT", "TEACHER")
+            .requestMatchers("/classes/getByClassId/{classId}").hasAnyAuthority("STUDENT", "TEACHER")
+            .requestMatchers("/classes/teacher/{teacherName}").hasAuthority("STUDENT")
+            .requestMatchers("/classes/my-classes").hasAuthority("TEACHER")
+            .requestMatchers(HttpMethod.PUT, "/classes/{classId}").hasAuthority("TEACHER")
+            .requestMatchers(HttpMethod.POST, "/classes").hasAuthority("TEACHER")
+            .requestMatchers("/classes/confirm-classes/").hasAuthority("TEACHER")
+
+            // Các endpoint cho STUDENT
+            .requestMatchers("/student/**").hasAuthority("STUDENT")
+            .requestMatchers(HttpMethod.GET, "/courses").hasAnyAuthority("TEACHER", "STAFF", "STUDENT")
+            .requestMatchers("/classes/{classId}/students").hasAnyAuthority("STAFF", "STUDENT", "TEACHER")
+            .requestMatchers("feedback/order/{orderId}/submit").hasAuthority("STUDENT")
+
+            // Các endpoint cho ADMIN
+            .requestMatchers("/classes/StatusCompleted").hasAnyAuthority("STAFF", "ADMIN")
+            .requestMatchers("/classes").hasAnyAuthority("STUDENT", "ADMIN")
+            .requestMatchers("/classes/{classId}/students").hasAnyAuthority("STAFF", "STUDENT", "TEACHER")
+            .requestMatchers(HttpMethod.GET, "/slots").hasAnyAuthority("STAFF", "STUDENT", "TEACHER", "ADMIN")
+            .requestMatchers(HttpMethod.GET, "/slots/{slotId}").hasAnyAuthority("STAFF", "STUDENT", "TEACHER")
+
+            // Bảo mật các endpoint khác
+            .anyRequest().authenticated()
+            .and()
+            .sessionManagement()
+            .sessionCreationPolicy(SessionCreationPolicy.NEVER)
+            .and()
+            .csrf().disable();
+
+    // Đăng ký JWT Filter
     http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+
     return http.build();
 }
 
