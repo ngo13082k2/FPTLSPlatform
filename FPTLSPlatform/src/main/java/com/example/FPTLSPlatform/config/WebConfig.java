@@ -13,7 +13,6 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedOrigins("https://lss-front-end.vercel.app", "http://localhost:5173")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
-                .exposedHeaders("Authorization", "Content-Type")
                 .allowCredentials(true);
     }
 }
