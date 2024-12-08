@@ -2,6 +2,7 @@ package com.example.FPTLSPlatform.config;
 
 
 import com.example.FPTLSPlatform.filter.JwtRequestFilter;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -17,6 +18,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+
+import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
@@ -28,58 +32,78 @@ public class SecurityConfig {
         this.jwtRequestFilter = jwtRequestFilter;
     }
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/login", "/applications/**", "/auth/register-student", "/auth/register-teacher", "/forgotpassword/**", "api/**", "/auth/confirm-otp", "/feedback/comments", "/auth/forgot-password", "/auth/confirm-otpForgot", "/auth/reset-password", "/ws/**").permitAll() // Publicly accessible endpoints
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/categories", "/categories/{id}").permitAll()
-                        .requestMatchers("/staff/**").hasAuthority("STAFF")
-                        .requestMatchers("/teacher/**").hasAuthority("TEACHER")
-                        .requestMatchers("/student/**").hasAuthority("STUDENT")
-                        .requestMatchers("/applications/staff").hasAuthority("STAFF")
-                        .requestMatchers(HttpMethod.GET, "/courses").hasAnyAuthority("TEACHER", "STAFF", "STUDENT")
-                        .requestMatchers(HttpMethod.POST, "/courses").hasAuthority("STAFF")
-                        .requestMatchers(HttpMethod.PUT, "/courses/{courseCode}").hasAuthority("STAFF")
-                        .requestMatchers(HttpMethod.DELETE, "/courses/{courseCode}").hasAuthority("STAFF")
-                        .requestMatchers(HttpMethod.POST, "/categories").hasAuthority("STAFF")
-                        .requestMatchers(HttpMethod.PUT, "/categories").hasAuthority("STAFF")
-                        .requestMatchers(HttpMethod.POST, "/categories").hasAuthority("STAFF")
-                        .requestMatchers("/classes/byCourse/{courseCode}").hasAnyAuthority("STUDENT", "TEACHER")
-                        .requestMatchers("/classes/StatusCompleted").hasAnyAuthority("STAFF", "ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/classes/getByClassId/{classId}").hasAnyAuthority("STUDENT", "TEACHER")
-                        .requestMatchers(HttpMethod.GET, "/classes").hasAnyAuthority("STUDENT", "ADMIN")
-                        .requestMatchers("/classes/teacher/{teacherName}").hasAuthority("STUDENT")
-                        .requestMatchers("/classes/{classId}/students").hasAnyAuthority("STAFF", "STUDENT", "TEACHER")
-                        .requestMatchers(HttpMethod.PUT, "/classes/{classId}").hasAuthority("TEACHER")
-                        .requestMatchers("/classes/my-classes").hasAuthority("TEACHER")
-                        .requestMatchers(HttpMethod.POST, "/classes").hasAuthority("TEACHER")
-                        .requestMatchers("classes/confirm-classes/").hasAuthority("TEACHER")
-                        .requestMatchers("orders/**").hasAnyAuthority("STAFF", "STUDENT", "ADMIN")
-                        .requestMatchers("feedback/order/{orderId}/submit").hasAuthority("STUDENT")
-                        .requestMatchers("feedback/class/{classId}/summary").hasAuthority("STAFF")
-                        .requestMatchers("/api/feedback-question").hasAuthority("STAFF")
-                        .requestMatchers("/api/feedback-category").hasAuthority("STAFF")
-                        .requestMatchers(HttpMethod.POST, "/slots").hasAuthority("STAFF")
-                        .requestMatchers(HttpMethod.PUT, "/slots/{slotId}").hasAuthority("STAFF")
-                        .requestMatchers(HttpMethod.DELETE, "/slots/{slotId}").hasAuthority("STAFF")
-                        .requestMatchers(HttpMethod.GET, "/slots").hasAnyAuthority("STAFF", "STUDENT", "TEACHER", "ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/slots/{slotId}").hasAnyAuthority("STAFF", "STUDENT", "TEACHER")
-                        .requestMatchers("/admin/**").hasAuthority("ADMIN")
+//    @Bean
+//    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+//        http
+//                .csrf(AbstractHttpConfigurer::disable)
+//                .authorizeHttpRequests(auth -> auth
+//                        .requestMatchers("/auth/login", "/applications/**", "/auth/register-student", "/auth/register-teacher", "/forgotpassword/**", "api/**", "/auth/confirm-otp", "/feedback/comments", "/auth/forgot-password", "/auth/confirm-otpForgot", "/auth/reset-password", "/ws/**").permitAll() // Publicly accessible endpoints
+//                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
+//                        .requestMatchers(HttpMethod.GET, "/categories", "/categories/{id}").permitAll()
+//                        .requestMatchers("/staff/**").hasAuthority("STAFF")
+//                        .requestMatchers("/teacher/**").hasAuthority("TEACHER")
+//                        .requestMatchers("/student/**").hasAuthority("STUDENT")
+//                        .requestMatchers("/applications/staff").hasAuthority("STAFF")
+//                        .requestMatchers(HttpMethod.GET, "/courses").hasAnyAuthority("TEACHER", "STAFF", "STUDENT")
+//                        .requestMatchers(HttpMethod.POST, "/courses").hasAuthority("STAFF")
+//                        .requestMatchers(HttpMethod.PUT, "/courses/{courseCode}").hasAuthority("STAFF")
+//                        .requestMatchers(HttpMethod.DELETE, "/courses/{courseCode}").hasAuthority("STAFF")
+//                        .requestMatchers(HttpMethod.POST, "/categories").hasAuthority("STAFF")
+//                        .requestMatchers(HttpMethod.PUT, "/categories").hasAuthority("STAFF")
+//                        .requestMatchers(HttpMethod.POST, "/categories").hasAuthority("STAFF")
+//                        .requestMatchers("/classes/byCourse/{courseCode}").hasAnyAuthority("STUDENT", "TEACHER")
+//                        .requestMatchers("/classes/StatusCompleted").hasAnyAuthority("STAFF", "ADMIN")
+//                        .requestMatchers(HttpMethod.GET, "/classes/getByClassId/{classId}").hasAnyAuthority("STUDENT", "TEACHER")
+//                        .requestMatchers(HttpMethod.GET, "/classes").hasAnyAuthority("STUDENT", "ADMIN")
+//                        .requestMatchers("/classes/teacher/{teacherName}").hasAuthority("STUDENT")
+//                        .requestMatchers("/classes/{classId}/students").hasAnyAuthority("STAFF", "STUDENT", "TEACHER")
+//                        .requestMatchers(HttpMethod.PUT, "/classes/{classId}").hasAuthority("TEACHER")
+//                        .requestMatchers("/classes/my-classes").hasAuthority("TEACHER")
+//                        .requestMatchers(HttpMethod.POST, "/classes").hasAuthority("TEACHER")
+//                        .requestMatchers("classes/confirm-classes/").hasAuthority("TEACHER")
+//                        .requestMatchers("orders/**").hasAnyAuthority("STAFF", "STUDENT", "ADMIN")
+//                        .requestMatchers("feedback/order/{orderId}/submit").hasAuthority("STUDENT")
+//                        .requestMatchers("feedback/class/{classId}/summary").hasAuthority("STAFF")
+//                        .requestMatchers("/api/feedback-question").hasAuthority("STAFF")
+//                        .requestMatchers("/api/feedback-category").hasAuthority("STAFF")
+//                        .requestMatchers(HttpMethod.POST, "/slots").hasAuthority("STAFF")
+//                        .requestMatchers(HttpMethod.PUT, "/slots/{slotId}").hasAuthority("STAFF")
+//                        .requestMatchers(HttpMethod.DELETE, "/slots/{slotId}").hasAuthority("STAFF")
+//                        .requestMatchers(HttpMethod.GET, "/slots").hasAnyAuthority("STAFF", "STUDENT", "TEACHER", "ADMIN")
+//                        .requestMatchers(HttpMethod.GET, "/slots/{slotId}").hasAnyAuthority("STAFF", "STUDENT", "TEACHER")
+//                        .requestMatchers("/admin/**").hasAuthority("ADMIN")
+//
+//
+//                        .anyRequest().authenticated()
+//                )
+//                .sessionManagement(session -> session
+//                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+//                );
+//
+//        http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+//
+//        return http.build();
+//    }
+@Bean
+public SecurityFilterChain configure(HttpSecurity http) throws Exception {
+    http.cors().configurationSource(new CorsConfigurationSource() {
 
-
-                        .anyRequest().authenticated()
-                )
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                );
-
-        http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
-
-        return http.build();
-    }
+                @Override
+                public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
+                    CorsConfiguration configuration = new CorsConfiguration();
+                    configuration.setAllowedOrigins(Arrays.asList("*"));
+                    configuration.setAllowedMethods(Arrays.asList("*"));
+                    configuration.setAllowedHeaders(Arrays.asList("*"));
+                    return configuration;
+                }
+            }).and() // Enable CORS globally
+            .authorizeRequests()
+            .anyRequest().permitAll()
+            .and().sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.NEVER))
+            .csrf(AbstractHttpConfigurer::disable);
+    http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+    return http.build();
+}
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
