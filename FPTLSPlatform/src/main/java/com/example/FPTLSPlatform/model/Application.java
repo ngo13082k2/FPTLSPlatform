@@ -24,7 +24,7 @@ public class Application {
     @Column(name = "status", nullable = false)
     private String status;
 
-    @Column(name = "description", columnDefinition = "TEXT")
+    @Column(name = "description", columnDefinition = "NVARCHAR(1000)")
     @Size(max = 1000, message = "Description cannot exceed 1000 characters")
     private String description;
 

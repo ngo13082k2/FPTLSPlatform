@@ -684,30 +684,17 @@ public class OrderService implements IOrderService {
         Wallet wallet = scheduledClass.getTeacher().getWallet();
 
         // 1. Cộng lương chính thức vào số dư ví
-        double updatedBalance = wallet.getBalance() + totalAmount;
+        double updatedBalance = wallet.getBalance() + (totalAmount - violationAmount);
         wallet.setBalance(updatedBalance);
-
-        // Lưu giao dịch lương chính thức
-        TransactionHistory salaryTransaction = saveTransactionHistory(
-                scheduledClass.getTeacher().getEmail(),
-                totalAmount,
-                wallet,
-                "Your lesson has completed. Your salary has been updated."
-        );
-        salaryTransaction.setNote("Salary");
-
-        // 2. Trừ tiền phạt từ số dư ví đã cập nhật
-        double finalBalance = updatedBalance - violationAmount;
-        wallet.setBalance(finalBalance);
 
         // Lưu giao dịch tiền phạt
         TransactionHistory violationTransaction = saveTransactionHistory(
                 scheduledClass.getTeacher().getEmail(),
-                -violationAmount,
+                updatedBalance,
                 wallet,
                 "Your salary had a discount due to your violation!"
         );
-        violationTransaction.setNote("Violation - Discount");
+        violationTransaction.setNote("Salary (Fined)");
     }
 
 

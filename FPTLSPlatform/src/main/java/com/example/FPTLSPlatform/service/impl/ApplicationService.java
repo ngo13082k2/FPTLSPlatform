@@ -73,6 +73,7 @@ public class ApplicationService implements IApplicationService {
             if (application.getStatus().equalsIgnoreCase("REJECTED")) {
                 application.setDescription(applicationDTO.getDescription());
                 application.setStatus("PENDING");
+                application.setRejectionReason("");
 
                 List<Certificate> certificates = application.getCertificates();
 
