@@ -1,5 +1,6 @@
 package com.example.FPTLSPlatform.config;
 
+
 import com.example.FPTLSPlatform.filter.JwtRequestFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,9 +17,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-
-import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
@@ -30,35 +28,14 @@ public class SecurityConfig {
         this.jwtRequestFilter = jwtRequestFilter;
     }
 
-    // CORS Configuration
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        return request -> {
-            CorsConfiguration configuration = new CorsConfiguration();
-            // Cho phép tất cả các origin (thay thế "*" bằng danh sách origin nếu cần hạn chế)
-            configuration.setAllowedOrigins(Arrays.asList("*")); // Thay "*" bằng danh sách các origin nếu cần bảo mật hơn.
-            configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-            configuration.setAllowedHeaders(Arrays.asList("*"));
-            configuration.setAllowCredentials(true); // Cho phép cookies và headers cross-origin
-            return configuration;
-        };
-    }
-
-    // Cấu hình Security cho các endpoint và JWT Filter
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .cors().configurationSource(corsConfigurationSource())  // Enable CORS globally
-                .and()
-                .csrf().disable() // Tắt CSRF cho các API REST
-                .authorizeRequests(auth -> auth
-                        .requestMatchers("/auth/login", "/applications/**", "/auth/register-student", "/auth/register-teacher",
-                                "/forgotpassword/**", "api/**", "/auth/confirm-otp", "/feedback/comments",
-                                "/auth/forgot-password", "/auth/confirm-otpForgot", "/auth/reset-password", "/ws/**")
-                        .permitAll() // Publicly accessible endpoints
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll() // Swagger API documentation
-                        .requestMatchers(HttpMethod.GET, "/categories", "/categories/{id}").permitAll() // Open access to categories
-                        // Các endpoint yêu cầu quyền hạn
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/auth/login", "/applications/**", "/auth/register-student", "/auth/register-teacher", "/forgotpassword/**", "api/**", "/auth/confirm-otp", "/feedback/comments", "/auth/forgot-password", "/auth/confirm-otpForgot", "/auth/reset-password", "/ws/**").permitAll() // Publicly accessible endpoints
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/categories", "/categories/{id}").permitAll()
                         .requestMatchers("/staff/**").hasAuthority("STAFF")
                         .requestMatchers("/teacher/**").hasAuthority("TEACHER")
                         .requestMatchers("/student/**").hasAuthority("STUDENT")
@@ -91,28 +68,27 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/slots").hasAnyAuthority("STAFF", "STUDENT", "TEACHER", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/slots/{slotId}").hasAnyAuthority("STAFF", "STUDENT", "TEACHER")
                         .requestMatchers("/admin/**").hasAuthority("ADMIN")
-                        // Bảo vệ các endpoint còn lại
+
+
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // Stateless sessions, sử dụng JWT
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 );
 
-        // Thêm JWT filter trước UsernamePasswordAuthenticationFilter
         http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    // Cấu hình AuthenticationManager để hỗ trợ authenticate các yêu cầu
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();
     }
 
-    // Cấu hình PasswordEncoder
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 }
+
