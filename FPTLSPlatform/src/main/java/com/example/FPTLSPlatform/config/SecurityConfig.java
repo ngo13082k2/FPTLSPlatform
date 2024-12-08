@@ -91,9 +91,10 @@ public SecurityFilterChain configure(HttpSecurity http) throws Exception {
                 @Override
                 public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
                     CorsConfiguration configuration = new CorsConfiguration();
-                    configuration.setAllowedOrigins(Arrays.asList("*"));
-                    configuration.setAllowedMethods(Arrays.asList("*"));
-                    configuration.setAllowedHeaders(Arrays.asList("*"));
+                    configuration.setAllowedOrigins(Arrays.asList("https://lss-front-end.vercel.app")); // URL của frontend
+                    configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE")); // Các phương thức bạn cần
+                    configuration.setAllowedHeaders(Arrays.asList("*")); // Cho phép mọi headers
+                    configuration.setAllowCredentials(true);
                     return configuration;
                 }
             }).and() // Enable CORS globally
