@@ -115,6 +115,7 @@ public class ApplicationService implements IApplicationService {
 
                 certificates.add(certificate);
             }
+            application.setCertificates(certificates);
         }
     }
 
