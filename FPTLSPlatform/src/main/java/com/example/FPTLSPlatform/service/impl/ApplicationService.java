@@ -74,7 +74,7 @@ public class ApplicationService implements IApplicationService {
                 application.setDescription(applicationDTO.getDescription());
                 application.setStatus("PENDING");
                 application.setRejectionReason("");
-
+                application.setAssignedStaff(null);
                 List<Certificate> certificates = application.getCertificates();
                 certificates.clear();
                 saveCertificate(certificateFiles, certificateNames, teacher, application, certificates);
