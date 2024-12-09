@@ -76,26 +76,8 @@ public class ApplicationService implements IApplicationService {
                 application.setRejectionReason("");
 
                 List<Certificate> certificates = application.getCertificates();
-
-                for (int i = 0; i < certificateFiles.size(); i++) {
-                    MultipartFile file = certificateFiles.get(i);
-                    String name = certificateNames.get(i);
-
-                    if (!file.isEmpty()) {
-                        String uploadedUrl = cloudinaryService.uploadImage(file);
-
-                        Certificate certificate = Certificate.builder()
-                                .name(name)
-                                .fileUrl(uploadedUrl)
-                                .application(application)
-                                .teacher(teacher)
-                                .build();
-
-                        certificates.add(certificate);
-                    }
-                }
-
-                application.setCertificates(certificates);
+                certificates.clear();
+                saveCertificate(certificateFiles, certificateNames, teacher, application, certificates);
             } else {
                 throw new RuntimeException("A previous application exists and cannot be modified.");
             }
@@ -108,30 +90,32 @@ public class ApplicationService implements IApplicationService {
 
             // Thêm chứng chỉ mới từ file lên
             List<Certificate> certificates = new ArrayList<>();
-            for (int i = 0; i < certificateFiles.size(); i++) {
-                MultipartFile file = certificateFiles.get(i);
-                String name = certificateNames.get(i);
-
-                if (!file.isEmpty()) {
-                    String uploadedUrl = cloudinaryService.uploadImage(file);
-
-                    Certificate certificate = Certificate.builder()
-                            .name(name)
-                            .fileUrl(uploadedUrl)
-                            .application(application)
-                            .teacher(teacher)
-                            .build();
-
-                    certificates.add(certificate);
-                }
-            }
-
-            application.setCertificates(certificates);
+            saveCertificate(certificateFiles, certificateNames, teacher, application, certificates);
         }
 
         application = applicationRepository.save(application);
 
         return convertToDTO(application);
+    }
+
+    private void saveCertificate(List<MultipartFile> certificateFiles, List<String> certificateNames, Teacher teacher, Application application, List<Certificate> certificates) throws IOException {
+        for (int i = 0; i < certificateFiles.size(); i++) {
+            MultipartFile file = certificateFiles.get(i);
+            String name = certificateNames.get(i);
+
+            if (!file.isEmpty()) {
+                String uploadedUrl = cloudinaryService.uploadImage(file);
+
+                Certificate certificate = Certificate.builder()
+                        .name(name)
+                        .fileUrl(uploadedUrl)
+                        .application(application)
+                        .teacher(teacher)
+                        .build();
+
+                certificates.add(certificate);
+            }
+        }
     }
 
 

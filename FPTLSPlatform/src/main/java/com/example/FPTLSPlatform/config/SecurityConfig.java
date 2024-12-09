@@ -27,15 +27,19 @@ import java.util.Arrays;
 public class SecurityConfig {
 
     private final JwtRequestFilter jwtRequestFilter;
-
-    public SecurityConfig(JwtRequestFilter jwtRequestFilter) {
+//    private final CorsConfigurationSource corsConfigurationSource;
+    public SecurityConfig(JwtRequestFilter jwtRequestFilter
+//                          ,CorsConfigurationSource corsConfigurationSource
+    ) {
         this.jwtRequestFilter = jwtRequestFilter;
+//        this.corsConfigurationSource = corsConfigurationSource;
     }
 
 //    @Bean
 //    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 //        http
 //                .csrf(AbstractHttpConfigurer::disable)
+//                .cors(AbstractHttpConfigurer::disable)
 //                .authorizeHttpRequests(auth -> auth
 //                        .requestMatchers("/auth/login", "/applications/**", "/auth/register-student", "/auth/register-teacher", "/forgotpassword/**", "api/**", "/auth/confirm-otp", "/feedback/comments", "/auth/forgot-password", "/auth/confirm-otpForgot", "/auth/reset-password", "/ws/**").permitAll() // Publicly accessible endpoints
 //                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
@@ -78,7 +82,8 @@ public class SecurityConfig {
 //                )
 //                .sessionManagement(session -> session
 //                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-//                );
+//                )
+//                .cors(cors -> cors.configurationSource(corsConfigurationSource));
 //
 //        http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 //
@@ -90,7 +95,7 @@ public SecurityFilterChain configure(HttpSecurity http) throws Exception {
                 @Override
                 public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
                     CorsConfiguration configuration = new CorsConfiguration();
-                    configuration.setAllowedOrigins(Arrays.asList("https://lss-front-end.vercel.app")); // URL của frontend
+                    configuration.setAllowedOrigins(Arrays.asList("https://lss-front-end.vercel.app", "http://localhost:5173")); // URL của frontend
                     configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE")); // Các phương thức bạn cần
                     configuration.setAllowedHeaders(Arrays.asList("*")); // Cho phép mọi headers
                     configuration.setAllowCredentials(true);
@@ -99,8 +104,7 @@ public SecurityFilterChain configure(HttpSecurity http) throws Exception {
             }).and() // Enable CORS globally
             .authorizeRequests()
             // Các endpoint công cộng, không cần xác thực
-            .requestMatchers("/auth/login", "/applications/**", "/auth/register-student", "/auth/register-teacher", "/forgotpassword/**", "api/**", "/auth/confirm-otp", "/feedback/comments", "/auth/forgot-password", "/auth/confirm-otpForgot", "/auth/reset-password", "/ws/**").permitAll()
-
+            .requestMatchers("/auth/login", "/applications/**", "/auth/register-student", "/auth/register-teacher", "/forgotpassword/**", "api/**", "/auth/confirm-otp", "/feedback/comments", "/auth/forgot-password", "/auth/confirm-otpForgot", "/auth/reset-password", "/ws/**", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
             // Các endpoint cho STAFF
             .requestMatchers("/staff/**").hasAuthority("STAFF")
             .requestMatchers("/applications/staff").hasAuthority("STAFF")
