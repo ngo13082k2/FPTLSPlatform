@@ -54,7 +54,6 @@ public class SecurityConfig {
 //                        .requestMatchers(HttpMethod.DELETE, "/courses/{courseCode}").hasAuthority("STAFF")
 //                        .requestMatchers(HttpMethod.POST, "/categories").hasAuthority("STAFF")
 //                        .requestMatchers(HttpMethod.PUT, "/categories").hasAuthority("STAFF")
-//                        .requestMatchers(HttpMethod.POST, "/categories").hasAuthority("STAFF")
 //                        .requestMatchers("/classes/byCourse/{courseCode}").hasAnyAuthority("STUDENT", "TEACHER")
 //                        .requestMatchers("/classes/StatusCompleted").hasAnyAuthority("STAFF", "ADMIN")
 //                        .requestMatchers(HttpMethod.GET, "/classes/getByClassId/{classId}").hasAnyAuthority("STUDENT", "TEACHER")
@@ -91,17 +90,14 @@ public class SecurityConfig {
 //    }
 @Bean
 public SecurityFilterChain configure(HttpSecurity http) throws Exception {
-    http.cors().configurationSource(new CorsConfigurationSource() {
-                @Override
-                public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
-                    CorsConfiguration configuration = new CorsConfiguration();
-                    configuration.setAllowedOrigins(Arrays.asList("https://lss-front-end.vercel.app", "http://localhost:5173")); // URL của frontend
-                    configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE")); // Các phương thức bạn cần
-                    configuration.setAllowedHeaders(Arrays.asList("*")); // Cho phép mọi headers
-                    configuration.setAllowCredentials(true);
-                    return configuration;
-                }
-            }).and() // Enable CORS globally
+    http.cors().configurationSource(request -> {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.asList("https://lss-front-end.vercel.app", "http://localhost:5173")); // URL của frontend
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE")); // Các phương thức bạn cần
+        configuration.setAllowedHeaders(Arrays.asList("*")); // Cho phép mọi headers
+        configuration.setAllowCredentials(true);
+        return configuration;
+    }).and() // Enable CORS globally
             .authorizeRequests()
             // Các endpoint công cộng, không cần xác thực
             .requestMatchers("/auth/login", "/applications/**", "/auth/register-student", "/auth/register-teacher", "/forgotpassword/**", "api/**", "/auth/confirm-otp", "/feedback/comments", "/auth/forgot-password", "/auth/confirm-otpForgot", "/auth/reset-password", "/ws/**", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
@@ -113,6 +109,8 @@ public SecurityFilterChain configure(HttpSecurity http) throws Exception {
             .requestMatchers(HttpMethod.DELETE, "/courses/{courseCode}").hasAuthority("STAFF")
             .requestMatchers(HttpMethod.POST, "/categories").hasAuthority("STAFF")
             .requestMatchers(HttpMethod.PUT, "/categories").hasAuthority("STAFF")
+            .requestMatchers(HttpMethod.GET, "/categories", "/categories/{id}").permitAll()
+
             .requestMatchers("/api/feedback-question").hasAuthority("STAFF")
             .requestMatchers("/api/feedback-category").hasAuthority("STAFF")
             .requestMatchers(HttpMethod.POST, "/slots").hasAuthority("STAFF")
@@ -142,6 +140,7 @@ public SecurityFilterChain configure(HttpSecurity http) throws Exception {
             .requestMatchers("/classes/{classId}/students").hasAnyAuthority("STAFF", "STUDENT", "TEACHER")
             .requestMatchers(HttpMethod.GET, "/slots").hasAnyAuthority("STAFF", "STUDENT", "TEACHER", "ADMIN")
             .requestMatchers(HttpMethod.GET, "/slots/{slotId}").hasAnyAuthority("STAFF", "STUDENT", "TEACHER")
+            .requestMatchers("orders/**").hasAnyAuthority("STAFF", "STUDENT", "ADMIN")
 
             // Bảo mật các endpoint khác
             .anyRequest().authenticated()

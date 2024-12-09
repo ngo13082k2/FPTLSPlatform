@@ -46,8 +46,8 @@ vnpay:
   tmn_code: WF0GYR4R
   hash_secret: KYU6SQGZREITDT5DZP44P2ZE28FJG3J0
   api_url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
-  return_url: https://lss-front-end.vercel.app/wallet
-#  return_url: http://localhost:5173/wallet
+#  return_url: https://lss-front-end.vercel.app/wallet
+  return_url: http://localhost:5173/wallet
 
 server:
   servlet:
