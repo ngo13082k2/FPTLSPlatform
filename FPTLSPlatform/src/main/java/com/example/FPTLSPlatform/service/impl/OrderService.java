@@ -694,7 +694,10 @@ public class OrderService implements IOrderService {
                 wallet,
                 "Your salary had a discount due to your violation!"
         );
-        violationTransaction.setNote("Salary (Fined)");
+        if(violationDiscount != 0) {
+            violationTransaction.setNote("Salary (Fined)");
+        }
+        violationTransaction.setNote("Salary");
     }
 
 
