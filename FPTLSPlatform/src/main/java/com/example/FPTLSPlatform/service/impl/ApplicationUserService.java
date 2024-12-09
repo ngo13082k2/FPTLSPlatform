@@ -229,7 +229,6 @@ public class ApplicationUserService implements IApplicationUserService {
                 .type("Other application")
                 .build());
 
-        // Gửi email cho người dùng
         sendEmail(applicationUser, email, username);
 
         return "Your application has been approved.";
@@ -374,6 +373,7 @@ public class ApplicationUserService implements IApplicationUserService {
 
         Context context = new Context();
         context.setVariable("systemTransactionHistory", systemTransactionHistory);
+        context.setVariable("amount", Math.abs(systemTransactionHistory.getTransactionAmount()));
         emailService.sendEmail(email, "Transaction Successful", "withdraw-email", context);
 
         return "Đã trả tiền thành công và cập nhật trạng thái yêu cầu thành completed.";
