@@ -146,6 +146,7 @@ public SecurityFilterChain configure(HttpSecurity http) throws Exception {
             .requestMatchers(HttpMethod.GET, "/slots").hasAnyAuthority("STAFF", "STUDENT", "TEACHER", "ADMIN")
             .requestMatchers(HttpMethod.GET, "/slots/{slotId}").hasAnyAuthority("STAFF", "STUDENT", "TEACHER")
             .requestMatchers("orders/**").hasAnyAuthority("STAFF", "STUDENT", "ADMIN")
+            .requestMatchers("/admin/**").hasAuthority("ADMIN")
 
             // Bảo mật các endpoint khác
             .anyRequest().authenticated()
