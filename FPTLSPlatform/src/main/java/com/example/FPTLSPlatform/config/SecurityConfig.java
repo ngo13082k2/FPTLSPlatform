@@ -92,7 +92,9 @@ public SecurityFilterChain configure(HttpSecurity http) throws Exception {
                     CorsConfiguration configuration = new CorsConfiguration();
                     configuration.setAllowedOrigins(Arrays.asList(
                             "https://lss-front-end.vercel.app",
-                            "https://fsls.info.vn"
+                            "https://fsls.info.vn",
+                            "http://localhost:5173"
+
                     ));
                     configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
                     configuration.setAllowedHeaders(Arrays.asList("*")); // Cho phép mọi headers
