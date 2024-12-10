@@ -19,13 +19,14 @@ public interface OrderRepository extends JpaRepository<Order, String> {
     Page<Order> findByUserName(@Param("username") String username, Pageable pageable);
 
     @Query("SELECT new com.example.FPTLSPlatform.dto.TotalOrderDTO(SUM(o.totalPrice), COUNT(o)) " +
-            "FROM Order o WHERE o.createAt BETWEEN :startDate AND :endDate")
+            "FROM Order o WHERE o.createAt BETWEEN :startDate AND :endDate AND o.status ='COMPLETED'")
     TotalOrderDTO getTotalOrdersAndAmountByDateRange(@Param("startDate") LocalDateTime startDate,
                                                      @Param("endDate") LocalDateTime endDate);
 
-    @Query("SELECT od FROM OrderDetail od WHERE od.order.createAt BETWEEN :startDate AND :endDate")
+    @Query("SELECT od FROM OrderDetail od WHERE od.order.createAt BETWEEN :startDate AND :endDate AND od.order.status = 'COMPLETED'")
     List<OrderDetail> getOrderDetailsByDateRange(@Param("startDate") LocalDateTime startDate,
                                                  @Param("endDate") LocalDateTime endDate);
+
 
     @Query("SELECT MONTH(o.createAt) AS month, SUM(o.totalPrice) AS totalOrders " +
             "FROM Order o " +
@@ -33,4 +34,8 @@ public interface OrderRepository extends JpaRepository<Order, String> {
             "GROUP BY MONTH(o.createAt) " +
             "ORDER BY MONTH(o.createAt)")
     List<Object[]> getTotalOrderByMonth(@Param("year") Integer year);
+
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.status = 'COMPLETED'")
+    int getTotalOrder();
+
 }

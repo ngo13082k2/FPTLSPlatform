@@ -105,7 +105,7 @@ public SecurityFilterChain configure(HttpSecurity http) throws Exception {
             .authorizeRequests()
             // Các endpoint công cộng, không cần xác thực
             .requestMatchers("/auth/login", "/applications/**", "/auth/register-student", "/auth/register-teacher", "/forgotpassword/**", "api/**", "/auth/confirm-otp", "/feedback/comments", "/auth/forgot-password", "/auth/confirm-otpForgot", "/auth/reset-password", "/ws/**").permitAll()
-
+            .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
             // Các endpoint cho STAFF
             .requestMatchers("/staff/**").hasAuthority("STAFF")
             .requestMatchers("/applications/staff").hasAuthority("STAFF")

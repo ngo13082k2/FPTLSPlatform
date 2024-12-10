@@ -79,6 +79,10 @@ public class AdminController {
         return orderService.getTotalOrders(startDate, endDate);
     }
 
+    @GetMapping("/total-order")
+    public int getTotalOrders(){
+        return orderService.getTotal();
+    }
     @GetMapping("/totalClass")
     public ResponseEntity<Long> getTotalClasses() {
         long totalClasses = classService.getTotalClasses();

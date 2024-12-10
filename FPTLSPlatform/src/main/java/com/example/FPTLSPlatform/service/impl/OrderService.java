@@ -867,6 +867,11 @@ public class OrderService implements IOrderService {
         sendCancelEmail(activeClass);
     }
 
+    @Override
+    public int getTotal() {
+        return orderRepository.getTotalOrder();
+    }
+
     private String getCurrentUsername() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (principal instanceof UserDetails) {

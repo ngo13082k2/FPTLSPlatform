@@ -32,4 +32,6 @@ public interface IOrderService {
     void completeClassImmediately(Long classId);
 
     void startClass(Long classId);
+
+    int getTotal();
 }
