@@ -2,15 +2,11 @@ package com.example.FPTLSPlatform.controller;
 
 import com.example.FPTLSPlatform.dto.TeacherDTO;
 import com.example.FPTLSPlatform.model.Teacher;
-import com.example.FPTLSPlatform.model.User;
-import com.example.FPTLSPlatform.model.enums.Role;
 import com.example.FPTLSPlatform.request.AuthenticationRequest;
 import com.example.FPTLSPlatform.request.RegisterRequest;
 import com.example.FPTLSPlatform.response.AuthenticationResponse;
 import com.example.FPTLSPlatform.response.UserResponse;
-import com.example.FPTLSPlatform.service.IUserService;
 import com.example.FPTLSPlatform.service.impl.AuthService;
-import com.example.FPTLSPlatform.service.impl.EmailService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpSession;
@@ -22,7 +18,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -30,14 +25,13 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
-    private final IUserService userService;
 
     @Autowired
     private ObjectMapper objectMapper;
 
-    public AuthController(AuthService authService, IUserService userService) {
+    @Autowired
+    public AuthController(AuthService authService) {
         this.authService = authService;
-        this.userService = userService;
     }
 
     @PostMapping("/register-student")
@@ -114,7 +108,7 @@ public class AuthController {
         }
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{username}")
     public ResponseEntity<UserResponse> getUserById(@PathVariable String username) {
         UserResponse userResponse = authService.getUserByUserName(username);
         return ResponseEntity.ok(userResponse);

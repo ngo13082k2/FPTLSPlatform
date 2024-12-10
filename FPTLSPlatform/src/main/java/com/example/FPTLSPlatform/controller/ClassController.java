@@ -79,7 +79,7 @@ public class ClassController {
         try {
 
             ClassDTO classDTO = classService.confirmClassCompletion(classId, getCurrentUsername());
-            return ResponseEntity.ok(new ResponseDTO<>("SUCCESS", "Class has been confirmed as completed.", classDTO));
+            return ResponseEntity.ok(new ResponseDTO<>("SUCCESS", "Lesson has been confirmed as completed.", classDTO));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ResponseDTO<>("ERROR", e.getMessage(), null));
         }

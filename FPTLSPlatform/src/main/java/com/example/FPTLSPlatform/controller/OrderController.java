@@ -53,7 +53,7 @@ public class OrderController {
             ResponseDTO<OrderDTO> response = new ResponseDTO<>("SUCCESS", "Order created successfully", orderDTO);
             return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (ResourceNotFoundException e) {
-            ResponseDTO<OrderDTO> response = new ResponseDTO<>("ERROR", "Class not found", null);
+            ResponseDTO<OrderDTO> response = new ResponseDTO<>("ERROR", "Lesson not found", null);
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             ResponseDTO<OrderDTO> response = new ResponseDTO<>("ERROR", e.getMessage(), null);
@@ -90,7 +90,7 @@ public class OrderController {
         String username = getCurrentUsername();
         Pageable pageable = PageRequest.of(page, size);
         Page<OrderDetailDTO> classDTOS = orderService.getClassesOrderedByUser(username, pageable);
-        ResponseDTO<Page<OrderDetailDTO>> response = new ResponseDTO<>("SUCCESS", "Classes retrieved successfully", classDTOS);
+        ResponseDTO<Page<OrderDetailDTO>> response = new ResponseDTO<>("SUCCESS", "Lesson retrieved successfully", classDTOS);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 

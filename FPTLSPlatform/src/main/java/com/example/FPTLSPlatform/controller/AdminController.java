@@ -188,7 +188,7 @@ public class AdminController {
     public ResponseEntity<String> completeClassImmediately(@PathVariable Long classId) {
         try {
             orderService.completeClassImmediately(classId);
-            return ResponseEntity.ok("Class completed successfully.");
+            return ResponseEntity.ok("Lesson completed successfully.");
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (Exception e) {
@@ -200,7 +200,7 @@ public class AdminController {
     public ResponseEntity<String> activeClassImmediately(@PathVariable Long classId) {
         try {
             orderService.startClass(classId);
-            return ResponseEntity.ok("Class active successfully.");
+            return ResponseEntity.ok("Lesson active successfully.");
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (Exception e) {
