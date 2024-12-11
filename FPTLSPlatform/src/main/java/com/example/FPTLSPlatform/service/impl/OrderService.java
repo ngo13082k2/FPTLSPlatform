@@ -410,6 +410,7 @@ public class OrderService implements IOrderService {
         context.setVariable("transactionHistory", transactionHistory);
         context.setVariable("name", recipientName);
         context.setVariable("reason", reason);
+        context.setVariable("amount", amount);
         emailService.sendEmail(email, "Transaction", "transaction-email", context);
 
         return transactionHistory;
