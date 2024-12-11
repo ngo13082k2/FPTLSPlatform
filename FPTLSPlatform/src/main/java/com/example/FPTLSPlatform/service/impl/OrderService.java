@@ -678,13 +678,10 @@ public class OrderService implements IOrderService {
 
         // Tính tổng số tiền trước khi xử lý
         double totalAmount = (scheduledClass.getPrice() * (1 - discount)) * studentDTOS.size();
-        double violationAmount = totalAmount * violationDiscount;
+        double officialAmount = totalAmount * (1 - violationDiscount);
 
         // Lấy ví của giáo viên
         Wallet wallet = scheduledClass.getTeacher().getWallet();
-
-        // 1. Cộng lương chính thức vào số dư ví
-        double officialAmount =(totalAmount - violationAmount);
         wallet.setBalance(wallet.getBalance() + officialAmount);
 
         // Lưu giao dịch tiền phạt
@@ -750,16 +747,18 @@ public class OrderService implements IOrderService {
             violationRepository.save(violation);
         }
 
-        // Lấy tất cả các OrderDetail liên quan đến lớp
         Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(classId, Pageable.unpaged());
 
-        // Cập nhật trạng thái đơn hàng liên quan
         for (OrderDetail orderDetail : orderDetails) {
+
+            Order order = orderDetail.getOrder();
+            notificationService.createNotification(buildNotificationDTO("Your booked lesson " + scheduledClass.getName() + " has been completed",
+                    "Your lesson " + scheduledClass.getName() + " has been successfully completed.",
+                    order.getUser().getUserName(), "Lesson Completed"));
             orderDetail.getOrder().setStatus(OrderStatus.COMPLETED);
             orderDetailRepository.save(orderDetail);
         }
 
-        // Xử lý thanh toán: trừ tiền từ SystemWallet và thêm vào ví của giáo viên
         saveTeacherWallet(discount, scheduledClass, violationDiscount);
 
         notificationService.createNotification(NotificationDTO.builder()
@@ -859,7 +858,7 @@ public class OrderService implements IOrderService {
         }
         notificationService.createNotification(buildNotificationDTO("Your lesson " + activeClass.getName() + " has been start",
                 "Your lesson " + activeClass.getName() + " has been start.",
-                activeClass.getTeacher().getTeacherName(), "Start class"));
+                activeClass.getTeacher().getTeacherName(), "Start lesson"));
 
 
         activeClass.setStatus(ClassStatus.ONGOING);
