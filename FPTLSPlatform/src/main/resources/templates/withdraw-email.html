@@ -2,66 +2,126 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Transaction Notification</title>
     <style>
+        /* Tổng quan */
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f9f9f9;
-            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 0;
         }
 
         .container {
+            max-width: 600px;
+            margin: 30px auto;
             background-color: #fff;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 25px 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
         h1 {
-            color: #333;
+            color: #2e7d32;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            text-align: center;
         }
 
+        p {
+            line-height: 1.6;
+            font-size: 1em;
+            margin: 15px 0;
+        }
+
+        /* Bảng chi tiết giao dịch */
         .transaction-details {
-            margin-top: 20px;
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
         }
 
         .transaction-details th,
         .transaction-details td {
-            padding: 10px;
+            padding: 12px 15px;
             border: 1px solid #ddd;
         }
 
+        .transaction-details th {
+            background-color: #2e7d32;
+            color: #fff;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        .transaction-details td {
+            background-color: #f9f9f9;
+        }
+
+        /* Footer */
         .footer {
+            text-align: center;
             margin-top: 20px;
             font-size: 0.9em;
-            color: #777;
+            color: #555;
+        }
+
+        .footer p {
+            margin: 0;
+        }
+
+        .footer p a {
+            color: #2e7d32;
+            text-decoration: none;
+        }
+
+        .footer p a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media screen and (max-width: 768px) {
+            .container {
+                padding: 15px 20px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .transaction-details th,
+            .transaction-details td {
+                padding: 10px;
+            }
         }
     </style>
 </head>
 <body>
 <div class="container">
     <h1>Transaction Notification</h1>
-    <p>Dear <span th:text="${systemTransactionHistory.getUsername()}"></span>,</p>
+    <p>Dear <span th:text="${systemTransactionHistory.getUsername()}">[Username]</span>,</p>
     <p>We have received your transaction. Here are the details:</p>
 
     <table class="transaction-details">
         <tr>
             <th>Transaction ID</th>
-            <td th:text="${systemTransactionHistory.getId()}"></td>
+            <td th:text="${systemTransactionHistory.getId()}">[Transaction ID]</td>
         </tr>
         <tr>
             <th>Amount</th>
-            <td th:text="${systemTransactionHistory.getTransactionAmount()}"></td>
+            <td th:text="${systemTransactionHistory.getTransactionAmount()}">[Amount]</td>
         </tr>
         <tr>
             <th>Date</th>
-            <td th:text="${systemTransactionHistory.getTransactionDate()}"></td>
+            <td th:text="${systemTransactionHistory.getTransactionDate()}">[Transaction Date]</td>
         </tr>
     </table>
 
     <p>Thank you for your transaction!</p>
     <div class="footer">
-        <p>Best regards,<br>Your Company Name</p>
+        <p>Best regards,<br>FPT Student Learning Support</p>
     </div>
 </div>
 </body>

@@ -1,51 +1,114 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="vi">
 <head>
-    <title>Class Booking Confirmation</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lesson Cancellation Confirmation</title>
     <style>
+        /* Tổng quan */
         body {
             font-family: Arial, sans-serif;
-            line-height: 1.6;
+            background-color: #f9f9f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
         }
+
+        .container {
+            max-width: 600px;
+            margin: 30px auto;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px 30px;
+        }
+
         h3 {
-            color: #4CAF50;
+            color: #E74C3C; /* Màu đỏ nổi bật */
+            text-align: center;
         }
+
+        p {
+            line-height: 1.6;
+            font-size: 1em;
+            margin: 15px 0;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
+            margin-top: 20px;
         }
+
         th, td {
-            padding: 8px 12px;
+            padding: 12px;
+            text-align: left;
             border: 1px solid #ddd;
         }
+
         th {
             background-color: #f4f4f4;
-            font-weight: bold;
+            color: #555;
         }
+
         td {
-            text-align: left;
+            background-color: #fff;
         }
-        p {
-            margin: 20px 0;
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        .footer p {
+            margin: 0;
+        }
+
+        .footer p a {
+            color: #2e7d32;
+            text-decoration: none;
+        }
+
+        .footer p a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media screen and (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            table th, table td {
+                font-size: 0.9em;
+            }
         }
     </style>
 </head>
 <body>
-<h3>Dear <span th:text="${username}">User</span>,</h3>
-<p>Congratulations! You have cancel class:</p>
-<table>
-    <tr>
-        <th>Class Name:</th>
-        <td th:text="${class.name}">Class Name</td>
-    </tr>
-    <tr>
-        <th>Price:</th>
-        <td th:text="${class.price}">Price</td>
-    </tr>
-</table>
-<p>The system has refunded to your wallet.</p>
-<p>Thank you for choosing our platform!</p>
-<p>Best regards,</p>
-<p>FPT Learning Support</p>
+<div class="container">
+    <h3>Dear <span th:text="${username}">User</span>,</h3>
+    <p>We regret to inform you that you have canceled the following lesson:</p>
+
+    <table>
+        <tr>
+            <th>Lesson Name:</th>
+            <td th:text="${class.getName()}">Lesson Name</td>
+        </tr>
+        <tr>
+            <th>Price:</th>
+            <td th:text="${class.getPrice()}">Price</td>
+        </tr>
+    </table>
+
+    <p>The system has refunded the amount to your wallet.</p>
+    <p>Thank you for choosing our platform!</p>
+
+    <div class="footer">
+        <p>Best regards,<br>FPT Student Learning Support</p>
+    </div>
+</div>
 </body>
 </html>

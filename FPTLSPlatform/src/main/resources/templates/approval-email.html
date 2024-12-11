@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
 <head>
     <title>Application Approved</title>
     <style>
@@ -7,11 +7,14 @@
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
             color: #333;
+            margin: 0;
+            padding: 0;
         }
 
         .container {
             width: 80%;
-            margin: 0 auto;
+            max-width: 800px;
+            margin: 20px auto;
             background-color: #fff;
             padding: 20px;
             border-radius: 10px;
@@ -20,19 +23,52 @@
 
         h1 {
             color: #4CAF50;
+            text-align: center;
         }
 
         p {
             line-height: 1.6;
+            font-size: 1em;
+            margin: 10px 0;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        .footer p {
+            margin: 0;
+        }
+
+        /* Responsive Styles */
+        @media screen and (max-width: 768px) {
+            .container {
+                width: 95%;
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            p {
+                font-size: 0.9em;
+            }
         }
     </style>
 </head>
 <body>
 <div class="container">
     <h1>Application Approved</h1>
-    <p>Dear <span th:text="${teacherName}">[Teacher Name]</span>,</p>
+    <p>Dear <span th:text="${teacherName}">[Tutor Name]</span>,</p>
     <p>Your registration application has been approved.</p>
     <p>Congratulations!</p>
+    <div class="footer">
+        <p>Best regards,<br>FPT Student Learning Support</p>
+    </div>
 </div>
 </body>
 </html>

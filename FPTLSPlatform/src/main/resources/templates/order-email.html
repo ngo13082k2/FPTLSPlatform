@@ -1,64 +1,104 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="vi">
 <head>
-    <title>Class Booking Confirmation</title>
+    <title>Lesson Booking Confirmation</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
             line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 30px auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
         h3 {
-            color: #4CAF50;
+            color: #2e7d32;
+            margin-bottom: 10px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
+            margin: 20px 0;
         }
 
         th, td {
-            padding: 8px 12px;
+            padding: 12px 15px;
             border: 1px solid #ddd;
         }
 
         th {
-            background-color: #f4f4f4;
+            background-color: #2e7d32;
+            color: #fff;
             font-weight: bold;
+            text-align: left;
         }
 
         td {
-            text-align: left;
+            background-color: #fdfdfd;
         }
 
         p {
             margin: 20px 0;
         }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        .footer p {
+            margin: 0;
+        }
+
+        .footer p a {
+            color: #2e7d32;
+            text-decoration: none;
+        }
+
+        .footer p a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
-<h3>Dear <span th:text="${username}">User</span>,</h3>
-<p>Congratulations! You have successfully booked the following class:</p>
-<table>
-    <tr>
-        <th>Class Name:</th>
-        <td th:text="${class.name}">Class Name</td>
-    </tr>
-    <tr>
-        <th>Teacher:</th>
-        <td th:text="${teacherName}">Teacher Name</td>
-    </tr>
-    <tr>
-        <th>Start Time:</th>
-        <td th:text="${class.getStartDate()}">Start time</td>
-    </tr>
-    <tr>
-        <th>Slot:</th>
-        <td th:text="${class.getSlot().getPeriod()}">Slot</td>
-    </tr>
-</table>
-<p>Thank you for choosing our platform!</p>
-<p>Best regards,</p>
-<p>FPT Learning Support</p>
+<div class="container">
+    <h3>Dear <span th:text="${username}">User</span>,</h3>
+    <p>Congratulations! You have successfully booked the following lesson:</p>
+    <table>
+        <tr>
+            <th>Lesson Name:</th>
+            <td th:text="${class.getName()}">Class Name</td>
+        </tr>
+        <tr>
+            <th>Tutor:</th>
+            <td th:text="${teacherName}">Tutor Name</td>
+        </tr>
+        <tr>
+            <th>Start Time:</th>
+            <td th:text="${class.getStartDate()}">Start time</td>
+        </tr>
+        <tr>
+            <th>Slot:</th>
+            <td th:text="${class.getSlot().getPeriod()}">Slot (<span th:text="${class.getSlot().getStartTime()}">7:15</span> - <span th:text="${class.getSlot().getEndTime()}">9:00</span>)</td>
+        </tr>
+    </table>
+    <p>Thank you for your transaction!</p>
+    <div class="footer">
+        <p>Best regards,<br>FPT Student Learning Support</p>
+    </div>
+</div>
 </body>
 </html>

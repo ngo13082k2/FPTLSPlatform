@@ -3,66 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Feedback for Class</title>
+    <title>Feedback for Lesson</title>
     <style>
+        /* Tổng quan */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px 30px;
+            overflow-x: auto; /* Cho phép cuộn ngang nếu nội dung tràn */
+        }
+
+        h2, h3 {
+            color: #4CAF50;
+            text-align: center;
+        }
+
+        p {
+            line-height: 1.6;
+            font-size: 1em;
+            margin: 10px 0 20px;
+        }
+
+        /* Bảng */
         table {
             width: 100%;
             border-collapse: collapse;
+            margin-top: 20px;
+            table-layout: auto; /* Tự động điều chỉnh cột */
         }
 
         th, td {
+            text-align: center;
+            padding: 12px 15px;
             border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
         }
 
         th {
+            background-color: #4CAF50;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
             background-color: #f2f2f2;
+        }
+
+        td {
+            background-color: #fff;
+            word-wrap: break-word; /* Cắt từ nếu quá dài */
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        .footer p {
+            margin: 0;
+        }
+
+        .footer p a {
+            color: #2e7d32;
+            text-decoration: none;
+        }
+
+        .footer p a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media screen and (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            table {
+                font-size: 0.9em;
+                table-layout: fixed; /* Điều chỉnh kích thước để phù hợp màn hình nhỏ */
+            }
+
+            th, td {
+                padding: 10px;
+            }
         }
     </style>
 </head>
 <body>
-<h2>Feedback Summary for Class: [[${class.name}]]</h2>
+<div class="container">
+    <h2>Feedback Summary for Lesson: [[${class.name}]]</h2>
 
-<p>Hello <span th:text="${class.getTeacher().getTeacherName()}">Teacher</span>,</p>
-<p>Here is the feedback summary for your class:</p>
+    <p>Hello <span th:text="${class.getTeacher().getTeacherName()}">Tutor</span>,</p>
+    <p>Here is the feedback summary for your lesson:</p>
 
-<h3>Class Feedback Summary</h3>
-<table>
-    <thead>
-    <tr>
-        <th>Question</th>
-        <th>Extremely dissatisfied</th>
-        <th>Dissatisfied</th>
-        <th>Slightly dissatisfied</th>
-        <th>Slightly satisfied</th>
-        <th>Satisfied</th>
-        <th>Extremely satisfied</th>
-        <th>Average Rating</th>
-        <th>Total Responses</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="summary : ${feedbackSummary}">
-        <td>
-            <span th:each="question : ${questions}"
-                  th:if="${question.getId() == summary.getQuestionId()}">
-                <span th:text="${question.getQuestionText()}">Question</span>
-            </span>
-        </td>
-        <td th:text="${summary.ratingCount[1] ?: 0}"></td>
-        <td th:text="${summary.ratingCount[2] ?: 0}"></td>
-        <td th:text="${summary.ratingCount[3] ?: 0}"></td>
-        <td th:text="${summary.ratingCount[4] ?: 0}"></td>
-        <td th:text="${summary.ratingCount[5] ?: 0}"></td>
-        <td th:text="${summary.ratingCount[6] ?: 0}"></td>
-        <td th:text="${summary.averageRating ?: 0}"></td>
-        <td th:text="${summary.totalResponses ?: 0}"></td>
+    <h3>Class Feedback Summary</h3>
+    <table>
+        <thead>
+        <tr>
+            <th>Question</th>
+            <th>Extremely Dissatisfied</th>
+            <th>Dissatisfied</th>
+            <th>Slightly Dissatisfied</th>
+            <th>Slightly Satisfied</th>
+            <th>Satisfied</th>
+            <th>Extremely Satisfied</th>
+            <th>Average Rating</th>
+            <th>Total Responses</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="summary : ${feedbackSummary}">
+            <td>
+                <span th:each="question : ${questions}" th:if="${question.getId() == summary.getQuestionId()}">
+                    <span th:text="${question.getQuestionText()}">Question</span>
+                </span>
+            </td>
+            <td th:text="${summary.ratingCount[1] ?: 0}">0</td>
+            <td th:text="${summary.ratingCount[2] ?: 0}">0</td>
+            <td th:text="${summary.ratingCount[3] ?: 0}">0</td>
+            <td th:text="${summary.ratingCount[4] ?: 0}">0</td>
+            <td th:text="${summary.ratingCount[5] ?: 0}">0</td>
+            <td th:text="${summary.ratingCount[6] ?: 0}">0</td>
+            <td th:text="${summary.averageRating ?: 0}">0.0</td>
+            <td th:text="${summary.averageRating ?: 0}">0</td>
+        </tr>
+        </tbody>
 
-    </tr>
-    </tbody>
-</table>
-
-<p>Thank you for your feedback!</p>
+    </table>
+    <div class="footer">
+        <p>Best regards,<br>FPT Student Learning Support</p>
+    </div>
+</div>
 </body>
 </html>
