@@ -209,6 +209,10 @@ public class AuthService {
         if (optionalUser.isPresent()) {
             User user = optionalUser.get();
 
+            if ("DEACTIVATED".equals(user.getStatus())) {
+                throw new RuntimeException("Your account has been banned");
+            }
+
             if (user.getRole() == Role.TEACHER && "PENDING".equals(user.getStatus())) {
                 throw new RuntimeException("Your account has not been approved as a teacher");
             }
@@ -223,6 +227,10 @@ public class AuthService {
         } else if (optionalTeacher.isPresent()) {
             Teacher teacher = optionalTeacher.get();
 
+            if ("DEACTIVATED".equals(teacher.getStatus())) {
+                throw new RuntimeException("Your account has been banned");
+            }
+
             if ("PENDING".equals(teacher.getStatus())) {
                 throw new RuntimeException("Your account has not been approved as a teacher");
             }
@@ -234,6 +242,7 @@ public class AuthService {
             throw new RuntimeException("User not found");
         }
     }
+
 
 
     public UserResponse viewCurrentUser(String token) {
