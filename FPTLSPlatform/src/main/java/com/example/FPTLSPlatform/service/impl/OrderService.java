@@ -403,14 +403,14 @@ public class OrderService implements IOrderService {
         } else if (wallet.getTeacherName() != null) { // Nếu wallet gắn với teacher
             recipientName = wallet.getTeacherName().getTeacherName(); // Lấy tên teacher
         } else {
-            throw new IllegalStateException("Wallet không có thông tin người dùng hoặc giáo viên");
+            throw new IllegalStateException("User not found");
         }
 
         Context context = new Context();
         context.setVariable("transactionHistory", transactionHistory);
         context.setVariable("name", recipientName);
         context.setVariable("reason", reason);
-        context.setVariable("amount", amount);
+        context.setVariable("amount", Math.abs(amount));
         emailService.sendEmail(email, "Transaction", "transaction-email", context);
 
         return transactionHistory;
@@ -726,7 +726,11 @@ public class OrderService implements IOrderService {
         // Lấy lớp học theo ID
         Class scheduledClass = classRepository.findById(classId)
                 .orElseThrow(() -> new RuntimeException("Lesson not found"));
-
+        if (scheduledClass.getStatus() == ClassStatus.COMPLETED) {
+            throw new RuntimeException("Cannot complete a lesson that is already completed.");
+        } else if (scheduledClass.getStatus() == ClassStatus.CANCELED) {
+            throw new RuntimeException("This lesson has already been complete.");
+        }
         scheduledClass.setStatus(ClassStatus.COMPLETED);
         classRepository.save(scheduledClass);
 
