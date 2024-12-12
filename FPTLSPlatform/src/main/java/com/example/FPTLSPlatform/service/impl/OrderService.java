@@ -666,8 +666,6 @@ public class OrderService implements IOrderService {
                         .type("Lesson Completed")
                         .username(teacher.getTeacherName())
                         .build());
-
-                // Log thông tin
             }
         }
     }
@@ -690,10 +688,21 @@ public class OrderService implements IOrderService {
                 scheduledClass.getTeacher().getEmail(),
                 officialAmount,
                 wallet,
-                "Your salary had a discount due to your violation!"
+                violationDiscount > 0
+                        ? "Salary (Fined due to violations)"
+                        : "Salary"
         );
-        if(violationDiscount != 0) {
+        if(violationDiscount > 0) {
             violationTransaction.setNote("Salary (Fined)");
+        }
+        if (violationDiscount > 0) {
+            notificationService.createNotification(NotificationDTO.builder()
+                    .title("Salary Deduction")
+                    .name("Notification")
+                    .description("Your salary has been reduced by " + (violationDiscount * 100) + "% due to your violations.")
+                    .type("Salary Adjustment")
+                    .username(scheduledClass.getTeacher().getTeacherName())
+                    .build());
         }
         violationTransaction.setNote("Salary");
     }
@@ -731,8 +740,7 @@ public class OrderService implements IOrderService {
         } else if (scheduledClass.getStatus() == ClassStatus.CANCELED) {
             throw new RuntimeException("This lesson has already been complete.");
         }
-        scheduledClass.setStatus(ClassStatus.COMPLETED);
-        classRepository.save(scheduledClass);
+
 
         // Lấy tỷ lệ giảm giá từ hệ thống
         System discountPercentage = systemRepository.findByName("discount_percentage");
@@ -773,6 +781,9 @@ public class OrderService implements IOrderService {
                 .type("Lesson Completed")
                 .username(teacher.getTeacherName())
                 .build());
+
+        scheduledClass.setStatus(ClassStatus.COMPLETED);
+        classRepository.save(scheduledClass);
     }
 
 
