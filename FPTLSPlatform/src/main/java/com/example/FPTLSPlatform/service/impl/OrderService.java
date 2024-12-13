@@ -677,7 +677,8 @@ public class OrderService implements IOrderService {
 
         // Tính tổng số tiền trước khi xử lý
         double totalAmount = (scheduledClass.getPrice() * (1 - discount)) * studentDTOS.size();
-        double officialAmount = totalAmount * (1 - violationDiscount);
+        double violationAmount = totalAmount * violationDiscount;
+        double officialAmount = totalAmount - violationAmount;
 
         // Lấy ví của giáo viên
         Wallet wallet = scheduledClass.getTeacher().getWallet();
@@ -688,12 +689,14 @@ public class OrderService implements IOrderService {
                 scheduledClass.getTeacher().getEmail(),
                 officialAmount,
                 wallet,
-                violationDiscount > 0
-                        ? "Salary (Fined due to violations)"
+                violationAmount > 0
+                        ? "Salary (Fined due to violations: " + violationAmount + "(" + violationDiscount + "%)" + ")"
                         : "Salary"
         );
-        if(violationDiscount > 0) {
+        if(violationAmount > 0) {
             violationTransaction.setNote("Salary (Fined)");
+        } else {
+            violationTransaction.setNote("Salary");
         }
         if (violationDiscount > 0) {
             notificationService.createNotification(NotificationDTO.builder()
@@ -704,7 +707,7 @@ public class OrderService implements IOrderService {
                     .username(scheduledClass.getTeacher().getTeacherName())
                     .build());
         }
-        violationTransaction.setNote("Salary");
+
     }
 
 
