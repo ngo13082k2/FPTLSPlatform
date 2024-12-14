@@ -152,17 +152,11 @@
         </tr>
         </thead>
         <tbody>
-        <tr th:each="entry : ${feedbackGroupedByLearner.entrySet()}">
-            <td rowspan="${#lists.size(entry.value)}" th:text="${entry.key.getFullName()}">Learners Name</td>
-            <td th:each="feedback, iterStat : ${entry.value}">
-                <span th:text="${feedback.getFeedbackQuestion()}">Question</span>
-            </td>
-            <td th:each="feedback, iterStat : ${entry.value}">
-                <span th:text="${feedback.getRating()}">Rating</span>
-            </td>
-            <td th:each="feedback, iterStat : ${entry.value}">
-                <span th:text="${feedback.getComment()}">Comment</span>
-            </td>
+        <tr th:each="entry : ${feedbackGroupedByLearner}">
+            <td rowspan="${#lists.size(entry.value)}" th:text="${entry.key.getFullName()}"></td>
+            <td th:each="feedback : ${entry.value}" th:text="${feedback.getFeedbackQuestion().getQuestionText()}"></td>
+            <td th:each="feedback : ${entry.value}" th:text="${feedback.getRating()}"></td>
+            <td rowspan="${#lists.size(entry.value)}" th:text="${entry.value[0].getComment()}"></td>
         </tr>
         </tbody>
 
