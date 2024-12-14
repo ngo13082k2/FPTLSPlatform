@@ -205,15 +205,18 @@ public class FeedbackService implements IFeedbackService {
         }
 
         List<FeedbackQuestion> feedbackQuestions = feedbackQuestionRepository.findAll();
-
         Context context = new Context();
         context.setVariable("class", clazz);
         context.setVariable("feedbackSummary", feedbackSummary);
         context.setVariable("questions", feedbackQuestions);
-
+        context.setVariable("feedbackGroupedByLearner", groupFeedbackByLearner(feedbacks));
         emailService.sendEmail(clazz.getTeacher().getEmail(), "Send feedback for teacher's class successful", "feedback-email", context);
     }
 
+    public Map<User, List<Feedback>> groupFeedbackByLearner(List<Feedback> feedbackList) {
+        return feedbackList.stream()
+                .collect(Collectors.groupingBy(Feedback::getStudent));
+    }
 
     public List<FeedbackDTO> getAllFeedbackByClassId(Long classId) {
         List<Feedback> feedbacks = feedbackRepository.findByClassEntityClassId(classId);

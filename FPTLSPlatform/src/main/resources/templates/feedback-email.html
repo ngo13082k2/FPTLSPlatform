@@ -140,8 +140,30 @@
             <td th:text="${summary.averageRating ?: 0}">0</td>
         </tr>
         </tbody>
-
     </table>
+    <h3>Detailed Feedback by Learners</h3>
+    <table>
+        <thead>
+        <tr>
+            <th>Learners Name</th>
+            <th>Question</th>
+            <th>Rating</th>
+            <th>Comment</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="entry : ${feedbackGroupedByLearner}">
+            <td rowspan="${#lists.size(entry.value)}" th:text="${entry.key.getFullName()}">Learners Name</td>
+            <td th:each="feedback, iter : ${entry.value}" th:if="${iter.index == 0}"
+                th:text="${feedback.getFeedbackQuestion().getQuestionText()}">Question</td>
+            <td th:each="feedback, iter : ${entry.value}"
+                th:if="${iter.index == 0}" th:text="${feedback.getRating()}">Rating</td>
+            <td rowspan="${#lists.size(entry.value)}" th:text="${entry.value[0].getComment()}">Comment</td>
+        </tr>
+        </tbody>
+    </table>
+
+
     <div class="footer">
         <p>Best regards,<br>FPT Student Learning Support</p>
     </div>
