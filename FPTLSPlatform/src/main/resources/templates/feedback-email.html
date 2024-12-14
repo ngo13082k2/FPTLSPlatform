@@ -154,15 +154,13 @@
         <tbody>
         <tr th:each="entry : ${feedbackGroupedByLearner}">
             <td rowspan="${#lists.size(entry.value)}" th:text="${entry.key.getFullName()}"></td>
-            <td th:each="feedback : ${entry.value}" th:text="${feedback.getFeedbackQuestion().getQuestionText()}"></td>
+            <td th:each="feedback : ${entry.value}" th:text="${feedback.getFeedbackQuestion().getId()}"></td>
             <td th:each="feedback : ${entry.value}" th:text="${feedback.getRating()}"></td>
+
             <td rowspan="${#lists.size(entry.value)}" th:text="${entry.value[0].getComment()}"></td>
         </tr>
         </tbody>
-
     </table>
-
-
     <div class="footer">
         <p>Best regards,<br>FPT Student Learning Support</p>
     </div>
