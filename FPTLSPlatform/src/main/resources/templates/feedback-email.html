@@ -154,8 +154,28 @@
         <tbody>
         <tr th:each="entry : ${feedbackGroupedByLearner}">
             <td rowspan="${#lists.size(entry.value)}" th:text="${entry.key.getFullName()}"></td>
-            <td th:each="feedback : ${entry.value}" th:text="${feedback.getFeedbackQuestion().getId()}"></td>
-            <td th:each="feedback : ${entry.value}" th:text="${feedback.getRating()}"></td>
+            <td rowspan="${#lists.size(entry.value)}">
+                <table>
+                    <tbody>
+                    <!-- Lặp qua feedback của học viên để hiển thị câu hỏi -->
+                    <tr th:each="feedback : ${entry.value}">
+                        <td th:text="${feedback.getFeedbackQuestion().getQuestionText()}"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </td>
+
+            <!-- Tạo bảng con cho rating -->
+            <td rowspan="${#lists.size(entry.value)}">
+                <table >
+                    <tbody>
+                    <!-- Lặp qua feedback của học viên để hiển thị rating -->
+                    <tr th:each="feedback : ${entry.value}">
+                        <td th:text="${feedback.getRating()}"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </td>
 
             <td rowspan="${#lists.size(entry.value)}" th:text="${entry.value[0].getComment()}"></td>
         </tr>
