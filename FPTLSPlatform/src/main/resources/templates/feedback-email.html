@@ -64,6 +64,17 @@
             word-wrap: break-word; /* Cắt từ nếu quá dài */
         }
 
+        /* Loại bỏ viền ngoài cho bảng con */
+        table table {
+            border: none;
+        }
+
+        table table td {
+            border: none;
+            padding: 8px;
+        }
+
+        /* Footer */
         .footer {
             text-align: center;
             margin-top: 20px;
@@ -137,10 +148,11 @@
             <td th:text="${summary.ratingCount[5] ?: 0}">0</td>
             <td th:text="${summary.ratingCount[6] ?: 0}">0</td>
             <td th:text="${summary.averageRating ?: 0}">0.0</td>
-            <td th:text="${summary.averageRating ?: 0}">0</td>
+            <td th:text="${summary.totalResponses ?: 0}">0</td>
         </tr>
         </tbody>
     </table>
+
     <h3>Detailed Feedback by Learners</h3>
     <table>
         <thead>
@@ -154,10 +166,11 @@
         <tbody>
         <tr th:each="entry : ${feedbackGroupedByLearner}">
             <td rowspan="${#lists.size(entry.value)}" th:text="${entry.key.getFullName()}"></td>
+
+            <!-- Bảng con cho câu hỏi -->
             <td rowspan="${#lists.size(entry.value)}">
                 <table>
                     <tbody>
-                    <!-- Lặp qua feedback của học viên để hiển thị câu hỏi -->
                     <tr th:each="feedback : ${entry.value}">
                         <td th:text="${feedback.getFeedbackQuestion().getQuestionText()}"></td>
                     </tr>
@@ -165,11 +178,10 @@
                 </table>
             </td>
 
-            <!-- Tạo bảng con cho rating -->
+            <!-- Bảng con cho Rating -->
             <td rowspan="${#lists.size(entry.value)}">
-                <table >
+                <table>
                     <tbody>
-                    <!-- Lặp qua feedback của học viên để hiển thị rating -->
                     <tr th:each="feedback : ${entry.value}">
                         <td th:text="${feedback.getRating()}"></td>
                     </tr>
@@ -181,6 +193,7 @@
         </tr>
         </tbody>
     </table>
+
     <div class="footer">
         <p>Best regards,<br>FPT Student Learning Support</p>
     </div>
