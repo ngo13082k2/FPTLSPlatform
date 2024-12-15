@@ -466,7 +466,7 @@ public class OrderService implements IOrderService {
     public void sendCancelEmail(Class scheduledClass) {
         try {
             Context context = new Context();
-            context.setVariable("teacherName", scheduledClass.getTeacher().getTeacherName());
+            context.setVariable("username", scheduledClass.getTeacher().getTeacherName());
             context.setVariable("class", scheduledClass);
             emailService.sendEmail(scheduledClass.getTeacher().getEmail(), "Lesson cancel", "cancel-email", context);
         } catch (Exception ex) {
@@ -835,6 +835,10 @@ public class OrderService implements IOrderService {
             notificationService.createNotification(buildNotificationDTO("Your booked lesson " + classToCancel.getName() + " has been cancelled",
                     "Your lesson " + classToCancel.getName() + " has been cancelled. " + "Refund to your wallet " + formatToVND(order.getTotalPrice()),
                     student.getUserName(), "Cancel lesson - Refund"));
+            Context context = new Context();
+            context.setVariable("username", classToCancel.getTeacher().getTeacherName());
+            context.setVariable("class", classToCancel);
+            emailService.sendEmail(student.getEmail(),"Lesson cancel", "cancel-email", context);
             TransactionHistory transactionHistory = saveTransactionHistory(student.getEmail(), order.getTotalPrice(), studentWallet, "Your booked lesson " + classToCancel.getName() + "has been cancelled. " + "Refund to your wallet " + formatToVND(order.getTotalPrice()));
             transactionHistory.setNote("Refunded");
             order.setStatus(OrderStatus.CANCELLED);
