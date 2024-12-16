@@ -886,7 +886,6 @@ public class OrderService implements IOrderService {
 
         activeClass.setStatus(ClassStatus.ONGOING);
         classRepository.save(activeClass);
-        sendCancelEmail(activeClass);
     }
 
     @Override
