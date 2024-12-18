@@ -694,7 +694,7 @@ public class OrderService implements IOrderService {
                         : "Salary"
         );
         if(violationAmount > 0) {
-            violationTransaction.setNote("Salary (Fined due to violations: " + violationAmount + "(" + violationDiscount + "%)" + ")");
+            violationTransaction.setNote("Salary (Fined due to violations: " + formatToVND(violationAmount) + "(" + violationDiscount * 100 + "%)" + ")");
         } else {
             violationTransaction.setNote("Salary");
         }
