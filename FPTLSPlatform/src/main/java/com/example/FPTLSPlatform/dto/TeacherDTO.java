@@ -1,6 +1,5 @@
 package com.example.FPTLSPlatform.dto;
 
-import com.example.FPTLSPlatform.model.Certificate;
 import lombok.*;
 
 import java.util.List;
@@ -20,5 +19,6 @@ public class TeacherDTO {
     private String description;
     private String avatarImage;
     private Set<String> major;
+    private int violation;
 }
 

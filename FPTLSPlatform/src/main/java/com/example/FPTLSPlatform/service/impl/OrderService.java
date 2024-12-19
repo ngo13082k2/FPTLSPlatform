@@ -360,7 +360,7 @@ public class OrderService implements IOrderService {
             }
 
             Wallet wallet = student.getWallet();
-            wallet.setBalance(student.getWallet().getBalance() + (orderDetail.getPrice()));
+            wallet.setBalance(wallet.getBalance() + orderDetail.getPrice());
             userRepository.save(student);
 
             TransactionHistory transactionHistory = saveTransactionHistory(student.getEmail(), orderDetail.getPrice(), wallet, "Your booked class " + cancelledClass.getName() + " has been cancelled" + "Refund to your wallet " + formatToVND(order.getTotalPrice()));
@@ -673,12 +673,15 @@ public class OrderService implements IOrderService {
 
     private void saveTeacherWallet(double discount, Class scheduledClass, double violationDiscount) {
         // Lấy danh sách học sinh tham gia lớp
-        List<StudentDTO> studentDTOS = classRepository.findStudentsByClassId(scheduledClass.getClassId());
-
+        List<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(scheduledClass.getClassId());
         // Tính tổng số tiền trước khi xử lý
-        double totalAmount = (scheduledClass.getPrice() * (1 - discount)) * studentDTOS.size();
-        double violationAmount = totalAmount * violationDiscount;
-        double officialAmount = totalAmount - violationAmount;
+        double totalAmount = 0;
+        for (OrderDetail orderDetail: orderDetails) {
+            totalAmount += orderDetail.getPrice();
+        }
+
+        double violationAmount = totalAmount * (1 - discount) * violationDiscount;
+        double officialAmount = totalAmount * (1 - discount)  - violationAmount;
 
         // Lấy ví của giáo viên
         Wallet wallet = scheduledClass.getTeacher().getWallet();

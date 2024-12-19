@@ -5,10 +5,7 @@ import com.example.FPTLSPlatform.dto.CertificateDTO;
 import com.example.FPTLSPlatform.dto.TeacherDTO;
 import com.example.FPTLSPlatform.model.*;
 import com.example.FPTLSPlatform.model.enums.Role;
-import com.example.FPTLSPlatform.repository.CategoryRepository;
-import com.example.FPTLSPlatform.repository.TeacherRepository;
-import com.example.FPTLSPlatform.repository.UserRepository;
-import com.example.FPTLSPlatform.repository.WalletRepository;
+import com.example.FPTLSPlatform.repository.*;
 import com.example.FPTLSPlatform.request.AuthenticationRequest;
 import com.example.FPTLSPlatform.request.RegisterRequest;
 import com.example.FPTLSPlatform.response.AuthenticationResponse;
@@ -47,12 +44,13 @@ public class AuthService {
     private final IEmailService emailService;
     private final CategoryRepository categoryRepository;
     private final CloudinaryService cloudinaryService;
+    private final ViolationRepository violationRepository;
     @Autowired
     private HttpSession session;
 
     public AuthService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, JwtUtil jwtUtil,
-                       CustomUserDetailsService userDetailsService, TeacherRepository teacherRepository, WalletRepository walletRepository, OTPGmailService otpGmailService, IEmailService emailService, CategoryRepository categoryRepository, CloudinaryService cloudinaryService) {
+                       CustomUserDetailsService userDetailsService, TeacherRepository teacherRepository, WalletRepository walletRepository, OTPGmailService otpGmailService, IEmailService emailService, CategoryRepository categoryRepository, CloudinaryService cloudinaryService, ViolationRepository violationRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
@@ -65,6 +63,7 @@ public class AuthService {
         this.emailService = emailService;
         this.categoryRepository = categoryRepository;
         this.cloudinaryService = cloudinaryService;
+        this.violationRepository = violationRepository;
     }
 
     public UserResponse register(RegisterRequest request) throws MessagingException {
@@ -372,7 +371,7 @@ public class AuthService {
     public TeacherDTO getTeacherByTeacherName(String teacherName) {
         Teacher teacher = teacherRepository.findByTeacherName(teacherName)
                 .orElseThrow(() -> new RuntimeException("Teacher not found"));
-
+        Violation violation = violationRepository.findByTeacher(teacher);
         return TeacherDTO.builder()
                 .avatarImage(teacher.getAvatarImage())
                 .address(teacher.getAddress())
@@ -390,6 +389,7 @@ public class AuthService {
                 .major(teacher.getMajor().stream()
                         .map(Category::getName)
                         .collect(Collectors.toSet()))
+                .violation(violation.getViolationCount())
                 .build();
     }
 
