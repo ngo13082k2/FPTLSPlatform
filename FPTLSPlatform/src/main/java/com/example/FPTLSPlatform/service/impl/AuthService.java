@@ -389,7 +389,7 @@ public class AuthService {
                 .major(teacher.getMajor().stream()
                         .map(Category::getName)
                         .collect(Collectors.toSet()))
-                .violation(violation.getViolationCount())
+                .violation(violation != null ? violation.getViolationCount() : 0)
                 .build();
     }
 

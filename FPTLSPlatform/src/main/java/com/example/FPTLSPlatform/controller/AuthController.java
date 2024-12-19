@@ -113,6 +113,7 @@ public class AuthController {
         UserResponse userResponse = authService.getUserByUserName(username);
         return ResponseEntity.ok(userResponse);
     }
+
     @GetMapping("GetTeacher/{teacherName}")
     public ResponseEntity<TeacherDTO> getTeacherByTeacherName(@PathVariable String teacherName) {
         TeacherDTO teacherDTO = authService.getTeacherByTeacherName(teacherName);
