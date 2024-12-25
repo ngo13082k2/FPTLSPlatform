@@ -36,4 +36,9 @@ public interface IClassService {
     long getTotalClasses();
     List<ClassDTO> getClassesByStatusAndMonthDetailed(ClassStatus status, int year, Integer month);
     String cancelClass(Long classId);
+    void assignTeacherToClass(Long classId) ;
+    List<ClassDTO> getClassesByTeacherName();
+    ClassDTO updateClassLocation(Long classId, String location);
+    List<ClassDTO> getAllClassesWithoutTeacher();
+    List<ClassDTO> getAllClassesWithTeacher();
 }

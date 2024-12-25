@@ -109,7 +109,7 @@ public SecurityFilterChain configure(HttpSecurity http) throws Exception {
             // Các endpoint cho STAFF
             .requestMatchers("/staff/**").hasAuthority("STAFF")
             .requestMatchers("/applications/staff").hasAuthority("STAFF")
-            .requestMatchers(HttpMethod.POST, "/courses").hasAuthority("STAFF")
+//            .requestMatchers(HttpMethod.POST, "/courses").hasAuthority("STAFF")
             .requestMatchers(HttpMethod.PUT, "/courses/{courseCode}").hasAuthority("STAFF")
             .requestMatchers(HttpMethod.DELETE, "/courses/{courseCode}").hasAuthority("STAFF")
             .requestMatchers(HttpMethod.POST, "/categories").hasAuthority("STAFF")
@@ -129,8 +129,8 @@ public SecurityFilterChain configure(HttpSecurity http) throws Exception {
             .requestMatchers("/classes/getByClassId/{classId}").hasAnyAuthority("STUDENT", "TEACHER")
             .requestMatchers("/classes/teacher/{teacherName}").hasAuthority("STUDENT")
             .requestMatchers("/classes/my-classes").hasAuthority("TEACHER")
-            .requestMatchers(HttpMethod.PUT, "/classes/{classId}").hasAuthority("TEACHER")
-            .requestMatchers(HttpMethod.POST, "/classes").hasAuthority("TEACHER")
+            .requestMatchers(HttpMethod.PUT, "/classes/{classId}").hasAuthority("STAFF")
+            .requestMatchers(HttpMethod.POST, "/classes").hasAuthority("STAFF")
             .requestMatchers("/classes/confirm-classes/").hasAuthority("TEACHER")
 
             // Các endpoint cho STUDENT

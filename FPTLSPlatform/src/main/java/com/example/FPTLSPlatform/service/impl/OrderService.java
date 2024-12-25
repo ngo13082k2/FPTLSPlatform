@@ -32,6 +32,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 @Service
 public class OrderService implements IOrderService {
@@ -209,20 +210,33 @@ public class OrderService implements IOrderService {
         Page<OrderDetail> userOrders = orderDetailRepository.findByOrder_User_UserName(username, Pageable.unpaged());
         Class newClass = classRepository.getReferenceById(classId);
 
+        // Lấy tất cả ClassDateSlot của lớp học mới
+        Set<ClassDateSlot> newClassDateSlots = newClass.getDateSlots();
+
         for (OrderDetail orderDetail : userOrders) {
             if (orderDetail.getOrder().getStatus().equals(OrderStatus.CANCELLED)) {
                 continue; // Bỏ qua các order đã bị hủy
             }
 
             Class existingClass = orderDetail.getClasses();
-            if (existingClass != null
-                    && existingClass.getStartDate().equals(newClass.getStartDate()) // Kiểm tra cùng ngày
-                    && existingClass.getSlot().equals(newClass.getSlot())) {        // Kiểm tra cùng slot
-                return true; // Trùng lịch
+            if (existingClass != null) {
+                // Lấy tất cả ClassDateSlot của lớp học hiện có
+                Set<ClassDateSlot> existingClassDateSlots = existingClass.getDateSlots();
+
+                // Kiểm tra trùng lịch giữa lớp học mới và lớp học hiện có
+                for (ClassDateSlot newDateSlot : newClassDateSlots) {
+                    for (ClassDateSlot existingDateSlot : existingClassDateSlots) {
+                        if (newDateSlot.getDate().equals(existingDateSlot.getDate()) // Cùng ngày
+                                && newDateSlot.getSlot().getSlotId().equals(existingDateSlot.getSlot().getSlotId())) { // Cùng slot
+                            return true; // Trùng lịch
+                        }
+                    }
+                }
             }
         }
         return false; // Không trùng lịch
     }
+
 
 
     @Transactional
@@ -241,7 +255,6 @@ public class OrderService implements IOrderService {
 
             Class scheduledClass = orderDetail.getClasses();
 
-
             if (Objects.equals(order.getStatus(), OrderStatus.PENDING)) {
                 int defaultTime = 1;
                 System checkTimeBeforeStart = systemRepository.findByName("check_time_before_start");
@@ -249,7 +262,14 @@ public class OrderService implements IOrderService {
                         ? Integer.parseInt(checkTimeBeforeStart.getValue())
                         : defaultTime;
                 LocalDateTime now = LocalDateTime.now();
-                LocalDateTime cancelDeadline = scheduledClass.getStartDate().atTime(orderDetail.getClasses().getSlot().getStartTime()).minusDays(checkTime);
+
+                // Lấy thời gian sớm nhất từ tất cả các ClassDateSlot
+                LocalDateTime earliestStartDateTime = scheduledClass.getDateSlots().stream()
+                        .map(dateSlot -> dateSlot.getDate().atTime(dateSlot.getSlot().getStartTime()))
+                        .min(LocalDateTime::compareTo)
+                        .orElseThrow(() -> new RuntimeException("No start time found for class date slots"));
+
+                LocalDateTime cancelDeadline = earliestStartDateTime.minusDays(checkTime);
 
                 if (now.isAfter(cancelDeadline)) {
                     return new ResponseDTO<>("ERROR", "Cannot cancel the order within " + checkTime + " days before the class starts.", null);
@@ -280,6 +300,8 @@ public class OrderService implements IOrderService {
             return new ResponseDTO<>("ERROR", ex.getMessage(), null);
         }
     }
+
+
 
     @Override
     public Page<OrderDTO> getOrdersByUser(String username, Pageable pageable) {
@@ -318,34 +340,47 @@ public class OrderService implements IOrderService {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime upcomingThreshold = now.plusHours(24);
 
+        // Lấy các lớp học sắp diễn ra trong khoảng thời gian từ now đến 24 giờ tới
         List<Class> upcomingClasses = classRepository.findByStatusAndStartDateBetween(ClassStatus.ACTIVE, now.toLocalDate(), upcomingThreshold.toLocalDate());
 
         for (Class upcomingClass : upcomingClasses) {
-            LocalTime startTime = upcomingClass.getSlot().getStartTime();
-            LocalTime endTime = upcomingClass.getSlot().getEndTime();
+            // Lặp qua các ClassDateSlot của lớp học
+            for (ClassDateSlot dateSlot : upcomingClass.getDateSlots()) {
+                LocalDate date = dateSlot.getDate();
+                LocalTime startTime = dateSlot.getSlot().getStartTime();
+                LocalTime endTime = dateSlot.getSlot().getEndTime();
 
-            Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(upcomingClass.getClassId(), Pageable.unpaged());
-            for (OrderDetail orderDetail : orderDetails) {
-                notificationService.createNotification(NotificationDTO.builder()
-                        .title("Reminder: Upcoming Lesson " + upcomingClass.getCode())
-                        .description("Your Lesson " + upcomingClass.getName() + " will start on " +
-                                upcomingClass.getStartDate() + " from " + startTime + " to " + endTime)
-                        .name("Notification")
-                        .type("Lesson Reminder")
-                        .username(orderDetail.getOrder().getUser().getUserName())
-                        .build());
+                // Tính toán thời gian bắt đầu lớp học
+                LocalDateTime classStartDateTime = date.atTime(startTime);
+                if (classStartDateTime.isAfter(now) && classStartDateTime.isBefore(upcomingThreshold)) {
+                    // Gửi thông báo cho học viên về lớp học sắp tới
+                    Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(upcomingClass.getClassId(), Pageable.unpaged());
+                    for (OrderDetail orderDetail : orderDetails) {
+                        notificationService.createNotification(NotificationDTO.builder()
+                                .title("Reminder: Upcoming Lesson " + upcomingClass.getCode())
+                                .description("Your Lesson " + upcomingClass.getName() + " will start on " +
+                                        date + " from " + startTime + " to " + endTime)
+                                .name("Notification")
+                                .type("Lesson Reminder")
+                                .username(orderDetail.getOrder().getUser().getUserName())
+                                .build());
+                    }
+
+                    // Gửi thông báo cho giảng viên về lớp học sắp tới
+                    notificationService.createNotification(NotificationDTO.builder()
+                            .title("Reminder: You have an upcoming class")
+                            .description("Lesson " + upcomingClass.getName() + " (Code: " + upcomingClass.getCode() + ") will start on " +
+                                    date + " from " + startTime + " to " + endTime)
+                            .name("Notification")
+                            .type("Lesson Reminder")
+                            .username(upcomingClass.getTeacher().getTeacherName())
+                            .build());
+                }
             }
-
-            notificationService.createNotification(NotificationDTO.builder()
-                    .title("Reminder: You have an upcoming class")
-                    .description("Lesson " + upcomingClass.getName() + " (Code: " + upcomingClass.getCode() + ") will start on " +
-                            upcomingClass.getStartDate() + " from " + startTime + " to " + endTime)
-                    .name("Notification")
-                    .type("Lesson Reminder")
-                    .username(upcomingClass.getTeacher().getTeacherName())
-                    .build());
         }
     }
+
+
 
     @Override
     public void refundStudents(Class cancelledClass) {
@@ -503,15 +538,20 @@ public class OrderService implements IOrderService {
 
             for (Class scheduledClass : classesPage) {
                 try {
-                    LocalDateTime classStartTime = scheduledClass.getStartDate()
-                            .atTime(scheduledClass.getSlot().getStartTime())
-                            .minusDays(checkTime);
+                    // Lấy thời gian bắt đầu sớm nhất từ tất cả các ClassDateSlot
+                    LocalDateTime earliestStartDateTime = scheduledClass.getDateSlots().stream()
+                            .map(dateSlot -> dateSlot.getDate().atTime(dateSlot.getSlot().getStartTime()))
+                            .min(LocalDateTime::compareTo) // Lấy thời gian bắt đầu sớm nhất
+                            .orElseThrow(() -> new RuntimeException("No start time found for class date slots"));
 
+                    // Điều chỉnh thời gian nếu ở chế độ demo
+                    LocalDateTime adjustedStartTime = earliestStartDateTime.minusDays(checkTime);
                     if (isDemoMode) {
-                        classStartTime = classStartTime.minusDays(demoTimeAdjustment);
+                        adjustedStartTime = adjustedStartTime.minusDays(demoTimeAdjustment);
                     }
 
-                    if (classStartTime.isBefore(LocalDateTime.now())) {
+                    // Kích hoạt lớp học nếu đủ điều kiện
+                    if (adjustedStartTime.isBefore(LocalDateTime.now())) {
                         Class clazz = activateClassIfEligible(scheduledClass);
                         Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(clazz.getClassId(), Pageable.unpaged());
                         handleOrderDetails(orderDetails, scheduledClass);
@@ -523,6 +563,8 @@ public class OrderService implements IOrderService {
             pageNumber++;
         }
     }
+
+
 
     @Transactional
     protected Class activateClassIfEligible(Class scheduledClass) {
@@ -573,7 +615,6 @@ public class OrderService implements IOrderService {
         }
         orderDetailRepository.saveAll(updatedOrderDetails); // Bulk save the order details
     }
-
     @Scheduled(cron = "0 * * * * *")
     @Transactional
     public void updateClassesToOngoing() {
@@ -586,28 +627,43 @@ public class OrderService implements IOrderService {
         System demoAdjustStartTime = systemRepository.findByName("demo_adjust_start_time");
         int adjustStartTime = demoAdjustStartTime != null ? Integer.parseInt(demoAdjustStartTime.getValue()) : 0;
 
+        // Lấy danh sách các lớp học đang ở trạng thái ACTIVE và có ngày bắt đầu là hôm nay
         List<Class> classesToStart = classRepository.findByStartDateAndStatus(now.toLocalDate(), ClassStatus.ACTIVE);
 
         for (Class scheduledClass : classesToStart) {
-            LocalDateTime startTime = scheduledClass.getStartDate().atTime(scheduledClass.getSlot().getStartTime());
+            try {
+                // Lấy thời gian bắt đầu sớm nhất từ các ClassDateSlot
+                LocalDateTime earliestStartDateTime = scheduledClass.getDateSlots().stream()
+                        .map(dateSlot -> dateSlot.getDate().atTime(dateSlot.getSlot().getStartTime()))
+                        .min(LocalDateTime::compareTo) // Lấy thời gian bắt đầu sớm nhất
+                        .orElseThrow(() -> new RuntimeException("No start time found for class date slots"));
 
-            if (isDemoMode) {
-                startTime = startTime.minusDays(adjustStartTime);
-            }
+                // Điều chỉnh thời gian nếu ở chế độ demo
+                LocalDateTime adjustedStartTime = earliestStartDateTime.minusDays(adjustStartTime);
+                if (isDemoMode) {
+                    adjustedStartTime = adjustedStartTime.minusDays(adjustStartTime);
+                }
 
-            if (now.isAfter(startTime) && scheduledClass.getStatus().equals(ClassStatus.ACTIVE)) {
-                scheduledClass.setStatus(ClassStatus.ONGOING);
-                classRepository.save(scheduledClass);
-                Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(scheduledClass.getClassId(), Pageable.unpaged());
-                for (OrderDetail orderDetail : orderDetails) {
-                    if (orderDetail.getOrder().getStatus().equals(OrderStatus.ACTIVE)) {
-                        orderDetail.getOrder().setStatus(OrderStatus.ONGOING);
-                        orderDetailRepository.save(orderDetail);
+                // Cập nhật trạng thái nếu lớp học đủ điều kiện
+                if (now.isAfter(adjustedStartTime) && scheduledClass.getStatus().equals(ClassStatus.ACTIVE)) {
+                    scheduledClass.setStatus(ClassStatus.ONGOING);
+                    classRepository.save(scheduledClass);
+
+                    // Cập nhật trạng thái của các OrderDetail liên quan
+                    Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(scheduledClass.getClassId(), Pageable.unpaged());
+                    for (OrderDetail orderDetail : orderDetails) {
+                        if (orderDetail.getOrder().getStatus().equals(OrderStatus.ACTIVE)) {
+                            orderDetail.getOrder().setStatus(OrderStatus.ONGOING);
+                            orderDetailRepository.save(orderDetail);
+                        }
                     }
                 }
+            } catch (Exception e) {
+                log.error("Error updating class {} to ONGOING: {}", scheduledClass.getClassId(), e.getMessage());
             }
         }
     }
+
 
 
     @Scheduled(cron = "0 * * * * *")
@@ -624,51 +680,68 @@ public class OrderService implements IOrderService {
         System discountPercentage = systemRepository.findByName("discount_percentage");
         double discount = discountPercentage != null ? Double.parseDouble(discountPercentage.getValue()) : 0;
 
+        // Lấy danh sách các lớp học đang ở trạng thái ONGOING và có ngày bắt đầu là hôm nay
         List<Class> classesToComplete = classRepository.findByStartDateAndStatus(now.toLocalDate(), ClassStatus.ONGOING);
 
         for (Class scheduledClass : classesToComplete) {
-            LocalDateTime endTime = scheduledClass.getStartDate().atTime(scheduledClass.getSlot().getEndTime());
+            try {
+                // Lấy thời gian kết thúc muộn nhất từ các ClassDateSlot
+                LocalDateTime latestEndDateTime = scheduledClass.getDateSlots().stream()
+                        .map(dateSlot -> dateSlot.getDate().atTime(dateSlot.getSlot().getEndTime()))
+                        .max(LocalDateTime::compareTo) // Lấy thời gian kết thúc muộn nhất
+                        .orElseThrow(() -> new RuntimeException("No end time found for class date slots"));
 
-            if (isDemoMode) {
-                endTime = endTime.minusDays(adjustEndTime);
-            }
-
-            if (now.isAfter(endTime)) {
-                scheduledClass.setStatus(ClassStatus.COMPLETED);
-                classRepository.save(scheduledClass);
-
-                Teacher teacher = scheduledClass.getTeacher();
-
-                Violation violation = violationRepository.findByTeacher(teacher);
-                double violationDiscount = 0;
-
-                if (violation != null && violation.getViolationCount() > 0) {
-                    violationDiscount = violation.getPenaltyPercentage();
-                    violation.setViolationCount(violation.getViolationCount() - 1);
-                    violationRepository.save(violation);
+                // Điều chỉnh thời gian nếu ở chế độ demo
+                LocalDateTime adjustedEndTime = latestEndDateTime.minusDays(adjustEndTime);
+                if (isDemoMode) {
+                    adjustedEndTime = adjustedEndTime.minusDays(adjustEndTime);
                 }
 
-                Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(scheduledClass.getClassId(), Pageable.unpaged());
+                // Kiểm tra nếu lớp học đã kết thúc
+                if (now.isAfter(adjustedEndTime)) {
+                    scheduledClass.setStatus(ClassStatus.COMPLETED);
+                    classRepository.save(scheduledClass);
 
-                for (OrderDetail orderDetail : orderDetails) {
-                    if (orderDetail.getOrder().getStatus().equals(OrderStatus.ONGOING)) {
-                        orderDetail.getOrder().setStatus(OrderStatus.COMPLETED);
-                        orderDetailRepository.save(orderDetail);
+                    Teacher teacher = scheduledClass.getTeacher();
+
+                    Violation violation = violationRepository.findByTeacher(teacher);
+                    double violationDiscount = 0;
+
+                    if (violation != null && violation.getViolationCount() > 0) {
+                        violationDiscount = violation.getPenaltyPercentage();
+                        violation.setViolationCount(violation.getViolationCount() - 1);
+                        violationRepository.save(violation);
                     }
+
+                    // Cập nhật trạng thái của các OrderDetail liên quan
+                    Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(scheduledClass.getClassId(), Pageable.unpaged());
+
+                    for (OrderDetail orderDetail : orderDetails) {
+                        if (orderDetail.getOrder().getStatus().equals(OrderStatus.ONGOING)) {
+                            orderDetail.getOrder().setStatus(OrderStatus.COMPLETED);
+                            orderDetailRepository.save(orderDetail);
+                        }
+                    }
+
+                    // Lưu thông tin vào ví của giáo viên
+                    saveTeacherWallet(discount, scheduledClass, violationDiscount);
+
+                    // Gửi thông báo cho giáo viên
+                    notificationService.createNotification(NotificationDTO.builder()
+                            .title("Lesson " + scheduledClass.getName() + " has been completed")
+                            .name("Notification")
+                            .description("Your lesson " + scheduledClass.getName() + " has been successfully completed.")
+                            .type("Lesson Completed")
+                            .username(teacher.getTeacherName())
+                            .build());
                 }
-
-                saveTeacherWallet(discount, scheduledClass, violationDiscount);
-
-                notificationService.createNotification(NotificationDTO.builder()
-                        .title("Lesson " + scheduledClass.getName() + " has been completed")
-                        .name("Notification")
-                        .description("Your lesson " + scheduledClass.getName() + " has been successfully completed.")
-                        .type("Lesson Completed")
-                        .username(teacher.getTeacherName())
-                        .build());
+            } catch (Exception e) {
+                log.error("Error completing class {}: {}", scheduledClass.getClassId(), e.getMessage());
             }
         }
     }
+
+
 
 
     private void saveTeacherWallet(double discount, Class scheduledClass, double violationDiscount) {

@@ -19,8 +19,8 @@ import java.util.Set;
 public interface ClassRepository extends JpaRepository<Class, Long> {
     List<Class> findByCoursesCourseCode(String courseCode);
 
-    boolean existsByTeacher_TeacherNameAndSlot_SlotIdAndDayOfWeekAndStartDate(
-            String teacherName, Long slotId, String dayOfWeek, LocalDate startDate);
+//    boolean existsByTeacher_TeacherNameAndSlot_SlotIdAndDayOfWeekAndStartDate(
+//            String teacherName, Long slotId, String dayOfWeek, LocalDate startDate);
 
     Optional<Class> findById(Long classId);
 
@@ -50,5 +50,16 @@ public interface ClassRepository extends JpaRepository<Class, Long> {
 
     boolean existsByCode(String string);
 
-    boolean existsByTeacher_TeacherNameAndSlot_SlotIdAndDayOfWeekAndStartDateAndStatusNot(String teacherName, Long slotId, String dayOfWeek, LocalDate startDate, ClassStatus classStatus);
+//    boolean existsByTeacher_TeacherNameAndSlots_SlotIdAndDayOfWeekAndStartDateAndStatusNot(String teacherName, Long slotId, String dayOfWeek, LocalDate startDate, ClassStatus classStatus);
+
+//    boolean existsByTeacher_TeacherNameAndSlots_SlotIdInAndDayOfWeekAndStartDateAndStatusNot(
+//            String teacherName,
+//            Set<Long> slotIds,
+//            String dayOfWeek,
+//            LocalDate startDate,
+//            ClassStatus status);
+List<Class> findByTeacher_TeacherName(String teacherName);
+    List<Class> findByTeacherIsNull();
+    List<Class> findByTeacherIsNotNull();
+
 }

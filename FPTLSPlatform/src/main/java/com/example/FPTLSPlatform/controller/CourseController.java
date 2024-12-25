@@ -4,6 +4,7 @@ import com.example.FPTLSPlatform.dto.CourseDTO;
 import com.example.FPTLSPlatform.service.ICourseService;
 import com.example.FPTLSPlatform.service.impl.CourseService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +20,8 @@ public class CourseController {
 
     private final ICourseService courseService;
     private final ObjectMapper objectMapper;
-
+    @Autowired
+    private HttpSession session;
     @Autowired
     public CourseController(ICourseService courseService, ObjectMapper objectMapper) {
         this.courseService = courseService;
@@ -38,6 +40,8 @@ public class CourseController {
             CourseDTO courseDTO = objectMapper.readValue(courseJson, CourseDTO.class);
 
             CourseDTO createdCourse = courseService.createCourse(courseDTO, image);
+            session.setAttribute("course_code", createdCourse.getCourseCode());
+
             return ResponseEntity.status(201).body("Course created successfully: " + objectMapper.writeValueAsString(createdCourse));
         } catch (IOException e) {
             return ResponseEntity.status(500).body("Error creating course: " + e.getMessage());

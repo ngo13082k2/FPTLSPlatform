@@ -1,5 +1,7 @@
 package com.example.FPTLSPlatform.service.impl;
 
+import com.example.FPTLSPlatform.dto.DateSlotDTO;
+import com.example.FPTLSPlatform.dto.DocumentDTO;
 import com.example.FPTLSPlatform.dto.StudentDTO;
 import com.example.FPTLSPlatform.exception.ResourceNotFoundException;
 import com.example.FPTLSPlatform.model.*;
@@ -44,6 +46,8 @@ public class ClassService implements IClassService {
     private final WalletRepository walletRepository;
     private final OrderRepository orderRepository;
     private final ViolationRepository violationRepository;
+    private final ClassDateSlotRepository classDateSlotRepository;
+    private final DocumentRepository documentRepository;
 
     @Autowired
     public ClassService(ClassRepository classRepository,
@@ -52,7 +56,7 @@ public class ClassService implements IClassService {
                         OrderDetailRepository orderDetailRepository,
                         CloudinaryService cloudinaryService,
                         SlotRepository slotRepository,
-                        UserRepository userRepository, WalletRepository walletRepository, OrderRepository orderRepository, ViolationRepository violationRepository
+                        UserRepository userRepository, WalletRepository walletRepository, OrderRepository orderRepository, ViolationRepository violationRepository, ClassDateSlotRepository classDateSlotRepository, DocumentRepository documentRepository
     ) {
         this.classRepository = classRepository;
         this.courseRepository = courseRepository;
@@ -66,6 +70,8 @@ public class ClassService implements IClassService {
         this.walletRepository = walletRepository;
         this.orderRepository = orderRepository;
         this.violationRepository = violationRepository;
+        this.classDateSlotRepository = classDateSlotRepository;
+        this.documentRepository = documentRepository;
     }
 
     private static final Logger log = LoggerFactory.getLogger(ClassService.class);
@@ -80,22 +86,12 @@ public class ClassService implements IClassService {
             classDTO.setCode(generateUniqueCode());
         }
 
-        String teacherName = getCurrentUsername();
-        Teacher teacher = teacherRepository.findByTeacherName(teacherName)
-                .orElseThrow(() -> new RuntimeException("Teacher not found"));
-
-        if (classDTO.getStartDate() != null && classDTO.getSlotId() != null && classDTO.getDayOfWeek() != null) {
-            boolean isDuplicateClass = classRepository.existsByTeacher_TeacherNameAndSlot_SlotIdAndDayOfWeekAndStartDateAndStatusNot(
-                    teacherName, classDTO.getSlotId(), classDTO.getDayOfWeek(), classDTO.getStartDate(), ClassStatus.CANCELED);
-
-            if (isDuplicateClass) {
-                throw new RuntimeException("A class with the same start date, teacher, slot, and day of the week already exists and is not canceled.");
-            }
-        }
-
+        String creatorName  = getCurrentUsername();
+        String user = String.valueOf(userRepository.findByUserName(creatorName)
+                .orElseThrow(() -> new RuntimeException("User not found")));
 
         classDTO.setCreateDate(LocalDateTime.now());
-        classDTO.setTeacherName(teacherName);
+
         classDTO.setStatus(ClassStatus.PENDING);
 
         Optional<Course> course = courseRepository.findById(classDTO.getCourseCode());
@@ -103,16 +99,20 @@ public class ClassService implements IClassService {
             throw new RuntimeException("Course with code " + classDTO.getCourseCode() + " not found");
         }
 
-        String imageUrl;
+        String imageUrl = null;
         if (image != null && !image.isEmpty()) {
             imageUrl = cloudinaryService.uploadImage(image);
             classDTO.setImageUrl(imageUrl);
         }
 
-        Class newClass = mapDTOToEntity(classDTO, course.get(), teacher);
+        Class newClass = mapDTOToEntity(classDTO, course.get(), user);
+        Set<ClassDateSlot> dateSlots = mapDateSlots(classDTO, newClass);
+        newClass.setDateSlots(dateSlots);
+
         Class savedClass = classRepository.save(newClass);
         return mapEntityToDTO(savedClass);
     }
+
 
 
     public String generateUniqueCode() {
@@ -145,6 +145,22 @@ public class ClassService implements IClassService {
             return principal.toString();
         }
     }
+    private Set<ClassDateSlot> mapDateSlots(ClassDTO classDTO, Class clazz) {
+        Set<ClassDateSlot> dateSlots = new HashSet<>();
+        for (DateSlotDTO dateSlotDTO : classDTO.getDateSlots()) {
+            for (Long slotId : dateSlotDTO.getSlotIds()) {
+                Slot slot = slotRepository.findById(slotId)
+                        .orElseThrow(() -> new RuntimeException("Slot not found with ID: " + slotId));
+                dateSlots.add(ClassDateSlot.builder()
+                        .clazz(clazz)
+                        .date(dateSlotDTO.getDate())
+                        .slot(slot)
+                        .build());
+            }
+        }
+        return dateSlots;
+    }
+
 
     public List<ClassDTO> getClassByMajor() {
         String username = getCurrentUsername();
@@ -314,15 +330,8 @@ public class ClassService implements IClassService {
                 .collect(Collectors.toList());
     }
 
-
-    private Class mapDTOToEntity(ClassDTO classDTO, Course course, Teacher teacher) {
-        Slot slot = null;
-        if (classDTO.getSlotId() != null) {
-            slot = slotRepository.findById(classDTO.getSlotId())
-                    .orElseThrow(() -> new RuntimeException("Slot not found with ID: " + classDTO.getSlotId()));
-        }
-
-        return Class.builder()
+    private Class mapDTOToEntity(ClassDTO classDTO, Course course, String user) {
+        Class clazz = Class.builder()
                 .name(classDTO.getName())
                 .code(classDTO.getCode())
                 .description(classDTO.getDescription())
@@ -330,19 +339,51 @@ public class ClassService implements IClassService {
                 .location(classDTO.getLocation())
                 .maxStudents(classDTO.getMaxStudents())
                 .price(classDTO.getPrice())
-                .teacher(teacher)
+                .creator(user)
+
                 .createDate(classDTO.getCreateDate())
                 .startDate(classDTO.getStartDate())
                 .endDate(classDTO.getEndDate())
-                .dayOfWeek(classDTO.getDayOfWeek())
-                .slot(slot)
                 .image(classDTO.getImageUrl())
                 .courses(course)
                 .build();
+
+        // Ánh xạ dateSlots từ DTO sang thực thể ClassDateSlot
+        if (classDTO.getDateSlots() != null) {
+            Set<ClassDateSlot> dateSlots = classDTO.getDateSlots().stream().flatMap(dateSlotDTO -> {
+                LocalDate date = dateSlotDTO.getDate();
+                return dateSlotDTO.getSlotIds().stream().map(slotId -> {
+                    Slot slot = slotRepository.findById(slotId)
+                            .orElseThrow(() -> new RuntimeException("Slot not found with ID: " + slotId));
+                    return ClassDateSlot.builder()
+                            .clazz(clazz)
+                            .date(date)
+                            .slot(slot)
+                            .build();
+                });
+            }).collect(Collectors.toSet());
+            clazz.setDateSlots(dateSlots);
+        }
+
+        return clazz;
     }
 
 
+
+    private List<DocumentDTO> getDocumentsByCourseCode(String courseCode) {
+        return documentRepository.findByCourse_CourseCode(courseCode).stream()
+                .map(doc -> DocumentDTO.builder()
+                        .id(doc.getId())
+                        .title(doc.getTitle())
+                        .content(doc.getContent())
+                        .filePath(doc.getFilePath())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
     ClassDTO mapEntityToDTO(Class clazz) {
+        List<DocumentDTO> documents = getDocumentsByCourseCode(clazz.getCourses().getCourseCode());
+
         Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(clazz.getClassId(), Pageable.unpaged());
         List<StudentDTO> studentDTOList = orderDetails.getContent().stream()
                 .map(orderDetail -> {
@@ -363,6 +404,25 @@ public class ClassService implements IClassService {
                 .distinct()
                 .toList();
 
+        List<DateSlotDTO> dateSlotDTOs = clazz.getDateSlots().stream()
+                .collect(Collectors.groupingBy(ClassDateSlot::getDate)) // Gom nhóm theo ngày
+                .entrySet().stream()
+                .map(entry -> {
+                    LocalDate date = entry.getKey();
+                    List<Long> slotIds = entry.getValue().stream()
+                            .map(classDateSlot -> classDateSlot.getSlot().getSlotId())
+                            .collect(Collectors.toList());
+                    return DateSlotDTO.builder()
+                            .date(date)
+                            .slotIds(slotIds)
+                            .build();
+                })
+                .toList();
+
+        Teacher teacher = clazz.getTeacher();
+        String teacherName = teacher != null ? teacher.getTeacherName() : null;
+        String fullName = teacher != null ? teacher.getFullName() : null;
+        String avatarImage = teacher != null ? teacher.getAvatarImage() : null;
 
         return ClassDTO.builder()
                 .classId(clazz.getClassId())
@@ -374,18 +434,21 @@ public class ClassService implements IClassService {
                 .maxStudents(clazz.getMaxStudents())
                 .createDate(clazz.getCreateDate())
                 .price(clazz.getPrice())
-                .teacherName(clazz.getTeacher().getTeacherName())
-                .fullName(clazz.getTeacher().getFullName())
+                .teacherName(teacherName)
+                .fullName(fullName)
                 .startDate(clazz.getStartDate())
                 .endDate(clazz.getEndDate())
                 .courseCode(clazz.getCourses().getCourseCode())
                 .imageUrl(clazz.getImage())
-                .slotId(clazz.getSlot() != null ? clazz.getSlot().getSlotId() : null)
-                .dayOfWeek(clazz.getDayOfWeek())
+                .creator(clazz.getCreator())
+                .dateSlots(dateSlotDTOs)
                 .students(studentDTOList)
-                .imageTeacher(clazz.getTeacher().getAvatarImage())
+                .imageTeacher(avatarImage)
+                .documents(documents)
                 .build();
     }
+
+
 
     public long getTotalClasses() {
         return classRepository.count();
@@ -482,6 +545,66 @@ public class ClassService implements IClassService {
 
         return "Class with ID " + classId + " has been successfully canceled, and refunds have been processed.";
     }
+    public void assignTeacherToClass(Long classId) {
+        Class clazz = classRepository.findById(classId)
+                .orElseThrow(() -> new RuntimeException("Class not found"));
+
+        if (clazz.getTeacher() != null) {
+            throw new RuntimeException("This class already has a teacher.");
+        }
+
+        String currentTeacherName = getCurrentUsername();
+        Teacher teacher = teacherRepository.findByTeacherName(currentTeacherName)
+                .orElseThrow(() -> new RuntimeException("Teacher not found"));
+
+        boolean hasConflict = clazz.getDateSlots().stream().anyMatch(dateSlot ->
+                classDateSlotRepository.existsByClazz_Teacher_TeacherNameAndDateAndSlot_SlotId(
+                        teacher.getTeacherName(),
+                        dateSlot.getDate(),
+                        dateSlot.getSlot().getSlotId()
+                )
+        );
+
+        if (hasConflict) {
+            throw new RuntimeException("Teacher already has a class scheduled on the same date and slot.");
+        }
+
+        clazz.setTeacher(teacher);
+        classRepository.save(clazz);
+    }
+    public List<ClassDTO> getClassesByTeacherName() {
+        String teacherName = getCurrentUsername();
+
+        List<Class> classes = classRepository.findByTeacher_TeacherName(teacherName);
+
+        return classes.stream()
+                .map(this::mapEntityToDTO)
+                .collect(Collectors.toList());
+    }
+    public ClassDTO updateClassLocation(Long classId, String location) {
+        Class clazz = classRepository.findById(classId)
+                .orElseThrow(() -> new RuntimeException("Class not found"));
+
+        clazz.setLocation(location);
+        classRepository.save(clazz);
+
+        return mapEntityToDTO(clazz);
+    }
+    public List<ClassDTO> getAllClassesWithoutTeacher() {
+        return classRepository.findByTeacherIsNull().stream()
+                .map(this::mapEntityToDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<ClassDTO> getAllClassesWithTeacher() {
+        return classRepository.findByTeacherIsNotNull().stream()
+                .map(this::mapEntityToDTO)
+                .collect(Collectors.toList());
+    }
+
+
+
+
 
 
 }

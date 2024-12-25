@@ -20,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/classes")
@@ -167,4 +168,46 @@ public class ClassController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
+    @PostMapping("/{classId}/joinByTeacher")
+    public ResponseEntity<?> teacherJoinClass(@PathVariable Long classId) {
+        try {
+            classService.assignTeacherToClass(classId);
+            return ResponseEntity.ok("Teacher joined the class successfully.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+    @PutMapping("/{classId}/location")
+    public ResponseEntity<ClassDTO> updateClassLocation(
+            @PathVariable Long classId,
+            @RequestBody Map<String, String> payload) {
+        // Lấy giá trị location từ payload
+        String location = payload.get("location");
+        if (location == null || location.isEmpty()) {
+            return ResponseEntity.badRequest().body(null);
+        }
+
+        // Gọi service để cập nhật location
+        ClassDTO updatedClass = classService.updateClassLocation(classId, location);
+        return ResponseEntity.ok(updatedClass);
+    }
+    @GetMapping("getClassesByTeacherNameAvailable")
+    public ResponseEntity<List<ClassDTO>> getClassesByTeacherNameAvailable() {
+        List<ClassDTO> classes = classService.getClassesByTeacherName();
+        return ResponseEntity.ok(classes);
+    }
+    @GetMapping("/without-teacher")
+    public ResponseEntity<List<ClassDTO>> getAllClassesWithoutTeacher() {
+        List<ClassDTO> classes = classService.getAllClassesWithoutTeacher();
+        return ResponseEntity.ok(classes);
+    }
+
+    // Lấy tất cả lớp học mà teacher khác null
+    @GetMapping("/with-teacher")
+    public ResponseEntity<List<ClassDTO>> getAllClassesWithTeacher() {
+        List<ClassDTO> classes = classService.getAllClassesWithTeacher();
+        return ResponseEntity.ok(classes);
+    }
+
+
 }

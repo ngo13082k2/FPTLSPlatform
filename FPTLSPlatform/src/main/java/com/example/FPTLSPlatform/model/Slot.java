@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalTime;
+import java.util.Set;
 
 
 @NoArgsConstructor
@@ -27,6 +28,11 @@ public class Slot {
 
     @JsonFormat(pattern = "HH:mm")
     private LocalTime endTime;
+
+    // Ánh xạ tới ClassDateSlot
+    @OneToMany(mappedBy = "slot", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<ClassDateSlot> classDateSlots;
 }
+
 
 
