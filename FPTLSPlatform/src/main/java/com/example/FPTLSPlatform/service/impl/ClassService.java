@@ -375,6 +375,7 @@ public class ClassService implements IClassService {
                         .title(doc.getTitle())
                         .content(doc.getContent())
                         .filePath(doc.getFilePath())
+                        .courseCode(doc.getCourse().getCourseCode())
                         .build())
                 .collect(Collectors.toList());
     }
@@ -599,6 +600,23 @@ public class ClassService implements IClassService {
                 .map(this::mapEntityToDTO)
                 .collect(Collectors.toList());
     }
+    public List<ClassDTO> getAllClassesWithTeacherByMajor() {
+        String username = getCurrentUsername();
+
+        User user = userRepository.findByUserName(username)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        Set<Long> categoryIds = user.getMajor().stream()
+                .map(Category::getCategoryId)
+                .collect(Collectors.toSet());
+
+        List<Class> classes = classRepository.findByCoursesCategoriesCategoryIdInAndTeacherIsNotNull(categoryIds);
+
+        return classes.stream()
+                .map(this::mapEntityToDTO)
+                .collect(Collectors.toList());
+    }
+
 
 
 

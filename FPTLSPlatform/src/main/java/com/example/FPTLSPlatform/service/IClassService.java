@@ -41,4 +41,5 @@ public interface IClassService {
     ClassDTO updateClassLocation(Long classId, String location);
     List<ClassDTO> getAllClassesWithoutTeacher();
     List<ClassDTO> getAllClassesWithTeacher();
+    List<ClassDTO> getAllClassesWithTeacherByMajor();
 }

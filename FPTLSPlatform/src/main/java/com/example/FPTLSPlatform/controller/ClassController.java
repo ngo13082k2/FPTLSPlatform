@@ -19,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -207,6 +208,17 @@ public class ClassController {
     public ResponseEntity<List<ClassDTO>> getAllClassesWithTeacher() {
         List<ClassDTO> classes = classService.getAllClassesWithTeacher();
         return ResponseEntity.ok(classes);
+    }
+    @GetMapping("/with-teacher-by-major")
+    public ResponseEntity<List<ClassDTO>> getAllClassesWithTeacherByMajor() {
+        try {
+            List<ClassDTO> classes = classService.getAllClassesWithTeacherByMajor();
+            return ResponseEntity.ok(classes);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.emptyList());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
+        }
     }
 
 
