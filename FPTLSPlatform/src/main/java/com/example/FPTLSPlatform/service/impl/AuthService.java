@@ -355,11 +355,11 @@ public class AuthService {
             teacher.setDescription(teacherDTO.getDescription());
         }
         if (backgroundImage != null && !backgroundImage.isEmpty()) {
-            String backgroundUrl = cloudinaryService.uploadImage(backgroundImage);
+            String backgroundUrl = cloudinaryService.uploadFile(backgroundImage);
             teacher.setBackgroundImage(backgroundUrl);
         }
         if (avatarImage != null && !avatarImage.isEmpty()) {
-            String avatarUrl = cloudinaryService.uploadImage(avatarImage);
+            String avatarUrl = cloudinaryService.uploadFile(avatarImage);
             teacher.setAvatarImage(avatarUrl);
         }
 

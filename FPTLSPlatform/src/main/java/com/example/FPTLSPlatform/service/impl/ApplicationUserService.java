@@ -208,7 +208,7 @@ public class ApplicationUserService implements IApplicationUserService {
 
         // Xử lý nếu có hình ảnh phê duyệt
         if (approvalImage != null && !approvalImage.isEmpty()) {
-            String approvalImageUrl = cloudinaryService.uploadImage(approvalImage);
+            String approvalImageUrl = cloudinaryService.uploadFile(approvalImage);
 
             // Lưu thông tin phê duyệt vào ApprovalRecord
             ApprovalRecord approvalRecord = ApprovalRecord.builder()
@@ -327,7 +327,7 @@ public class ApplicationUserService implements IApplicationUserService {
 
         String approvalImageUrl = null;
         if (approvalImage != null && !approvalImage.isEmpty()) {
-            approvalImageUrl = cloudinaryService.uploadImage(approvalImage);
+            approvalImageUrl = cloudinaryService.uploadFile(approvalImage);
 
             ApprovalRecord approvalRecord = ApprovalRecord.builder()
                     .applicationUser(applicationUser)

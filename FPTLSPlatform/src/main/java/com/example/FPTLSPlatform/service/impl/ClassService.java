@@ -65,8 +65,6 @@ public class ClassService implements IClassService {
         this.cloudinaryService = cloudinaryService;
         this.slotRepository = slotRepository;
         this.userRepository = userRepository;
-
-
         this.walletRepository = walletRepository;
         this.orderRepository = orderRepository;
         this.violationRepository = violationRepository;
@@ -101,7 +99,7 @@ public class ClassService implements IClassService {
 
         String imageUrl = null;
         if (image != null && !image.isEmpty()) {
-            imageUrl = cloudinaryService.uploadImage(image);
+            imageUrl = cloudinaryService.uploadFile(image);
             classDTO.setImageUrl(imageUrl);
         }
 
@@ -246,7 +244,7 @@ public class ClassService implements IClassService {
 
         String imageUrl;
         if (image != null && !image.isEmpty()) {
-            imageUrl = cloudinaryService.uploadImage(image);
+            imageUrl = cloudinaryService.uploadFile(image);
             existingClass.setImage(imageUrl);
         }
 

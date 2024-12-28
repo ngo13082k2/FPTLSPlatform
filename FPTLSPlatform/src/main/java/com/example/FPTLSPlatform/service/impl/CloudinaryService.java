@@ -19,7 +19,7 @@ public class CloudinaryService {
         this.cloudinary = cloudinary;
     }
 
-    public String uploadImage(MultipartFile file) throws IOException {
+    public String uploadFile(MultipartFile file) throws IOException {
         // Lấy phần mở rộng của file
         String fileExtension = getFileExtension(file);
         if (fileExtension == null || fileExtension.isEmpty()) {
@@ -40,12 +40,6 @@ public class CloudinaryService {
         return uploadResult.get("url").toString();
     }
 
-
-    public String uploadFile(MultipartFile file) throws IOException {
-        Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
-                ObjectUtils.asMap("resource_type", "auto"));
-        return uploadResult.get("url").toString();
-    }
 
     private String getFileExtension(MultipartFile file) {
         String originalFileName = file.getOriginalFilename();

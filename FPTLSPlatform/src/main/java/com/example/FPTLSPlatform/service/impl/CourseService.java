@@ -77,7 +77,7 @@ public class CourseService implements ICourseService {
             course.setStatus(courseDTO.getStatus());
         }
         if (image != null && !image.isEmpty()) {
-            String imageUrl = cloudinaryService.uploadImage(image);
+            String imageUrl = cloudinaryService.uploadFile(image);
             course.setImage(imageUrl);
         }
         if (courseDTO.getCategoryId() != null) {
@@ -105,7 +105,7 @@ public class CourseService implements ICourseService {
     private Course mapDTOToEntity(CourseDTO courseDTO, MultipartFile image) throws IOException {
         String imageUrl = null;
         if (image != null && !image.isEmpty()) {
-            imageUrl = cloudinaryService.uploadImage(image);
+            imageUrl = cloudinaryService.uploadFile(image);
         }
         Category category = categoryRepository.findById(courseDTO.getCategoryId())
                 .orElseThrow(() -> new RuntimeException("Category not found"));

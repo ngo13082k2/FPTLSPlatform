@@ -29,7 +29,7 @@ public class DocumentController {
     public ResponseEntity<DocumentDTO> createDocument(
             @RequestPart("document") String documentJson,
             @RequestPart("file") MultipartFile file,
-            HttpServletRequest request) throws IOException {
+            HttpServletRequest request) {
         String courseCode = (String) request.getSession().getAttribute("course_code");
 
         if (courseCode == null) {

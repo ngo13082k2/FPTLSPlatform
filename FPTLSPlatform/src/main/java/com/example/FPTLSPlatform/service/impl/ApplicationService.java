@@ -104,7 +104,7 @@ public class ApplicationService implements IApplicationService {
             String name = certificateNames.get(i);
 
             if (!file.isEmpty()) {
-                String uploadedUrl = cloudinaryService.uploadImage(file);
+                String uploadedUrl = cloudinaryService.uploadFile(file);
 
                 Certificate certificate = Certificate.builder()
                         .name(name)
