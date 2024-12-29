@@ -14,4 +14,6 @@ public interface IDocumentService {
     List<DocumentDTO> getAllDocuments();
     DocumentDTO getDocumentById(Long id);
     void deleteDocument(Long id);
+    DocumentDTO createDocumentByCourseCode(String courseCode, DocumentDTO documentDTO, MultipartFile file) throws IOException;
+    List<DocumentDTO> getDocumentsByCourseCode(String courseCode);
 }

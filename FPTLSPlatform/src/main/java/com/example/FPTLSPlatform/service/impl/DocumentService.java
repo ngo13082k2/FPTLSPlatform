@@ -84,6 +84,33 @@ public class DocumentService implements IDocumentService {
         }
         documentRepository.deleteById(id);
     }
+    @Override
+    public DocumentDTO createDocumentByCourseCode(String courseCode, DocumentDTO documentDTO, MultipartFile file) throws IOException {
+        Course course = courseRepository.findByCourseCode(courseCode)
+                .orElseThrow(() -> new IllegalArgumentException("Course with the given course_code not found"));
+
+        String filePath = cloudinaryService.uploadFile(file);
+        documentDTO.setFilePath(filePath);
+
+        Document document = mapDTOToEntity(documentDTO);
+        document.setCourse(course);
+
+        Document savedDocument = documentRepository.save(document);
+
+        return mapEntityToDTO(savedDocument);
+    }
+    public List<DocumentDTO> getDocumentsByCourseCode(String courseCode) {
+        Course course = courseRepository.findByCourseCode(courseCode)
+                .orElseThrow(() -> new IllegalArgumentException("Course with the given course_code not found"));
+
+        List<Document> documents = documentRepository.findByCourse(course);
+
+        return documents.stream()
+                .map(this::mapEntityToDTO)
+                .collect(Collectors.toList());
+    }
+
+
 
     private Document mapDTOToEntity(DocumentDTO documentDTO) {
         Document document = new Document();

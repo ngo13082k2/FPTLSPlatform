@@ -82,4 +82,33 @@ public class DocumentController {
         documentService.deleteDocument(id);
         return ResponseEntity.noContent().build();
     }
+    @PostMapping("/{courseCode}/documents")
+    public ResponseEntity<DocumentDTO> createDocumentByCourseCode(
+            @PathVariable("courseCode") String courseCode,
+            @RequestPart("document") String documentJson,
+            @RequestPart("file") MultipartFile file) {
+        try {
+            DocumentDTO documentDTO = objectMapper.readValue(documentJson, DocumentDTO.class);
+
+            DocumentDTO createdDocument = documentService.createDocumentByCourseCode(courseCode, documentDTO, file);
+
+            return ResponseEntity.status(201).body(createdDocument);
+        } catch (IOException e) {
+            return ResponseEntity.status(500).body(null);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(400).body(null);
+        }
+    }
+    @GetMapping("/{courseCode}/documents")
+    public ResponseEntity<List<DocumentDTO>> getDocumentsByCourseCode(@PathVariable("courseCode") String courseCode) {
+        try {
+            List<DocumentDTO> documents = documentService.getDocumentsByCourseCode(courseCode);
+            return ResponseEntity.ok(documents);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(null);
+        }
+    }
+
+
+
 }
