@@ -10,6 +10,7 @@ import java.util.Set;
 public interface CourseRepository extends JpaRepository<Course, String> {
     List<Course> findByCategoriesCategoryIdIn(Set<Long> categoryIds);
     Optional<Course> findByCourseCode(String courseCode);
+    boolean existsByCourseCode(String courseCode);
 
 
 }

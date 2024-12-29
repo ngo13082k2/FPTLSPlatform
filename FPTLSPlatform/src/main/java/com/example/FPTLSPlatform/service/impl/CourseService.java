@@ -58,6 +58,10 @@ public class CourseService implements ICourseService {
         }
     }
     public CourseDTO createCourse(CourseDTO courseDTO, MultipartFile image) throws IOException {
+        boolean courseExists = courseRepository.existsByCourseCode(courseDTO.getCourseCode());
+        if (courseExists) {
+            throw new RuntimeException("Course code " + courseDTO.getCourseCode() + " already exists.");
+        }
         Course course = mapDTOToEntity(courseDTO, image);
         Course savedCourse = courseRepository.save(course);
         return mapEntityToDTO(savedCourse);

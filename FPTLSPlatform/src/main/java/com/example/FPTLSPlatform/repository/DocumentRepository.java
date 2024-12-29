@@ -12,4 +12,6 @@ import java.util.List;
 public interface DocumentRepository extends JpaRepository<Document, Long> {
     List<Document> findByCourse_CourseCode(String courseCode);
     List<Document> findByCourse(Course course);
+    boolean existsByCourse_CourseCode(String courseCode);
+
 }

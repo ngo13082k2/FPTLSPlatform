@@ -84,17 +84,21 @@ public class ClassService implements IClassService {
             classDTO.setCode(generateUniqueCode());
         }
 
-        String creatorName  = getCurrentUsername();
+        String creatorName = getCurrentUsername();
         String user = String.valueOf(userRepository.findByUserName(creatorName)
                 .orElseThrow(() -> new RuntimeException("User not found")));
 
         classDTO.setCreateDate(LocalDateTime.now());
-
         classDTO.setStatus(ClassStatus.PENDING);
 
-        Optional<Course> course = courseRepository.findById(classDTO.getCourseCode());
+        Optional<Course> course = courseRepository.findByCourseCode(classDTO.getCourseCode());
         if (course.isEmpty()) {
             throw new RuntimeException("Course with code " + classDTO.getCourseCode() + " not found");
+        }
+
+        boolean hasDocument = documentRepository.existsByCourse_CourseCode(classDTO.getCourseCode());
+        if (!hasDocument) {
+            throw new RuntimeException("Cannot create class. No document associated with course code " + classDTO.getCourseCode());
         }
 
         String imageUrl = null;
@@ -110,6 +114,7 @@ public class ClassService implements IClassService {
         Class savedClass = classRepository.save(newClass);
         return mapEntityToDTO(savedClass);
     }
+
 
 
 
