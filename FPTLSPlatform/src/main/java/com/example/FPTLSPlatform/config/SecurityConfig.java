@@ -115,7 +115,6 @@ public SecurityFilterChain configure(HttpSecurity http) throws Exception {
             .requestMatchers(HttpMethod.POST, "/categories").hasAuthority("STAFF")
             .requestMatchers(HttpMethod.PUT, "/categories").hasAuthority("STAFF")
             .requestMatchers(HttpMethod.GET, "/categories", "/categories/{id}").permitAll()
-
             .requestMatchers("/api/feedback-question").hasAuthority("STAFF")
             .requestMatchers("/api/feedback-category").hasAuthority("STAFF")
             .requestMatchers(HttpMethod.POST, "/slots").hasAuthority("STAFF")
@@ -125,8 +124,8 @@ public SecurityFilterChain configure(HttpSecurity http) throws Exception {
 
             // Các endpoint cho TEACHER
             .requestMatchers("/teacher/**").hasAuthority("TEACHER")
-            .requestMatchers("/classes/byCourse/{courseCode}").hasAnyAuthority("STUDENT", "TEACHER")
-            .requestMatchers("/classes/getByClassId/{classId}").hasAnyAuthority("STUDENT", "TEACHER")
+            .requestMatchers("/classes/byCourse/{courseCode}").hasAnyAuthority("STUDENT", "TEACHER", "STAFF")
+            .requestMatchers("/classes/getByClassId/{classId}").hasAnyAuthority("STUDENT", "TEACHER", "STAFF")
             .requestMatchers("/classes/teacher/{teacherName}").hasAuthority("STUDENT")
             .requestMatchers("/classes/my-classes").hasAuthority("TEACHER")
             .requestMatchers(HttpMethod.PUT, "/classes/{classId}").hasAuthority("STAFF")
@@ -141,7 +140,7 @@ public SecurityFilterChain configure(HttpSecurity http) throws Exception {
 
             // Các endpoint cho ADMIN
             .requestMatchers("/classes/StatusCompleted").hasAnyAuthority("STAFF", "ADMIN")
-            .requestMatchers("/classes").hasAnyAuthority("STUDENT", "ADMIN")
+            .requestMatchers("/classes").hasAnyAuthority("STUDENT", "ADMIN", "STAFF")
             .requestMatchers("/classes/{classId}/students").hasAnyAuthority("STAFF", "STUDENT", "TEACHER")
             .requestMatchers(HttpMethod.GET, "/slots").hasAnyAuthority("STAFF", "STUDENT", "TEACHER", "ADMIN")
             .requestMatchers(HttpMethod.GET, "/slots/{slotId}").hasAnyAuthority("STAFF", "STUDENT", "TEACHER")

@@ -49,7 +49,12 @@ vnpay:
   return_url: https://fsls.info.vn/wallet
 
 server:
+  tomcat:
+    max-swallow-size: 100MB
   servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
     session:
       cookie:
         secure: true       # Enable for HTTPS

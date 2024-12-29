@@ -20,6 +20,12 @@ public class CloudinaryService {
     }
 
     public String uploadFile(MultipartFile file) throws IOException {
+        // Giới hạn kích thước tệp (ví dụ: 100MB)
+        long maxFileSizeInBytes = 100 * 1024 * 1024; // 100MB
+        if (file.getSize() > maxFileSizeInBytes) {
+            throw new IllegalArgumentException("Tệp vượt quá kích thước cho phép là 100MB!");
+        }
+
         // Lấy phần mở rộng của file
         String fileExtension = getFileExtension(file);
         if (fileExtension == null || fileExtension.isEmpty()) {
@@ -32,13 +38,16 @@ public class CloudinaryService {
                 "resource_type", "raw",
                 "folder", "uploads",
                 "public_id", fileNameWithExtension,
-                "type", "upload"
+                "type", "upload",
+                "chunk_size", 10 * 1024 * 1024 // Chia thành các phần 10MB
         );
+
 
         Map uploadResult = cloudinary.uploader().upload(file.getBytes(), options);
 
         return uploadResult.get("url").toString();
     }
+
 
 
     private String getFileExtension(MultipartFile file) {
