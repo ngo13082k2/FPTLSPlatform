@@ -577,7 +577,9 @@ public class OrderService implements IOrderService {
             scheduledClass.setStatus(ClassStatus.ACTIVE);
             classRepository.save(scheduledClass);
             notificationService.createNotification(buildNotificationDTO("Your lesson " + scheduledClass.getName() + " has been activated",
-                    "Lesson " + scheduledClass.getName() + " is starting on " + scheduledClass.getStartDate(),
+                    "Lesson " + scheduledClass.getName() + " is starting on " + scheduledClass.getDateSlots().stream()
+                            .map(dateSlot -> dateSlot.getDate().atTime(dateSlot.getSlot().getStartTime()))
+                            .min(LocalDateTime::compareTo),
                     scheduledClass.getTeacher().getTeacherName(), "Active lesson"));
 
             sendActivationEmail(scheduledClass);
@@ -628,7 +630,7 @@ public class OrderService implements IOrderService {
         int adjustStartTime = demoAdjustStartTime != null ? Integer.parseInt(demoAdjustStartTime.getValue()) : 0;
 
         // Lấy danh sách các lớp học đang ở trạng thái ACTIVE và có ngày bắt đầu là hôm nay
-        List<Class> classesToStart = classRepository.findByStartDateAndStatus(now.toLocalDate(), ClassStatus.ACTIVE);
+        Page<Class> classesToStart = classRepository.findByStatusAndStartDate(ClassStatus.ACTIVE ,now.toLocalDate(), Pageable.unpaged());
 
         for (Class scheduledClass : classesToStart) {
             try {
@@ -681,7 +683,7 @@ public class OrderService implements IOrderService {
         double discount = discountPercentage != null ? Double.parseDouble(discountPercentage.getValue()) : 0;
 
         // Lấy danh sách các lớp học đang ở trạng thái ONGOING và có ngày bắt đầu là hôm nay
-        List<Class> classesToComplete = classRepository.findByStartDateAndStatus(now.toLocalDate(), ClassStatus.ONGOING);
+        Page<Class> classesToComplete = classRepository.findByStatusAndStartDate(ClassStatus.ONGOING, now.toLocalDate(), Pageable.unpaged());
 
         for (Class scheduledClass : classesToComplete) {
             try {

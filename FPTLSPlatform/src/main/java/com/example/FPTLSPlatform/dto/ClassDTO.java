@@ -35,8 +35,8 @@ public class ClassDTO {
     private LocalDateTime createDate;
 
     private String teacherName;
+
     private String creator;
-    private LocalDate startDate;
 
     private String courseCode;
 
@@ -46,13 +46,10 @@ public class ClassDTO {
 
     private String imageUrl;
 
-    private Set<Long> slotIds;
-    private LocalDate endDate;
-
-    private String dayOfWeek;
-
     private String imageTeacher;
+
     private List<DateSlotDTO> dateSlots;
+
     private List<DocumentDTO> documents;
 
 }

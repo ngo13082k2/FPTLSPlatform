@@ -24,6 +24,7 @@ public interface ClassRepository extends JpaRepository<Class, Long> {
 
     Optional<Class> findById(Long classId);
 
+    @Query("SELECT c FROM Class c JOIN c.dateSlots ds WHERE c.status = :status AND ds.date = :date")
     Page<Class> findByStatusAndStartDate(ClassStatus status, LocalDate date, Pageable pageable);
 
     List<Class> findByTeacherTeacherName(String teacherName);
@@ -37,14 +38,17 @@ public interface ClassRepository extends JpaRepository<Class, Long> {
             "WHERE od.classes.classId = :classId")
     List<StudentDTO> findStudentsByClassId(@Param("classId") Long classId);
 
-
-    List<Class> findByStartDateAndStatus(LocalDate localDate, ClassStatus status);
-
     List<Class> findByCoursesCategoriesCategoryIdIn(Set<Long> categoryIds);
 
     List<Class> findByStatus(ClassStatus status);
 
-    List<Class> findByStatusAndStartDateBetween(ClassStatus classStatus, LocalDate localDate, LocalDate localDate1);
+    @Query("SELECT DISTINCT c FROM Class c " +
+            "JOIN c.dateSlots ds " +
+            "WHERE c.status = :classStatus " +
+            "AND ds.date BETWEEN :startDate AND :endDate")
+    List<Class> findByStatusAndStartDateBetween(@Param("classStatus") ClassStatus classStatus,
+                                               @Param("startDate") LocalDate startDate,
+                                               @Param("endDate") LocalDate endDate);
 
     List<Class> findByTeacherTeacherNameAndStatus(String teacherName, ClassStatus status);
 

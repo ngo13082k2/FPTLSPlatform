@@ -68,7 +68,6 @@ public class OrderDetailService implements IOrderDetailService {
                             .price(orderDetail.getClasses().getPrice())
                             .teacherName(orderDetail.getClasses().getTeacher().getTeacherName())
                             .fullName(orderDetail.getClasses().getTeacher().getFullName())
-                            .startDate(orderDetail.getClasses().getStartDate())
                             .courseCode(orderDetail.getClasses().getCourses().getCourseCode())
                             .imageUrl(orderDetail.getClasses().getImage())
                             .imageTeacher(orderDetail.getClasses().getTeacher().getAvatarImage())

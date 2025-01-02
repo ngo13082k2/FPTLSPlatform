@@ -17,6 +17,7 @@ import org.springframework.ui.Model;
 import org.thymeleaf.context.Context;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -66,7 +67,12 @@ public class FeedbackService implements IFeedbackService {
 
         // Get the class entity related to this order detail
         Class classEntity = orderDetails.getContent().get(0).getClasses();
-        LocalDate classEndDate = classEntity.getStartDate();
+        LocalDate classEndDate = classEntity.getDateSlots().stream()
+                .map(dateSlot -> dateSlot.getDate().atTime(dateSlot.getSlot().getEndTime())) // Lấy thời gian kết thúc
+                .max(LocalDateTime::compareTo) // Tìm thời điểm muộn nhất
+                .get() // Lấy giá trị từ Optional
+                .toLocalDate(); // Chuyển đổi sang LocalDate
+
 
         // Define the maximum number of days allowed for feedback submission (e.g., 7 days)
         int feedbackDeadlineInDays = 7;

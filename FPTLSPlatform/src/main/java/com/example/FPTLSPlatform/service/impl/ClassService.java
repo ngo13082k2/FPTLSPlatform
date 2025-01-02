@@ -343,10 +343,7 @@ public class ClassService implements IClassService {
                 .maxStudents(classDTO.getMaxStudents())
                 .price(classDTO.getPrice())
                 .creator(user)
-
                 .createDate(classDTO.getCreateDate())
-                .startDate(classDTO.getStartDate())
-                .endDate(classDTO.getEndDate())
                 .image(classDTO.getImageUrl())
                 .courses(course)
                 .build();
@@ -440,8 +437,6 @@ public class ClassService implements IClassService {
                 .price(clazz.getPrice())
                 .teacherName(teacherName)
                 .fullName(fullName)
-                .startDate(clazz.getStartDate())
-                .endDate(clazz.getEndDate())
                 .courseCode(clazz.getCourses().getCourseCode())
                 .imageUrl(clazz.getImage())
                 .creator(clazz.getCreator())

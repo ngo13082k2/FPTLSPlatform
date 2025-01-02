@@ -48,8 +48,10 @@
 
         @Column(name = "image")
         private String image;
+
         @Column(name = "creator", nullable = false)
         private String creator;
+
         @ManyToOne
         @JoinColumn(name = "teacher_name", referencedColumnName = "teacher_name",nullable = true)
         private Teacher teacher;
@@ -57,18 +59,9 @@
         @Column(name = "create_date")
         private LocalDateTime createDate;
 
-        @Column(name = "start_date")
-        private LocalDate startDate;
-
-        @Column(name = "end_date")
-        private LocalDate endDate;
-
         @ManyToOne
         @JoinColumn(name = "course_code", referencedColumnName = "course_code", nullable = false)
         private Course courses;
-
-        @Column(name = "day_of_week")
-        private String dayOfWeek;
 
         @OneToMany(mappedBy = "clazz", cascade = CascadeType.ALL, orphanRemoval = true)
         private Set<ClassDateSlot> dateSlots = new HashSet<>();
