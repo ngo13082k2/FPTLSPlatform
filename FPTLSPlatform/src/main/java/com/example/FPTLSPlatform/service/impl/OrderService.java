@@ -530,7 +530,7 @@ public class OrderService implements IOrderService {
 
         while (true) {
             Pageable pageable = PageRequest.of(pageNumber, 50);
-            Page<Class> classesPage = classRepository.findByStatusAndStartDate(ClassStatus.PENDING, LocalDate.now(), pageable);
+            Page<Class> classesPage = classRepository.findByStatus(ClassStatus.PENDING, pageable);
 
             if (classesPage.isEmpty()) {
                 break;
@@ -630,7 +630,7 @@ public class OrderService implements IOrderService {
         int adjustStartTime = demoAdjustStartTime != null ? Integer.parseInt(demoAdjustStartTime.getValue()) : 0;
 
         // Lấy danh sách các lớp học đang ở trạng thái ACTIVE và có ngày bắt đầu là hôm nay
-        Page<Class> classesToStart = classRepository.findByStatusAndStartDate(ClassStatus.ACTIVE ,now.toLocalDate(), Pageable.unpaged());
+        Page<Class> classesToStart = classRepository.findByStatus(ClassStatus.ACTIVE , Pageable.unpaged());
 
         for (Class scheduledClass : classesToStart) {
             try {
@@ -683,7 +683,7 @@ public class OrderService implements IOrderService {
         double discount = discountPercentage != null ? Double.parseDouble(discountPercentage.getValue()) : 0;
 
         // Lấy danh sách các lớp học đang ở trạng thái ONGOING và có ngày bắt đầu là hôm nay
-        Page<Class> classesToComplete = classRepository.findByStatusAndStartDate(ClassStatus.ONGOING, now.toLocalDate(), Pageable.unpaged());
+        Page<Class> classesToComplete = classRepository.findByStatus(ClassStatus.ONGOING, Pageable.unpaged());
 
         for (Class scheduledClass : classesToComplete) {
             try {

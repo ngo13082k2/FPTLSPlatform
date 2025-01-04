@@ -24,8 +24,7 @@ public interface ClassRepository extends JpaRepository<Class, Long> {
 
     Optional<Class> findById(Long classId);
 
-    @Query("SELECT c FROM Class c JOIN c.dateSlots ds WHERE c.status = :status AND ds.date = :date")
-    Page<Class> findByStatusAndStartDate(ClassStatus status, LocalDate date, Pageable pageable);
+    Page<Class> findByStatus(ClassStatus status, Pageable pageable);
 
     List<Class> findByTeacherTeacherName(String teacherName);
 
