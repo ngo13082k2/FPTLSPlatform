@@ -559,6 +559,8 @@ public class ClassService implements IClassService {
 
         return "Class with ID " + classId + " has been successfully canceled, and refunds have been processed.";
     }
+
+    @Transactional
     public void assignTeacherToClass(Long classId) {
         Class clazz = classRepository.findById(classId)
                 .orElseThrow(() -> new RuntimeException("Class not found"));
