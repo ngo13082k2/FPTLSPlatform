@@ -436,6 +436,9 @@ public class ClassService implements IClassService {
         if (teacherName != null) {
             teacherFeedback = feedbackService.getAverageFeedbackForTeacher(teacherName);
         }
+        if (teacherFeedback == null) {
+            teacherFeedback = 0.0;
+        }
         return ClassDTO.builder()
                 .classId(clazz.getClassId())
                 .name(clazz.getName())
