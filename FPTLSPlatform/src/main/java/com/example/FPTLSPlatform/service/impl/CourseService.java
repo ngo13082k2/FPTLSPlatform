@@ -120,6 +120,7 @@ public class CourseService implements ICourseService {
                 .description(courseDTO.getDescription())
                 .status(courseDTO.getStatus())
                 .image(imageUrl)
+                .duration(courseDTO.getDuration())
                 .categories(category)
                 .build();
     }

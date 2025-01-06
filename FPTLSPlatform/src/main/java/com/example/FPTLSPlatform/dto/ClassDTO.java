@@ -52,4 +52,5 @@ public class ClassDTO {
 
     private List<DocumentDTO> documents;
 
+    private Double teacherFeedback;
 }

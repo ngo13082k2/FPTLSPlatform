@@ -48,6 +48,7 @@ public class ClassService implements IClassService {
     private final ViolationRepository violationRepository;
     private final ClassDateSlotRepository classDateSlotRepository;
     private final DocumentRepository documentRepository;
+    private final FeedbackService feedbackService;
 
     @Autowired
     public ClassService(ClassRepository classRepository,
@@ -56,8 +57,8 @@ public class ClassService implements IClassService {
                         OrderDetailRepository orderDetailRepository,
                         CloudinaryService cloudinaryService,
                         SlotRepository slotRepository,
-                        UserRepository userRepository, WalletRepository walletRepository, OrderRepository orderRepository, ViolationRepository violationRepository, ClassDateSlotRepository classDateSlotRepository, DocumentRepository documentRepository
-    ) {
+                        UserRepository userRepository, WalletRepository walletRepository, OrderRepository orderRepository, ViolationRepository violationRepository, ClassDateSlotRepository classDateSlotRepository, DocumentRepository documentRepository,
+                        FeedbackService feedbackService) {
         this.classRepository = classRepository;
         this.courseRepository = courseRepository;
         this.teacherRepository = teacherRepository;
@@ -70,6 +71,7 @@ public class ClassService implements IClassService {
         this.violationRepository = violationRepository;
         this.classDateSlotRepository = classDateSlotRepository;
         this.documentRepository = documentRepository;
+        this.feedbackService = feedbackService;
     }
 
     private static final Logger log = LoggerFactory.getLogger(ClassService.class);
@@ -91,11 +93,17 @@ public class ClassService implements IClassService {
         classDTO.setCreateDate(LocalDateTime.now());
         classDTO.setStatus(ClassStatus.PENDING);
 
-        Optional<Course> course = courseRepository.findByCourseCode(classDTO.getCourseCode());
-        if (course.isEmpty()) {
+        Optional<Course> courseOpt = courseRepository.findByCourseCode(classDTO.getCourseCode());
+        if (courseOpt.isEmpty()) {
             throw new RuntimeException("Course with code " + classDTO.getCourseCode() + " not found");
         }
+        Course course = courseOpt.get();
 
+        // Kiểm tra số lượng slot của lớp
+        int requiredSlots = course.getDuration(); // Số lượng slot dựa trên thời lượng của khóa học
+        if (classDTO.getDateSlots() == null || classDTO.getDateSlots().size() != requiredSlots) {
+            throw new RuntimeException("Class must have exactly " + requiredSlots + " slots to match the course duration.");
+        }
         boolean hasDocument = documentRepository.existsByCourse_CourseCode(classDTO.getCourseCode());
         if (!hasDocument) {
             throw new RuntimeException("Cannot create class. No document associated with course code " + classDTO.getCourseCode());
@@ -107,7 +115,7 @@ public class ClassService implements IClassService {
             classDTO.setImageUrl(imageUrl);
         }
 
-        Class newClass = mapDTOToEntity(classDTO, course.get(), user);
+        Class newClass = mapDTOToEntity(classDTO, course, user);
         Set<ClassDateSlot> dateSlots = mapDateSlots(classDTO, newClass);
         newClass.setDateSlots(dateSlots);
 
@@ -424,7 +432,7 @@ public class ClassService implements IClassService {
         String teacherName = teacher != null ? teacher.getTeacherName() : null;
         String fullName = teacher != null ? teacher.getFullName() : null;
         String avatarImage = teacher != null ? teacher.getAvatarImage() : null;
-
+        Double teacherFeedback = feedbackService.getAverageFeedbackForTeacher(teacherName);
         return ClassDTO.builder()
                 .classId(clazz.getClassId())
                 .name(clazz.getName())
@@ -444,6 +452,7 @@ public class ClassService implements IClassService {
                 .students(studentDTOList)
                 .imageTeacher(avatarImage)
                 .documents(documents)
+                .teacherFeedback(teacherFeedback)
                 .build();
     }
 
@@ -557,10 +566,11 @@ public class ClassService implements IClassService {
                 .orElseThrow(() -> new RuntimeException("Teacher not found"));
 
         boolean hasConflict = clazz.getDateSlots().stream().anyMatch(dateSlot ->
-                classDateSlotRepository.existsByClazz_Teacher_TeacherNameAndDateAndSlot_SlotId(
+                classDateSlotRepository.existsByClazz_Teacher_TeacherNameAndDateAndSlot_SlotIdAndClazz_StatusNot(
                         teacher.getTeacherName(),
                         dateSlot.getDate(),
-                        dateSlot.getSlot().getSlotId()
+                        dateSlot.getSlot().getSlotId(),
+                        String.valueOf(ClassStatus.CANCELED)
                 )
         );
 
