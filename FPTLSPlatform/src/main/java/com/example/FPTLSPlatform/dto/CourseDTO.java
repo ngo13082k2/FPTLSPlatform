@@ -18,7 +18,7 @@ public class CourseDTO {
 
     private String image;
     
-    private int duration;
+//    private int duration;
 
     private Long categoryId;
 

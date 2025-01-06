@@ -199,7 +199,8 @@ public class ClassController {
     }
     @GetMapping("/without-teacher")
     public ResponseEntity<List<ClassDTO>> getAllClassesWithoutTeacher() {
-        List<ClassDTO> classes = classService.getAllClassesWithoutTeacher();
+        String username = getCurrentUsername();
+        List<ClassDTO> classes = classService.getAllClassesWithoutTeacher(username);
         return ResponseEntity.ok(classes);
     }
 

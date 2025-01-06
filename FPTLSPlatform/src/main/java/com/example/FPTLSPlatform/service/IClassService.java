@@ -39,7 +39,7 @@ public interface IClassService {
     void assignTeacherToClass(Long classId) ;
     List<ClassDTO> getClassesByTeacherName();
     ClassDTO updateClassLocation(Long classId, String location);
-    List<ClassDTO> getAllClassesWithoutTeacher();
+    List<ClassDTO> getAllClassesWithoutTeacher(String username);
     List<ClassDTO> getAllClassesWithTeacher();
     List<ClassDTO> getAllClassesWithTeacherByMajor();
 }

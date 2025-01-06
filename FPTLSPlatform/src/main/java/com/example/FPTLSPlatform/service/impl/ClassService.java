@@ -100,10 +100,10 @@ public class ClassService implements IClassService {
         Course course = courseOpt.get();
 
         // Kiểm tra số lượng slot của lớp
-        int requiredSlots = course.getDuration(); // Số lượng slot dựa trên thời lượng của khóa học
-        if (classDTO.getDateSlots() == null || classDTO.getDateSlots().size() != requiredSlots) {
-            throw new RuntimeException("Class must have exactly " + requiredSlots + " slots to match the course duration.");
-        }
+//        int requiredSlots = course.getDuration(); // Số lượng slot dựa trên thời lượng của khóa học
+//        if (classDTO.getDateSlots() == null || classDTO.getDateSlots().size() != requiredSlots) {
+//            throw new RuntimeException("Class must have exactly " + requiredSlots + " slots to match the course duration.");
+//        }
         boolean hasDocument = documentRepository.existsByCourse_CourseCode(classDTO.getCourseCode());
         if (!hasDocument) {
             throw new RuntimeException("Cannot create class. No document associated with course code " + classDTO.getCourseCode());
@@ -599,12 +599,33 @@ public class ClassService implements IClassService {
 
         return mapEntityToDTO(clazz);
     }
-    public List<ClassDTO> getAllClassesWithoutTeacher() {
-        return classRepository.findByTeacherIsNull().stream()
-                .map(this::mapEntityToDTO)
+    public List<ClassDTO> getAllClassesWithoutTeacher(String username) {
+        List<Class> classesWithoutTeacher = classRepository.findByTeacherIsNull();
+
+        // Duyệt qua từng lớp học
+        return classesWithoutTeacher.stream()
+                .filter(clazz -> !hasScheduleConflict(clazz, username)) // Kiểm tra xung đột lịch
+                .map(this::mapEntityToDTO) // Chuyển đổi thành DTO
                 .collect(Collectors.toList());
     }
+    private boolean hasScheduleConflict(Class clazz, String teacherUsername) {
+        // Lấy các lớp học của giáo viên
+        List<Class> teacherClasses = classRepository.findByTeacher_TeacherName(teacherUsername);
 
+        // Kiểm tra xem lớp học có xung đột lịch hay không
+        for (Class teacherClass : teacherClasses) {
+            for (ClassDateSlot dateSlot : clazz.getDateSlots()) {
+                for (ClassDateSlot teacherDateSlot : teacherClass.getDateSlots()) {
+                    // Kiểm tra nếu có sự trùng lặp về ngày và slot
+                    if (dateSlot.getDate().equals(teacherDateSlot.getDate()) &&
+                            dateSlot.getSlot().getSlotId().equals(teacherDateSlot.getSlot().getSlotId())) {
+                        return true; // Xung đột lịch
+                    }
+                }
+            }
+        }
+        return false; // Không có xung đột lịch
+    }
     public List<ClassDTO> getAllClassesWithTeacher() {
         return classRepository.findByTeacherIsNotNull().stream()
                 .map(this::mapEntityToDTO)

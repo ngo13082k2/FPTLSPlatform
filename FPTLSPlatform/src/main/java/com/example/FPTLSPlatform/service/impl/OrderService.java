@@ -551,7 +551,8 @@ public class OrderService implements IOrderService {
                     }
 
                     // Kích hoạt lớp học nếu đủ điều kiện
-                    if (adjustedStartTime.isBefore(LocalDateTime.now())) {
+                    LocalDateTime localDateTime = LocalDateTime.now();
+                    if (adjustedStartTime.isBefore(localDateTime)) {
                         Class clazz = activateClassIfEligible(scheduledClass);
                         Page<OrderDetail> orderDetails = orderDetailRepository.findByClasses_ClassId(clazz.getClassId(), Pageable.unpaged());
                         handleOrderDetails(orderDetails, scheduledClass);
