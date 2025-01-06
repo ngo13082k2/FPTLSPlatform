@@ -576,7 +576,7 @@ public class ClassService implements IClassService {
                         teacher.getTeacherName(),
                         dateSlot.getDate(),
                         dateSlot.getSlot().getSlotId(),
-                        String.valueOf(ClassStatus.CANCELED)
+                        ClassStatus.CANCELED
                 )
         );
 
@@ -625,7 +625,7 @@ public class ClassService implements IClassService {
         }
 
         // Lấy các lớp học của giáo viên
-        List<Class> teacherClasses = classRepository.findByTeacher_TeacherName(teacherUsername);
+        List<Class> teacherClasses = classRepository.findByTeacher_TeacherNameAndStatusNot(teacherUsername, ClassStatus.CANCELED);
 
         // Kiểm tra xem lớp học có xung đột lịch hay không
         for (Class teacherClass : teacherClasses) {

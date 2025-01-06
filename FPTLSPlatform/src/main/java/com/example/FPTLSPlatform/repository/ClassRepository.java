@@ -61,9 +61,10 @@ public interface ClassRepository extends JpaRepository<Class, Long> {
 //            String dayOfWeek,
 //            LocalDate startDate,
 //            ClassStatus status);
-List<Class> findByTeacher_TeacherName(String teacherName);
+    List<Class> findByTeacher_TeacherNameAndStatusNot(String teacherName, ClassStatus status);
     List<Class> findByTeacherIsNull();
     List<Class> findByTeacherIsNotNull();
     List<Class> findByCoursesCategoriesCategoryIdInAndTeacherIsNotNull(Set<Long> categoryIds);
 
+    List<Class> findByTeacher_TeacherName(String teacherName);
 }
