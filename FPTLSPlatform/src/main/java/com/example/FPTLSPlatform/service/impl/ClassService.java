@@ -432,7 +432,10 @@ public class ClassService implements IClassService {
         String teacherName = teacher != null ? teacher.getTeacherName() : null;
         String fullName = teacher != null ? teacher.getFullName() : null;
         String avatarImage = teacher != null ? teacher.getAvatarImage() : null;
-        Double teacherFeedback = feedbackService.getAverageFeedbackForTeacher(teacherName);
+        Double teacherFeedback = null;
+        if (teacherName != null) {
+            teacherFeedback = feedbackService.getAverageFeedbackForTeacher(teacherName);
+        }
         return ClassDTO.builder()
                 .classId(clazz.getClassId())
                 .name(clazz.getName())
@@ -600,6 +603,10 @@ public class ClassService implements IClassService {
         return mapEntityToDTO(clazz);
     }
     public List<ClassDTO> getAllClassesWithoutTeacher(String username) {
+        if (username == null || username.isEmpty()) {
+            throw new IllegalArgumentException("Teacher username cannot be null or empty");
+        }
+
         List<Class> classesWithoutTeacher = classRepository.findByTeacherIsNull();
 
         // Duyệt qua từng lớp học
@@ -608,7 +615,12 @@ public class ClassService implements IClassService {
                 .map(this::mapEntityToDTO) // Chuyển đổi thành DTO
                 .collect(Collectors.toList());
     }
+
     private boolean hasScheduleConflict(Class clazz, String teacherUsername) {
+        if (teacherUsername == null || teacherUsername.isEmpty()) {
+            throw new IllegalArgumentException("Teacher username cannot be null or empty");
+        }
+
         // Lấy các lớp học của giáo viên
         List<Class> teacherClasses = classRepository.findByTeacher_TeacherName(teacherUsername);
 
@@ -626,6 +638,7 @@ public class ClassService implements IClassService {
         }
         return false; // Không có xung đột lịch
     }
+
     public List<ClassDTO> getAllClassesWithTeacher() {
         return classRepository.findByTeacherIsNotNull().stream()
                 .map(this::mapEntityToDTO)
