@@ -120,7 +120,7 @@ public class CourseService implements ICourseService {
                 .description(courseDTO.getDescription())
                 .status(courseDTO.getStatus())
                 .image(imageUrl)
-//                .duration(courseDTO.getDuration())
+                .duration(courseDTO.getDuration())
                 .categories(category)
                 .build();
     }
@@ -135,6 +135,7 @@ public class CourseService implements ICourseService {
                 .description(course.getDescription())
                 .status(course.getStatus())
                 .image(course.getImage())
+                .duration(course.getDuration())
                 .categoryId(course.getCategories().getCategoryId())
                 .categoryName(course.getCategories().getName())
                 .build();

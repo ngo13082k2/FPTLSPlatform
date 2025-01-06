@@ -30,8 +30,8 @@ public class Course {
     @Column(name = "image")
     private String image;
 
-//    @Column(name = "duration", nullable = false)
-//    private int duration;
+    @Column(name = "duration", nullable = false)
+    private int duration;
 
     @ManyToOne
     @JoinColumn(name = "category_id", referencedColumnName = "category_id", nullable = false)

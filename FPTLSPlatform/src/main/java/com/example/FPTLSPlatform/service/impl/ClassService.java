@@ -100,10 +100,10 @@ public class ClassService implements IClassService {
         Course course = courseOpt.get();
 
         // Kiểm tra số lượng slot của lớp
-//        int requiredSlots = course.getDuration(); // Số lượng slot dựa trên thời lượng của khóa học
-//        if (classDTO.getDateSlots() == null || classDTO.getDateSlots().size() != requiredSlots) {
-//            throw new RuntimeException("Class must have exactly " + requiredSlots + " slots to match the course duration.");
-//        }
+        int requiredSlots = course.getDuration(); // Số lượng slot dựa trên thời lượng của khóa học
+        if (classDTO.getDateSlots() == null || classDTO.getDateSlots().size() != requiredSlots) {
+            throw new RuntimeException("Class must have exactly " + requiredSlots + " slots to match the course duration.");
+        }
         boolean hasDocument = documentRepository.existsByCourse_CourseCode(classDTO.getCourseCode());
         if (!hasDocument) {
             throw new RuntimeException("Cannot create class. No document associated with course code " + classDTO.getCourseCode());
