@@ -527,7 +527,7 @@ public class ClassService implements IClassService {
             violation = new Violation();
             violation.setTeacher(teacher);
             violation.setViolationCount(1);  // Tăng số lần vi phạm
-            violation.setPenaltyPercentage(0.1);  // Tỉ lệ trừ (ví dụ là 10%)
+            violation.setPenaltyPercentage(0.2);  // Tỉ lệ trừ (ví dụ là 20%)
             violation.setLastViolationDate(LocalDateTime.now());
             violation.setDescription("Teacher cancelled a class.");
             violationRepository.save(violation);
