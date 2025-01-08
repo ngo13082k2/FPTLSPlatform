@@ -175,7 +175,7 @@ public class FeedbackService implements IFeedbackService {
         List<Class> completedClasses = classRepository.findByTeacherTeacherNameAndStatus(teacherName, ClassStatus.COMPLETED);
 
         if (completedClasses.isEmpty()) {
-            throw new RuntimeException("No completed classes found for teacher: " + teacherName);
+            return 0;
         }
 
         double totalAverage = 0;
@@ -194,7 +194,7 @@ public class FeedbackService implements IFeedbackService {
         }
 
         if (classCount == 0) {
-            throw new RuntimeException("No feedback found for completed classes of teacher: " + teacherName);
+            return 0;
         }
 
         return totalAverage / classCount;
