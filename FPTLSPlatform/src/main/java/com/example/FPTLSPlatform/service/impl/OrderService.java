@@ -341,7 +341,7 @@ public class OrderService implements IOrderService {
         LocalDateTime upcomingThreshold = now.plusHours(24);
 
         // Lấy các lớp học sắp diễn ra trong khoảng thời gian từ now đến 24 giờ tới
-        List<Class> upcomingClasses = classRepository.findByStatusAndStartDateBetweenAndTeacher(ClassStatus.ACTIVE, now.toLocalDate(), upcomingThreshold.toLocalDate());
+        List<Class> upcomingClasses = classRepository.findByStatusAndStartDateBetween(ClassStatus.ACTIVE, now.toLocalDate(), upcomingThreshold.toLocalDate());
 
         for (Class upcomingClass : upcomingClasses) {
             // Lặp qua các ClassDateSlot của lớp học
