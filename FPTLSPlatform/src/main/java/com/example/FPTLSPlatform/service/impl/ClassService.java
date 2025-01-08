@@ -527,7 +527,7 @@ public class ClassService implements IClassService {
             violation = new Violation();
             violation.setTeacher(teacher);
             violation.setViolationCount(1);  // Tăng số lần vi phạm
-            violation.setPenaltyPercentage(0.1);  // Tỉ lệ trừ (ví dụ là 10%)
+            violation.setPenaltyPercentage(0.2);  // Tỉ lệ trừ (ví dụ là 20%)
             violation.setLastViolationDate(LocalDateTime.now());
             violation.setDescription("Teacher cancelled a class.");
             violationRepository.save(violation);
@@ -612,14 +612,28 @@ public class ClassService implements IClassService {
             throw new IllegalArgumentException("Teacher username cannot be null or empty");
         }
 
-        List<Class> classesWithoutTeacher = classRepository.findByTeacherIsNull();
+        Teacher teacher = teacherRepository.findByTeacherName(username)
+                .orElseThrow(() -> new IllegalArgumentException("Teacher not found"));
 
-        // Duyệt qua từng lớp học
+        Set<Long> categoryIds = teacher.getMajor().stream()
+                .map(Category::getCategoryId)
+                .collect(Collectors.toSet());
+
+        if (categoryIds.isEmpty()) {
+            throw new IllegalArgumentException("Teacher does not have any major categories assigned");
+        }
+
+        List<Class> classesWithoutTeacher = classRepository.findByTeacherIsNullAndCoursesCategoriesCategoryIdInAndStatus(
+                categoryIds, ClassStatus.PENDING
+        );
+
+        // Duyệt qua từng lớp học, loại bỏ các lớp có xung đột lịch
         return classesWithoutTeacher.stream()
                 .filter(clazz -> !hasScheduleConflict(clazz, username)) // Kiểm tra xung đột lịch
                 .map(this::mapEntityToDTO) // Chuyển đổi thành DTO
                 .collect(Collectors.toList());
     }
+
 
     private boolean hasScheduleConflict(Class clazz, String teacherUsername) {
         if (teacherUsername == null || teacherUsername.isEmpty()) {

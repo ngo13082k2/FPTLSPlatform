@@ -10,7 +10,7 @@ import lombok.*;
 @Table(name = "documents")
 @NoArgsConstructor
 @AllArgsConstructor
-public class Document {
+    public class Document {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
