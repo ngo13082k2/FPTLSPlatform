@@ -612,9 +612,21 @@ public class ClassService implements IClassService {
             throw new IllegalArgumentException("Teacher username cannot be null or empty");
         }
 
-        List<Class> classesWithoutTeacher = classRepository.findByTeacherIsNull();
+        Teacher teacher = teacherRepository.findByTeacherName(username)
+                .orElseThrow(() -> new IllegalArgumentException("Teacher not found"));
 
-        // Duyệt qua từng lớp học
+        Set<Long> categoryIds = teacher.getMajor().stream()
+                .map(Category::getCategoryId)
+                .collect(Collectors.toSet());
+
+        if (categoryIds.isEmpty()) {
+            throw new IllegalArgumentException("Teacher does not have any major categories assigned");
+        }
+
+        // Lấy danh sách các lớp học không có giáo viên và thuộc major của giáo viên
+        List<Class> classesWithoutTeacher = classRepository.findByTeacherIsNullAndCoursesCategoriesCategoryIdIn(categoryIds);
+
+        // Duyệt qua từng lớp học, loại bỏ các lớp có xung đột lịch
         return classesWithoutTeacher.stream()
                 .filter(clazz -> !hasScheduleConflict(clazz, username)) // Kiểm tra xung đột lịch
                 .map(this::mapEntityToDTO) // Chuyển đổi thành DTO
