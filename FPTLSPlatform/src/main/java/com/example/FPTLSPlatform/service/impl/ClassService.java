@@ -623,8 +623,9 @@ public class ClassService implements IClassService {
             throw new IllegalArgumentException("Teacher does not have any major categories assigned");
         }
 
-        // Lấy danh sách các lớp học không có giáo viên và thuộc major của giáo viên
-        List<Class> classesWithoutTeacher = classRepository.findByTeacherIsNullAndCoursesCategoriesCategoryIdIn(categoryIds);
+        List<Class> classesWithoutTeacher = classRepository.findByTeacherIsNullAndCoursesCategoriesCategoryIdInAndStatus(
+                categoryIds, ClassStatus.PENDING
+        );
 
         // Duyệt qua từng lớp học, loại bỏ các lớp có xung đột lịch
         return classesWithoutTeacher.stream()
@@ -632,6 +633,7 @@ public class ClassService implements IClassService {
                 .map(this::mapEntityToDTO) // Chuyển đổi thành DTO
                 .collect(Collectors.toList());
     }
+
 
     private boolean hasScheduleConflict(Class clazz, String teacherUsername) {
         if (teacherUsername == null || teacherUsername.isEmpty()) {
