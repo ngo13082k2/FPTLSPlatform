@@ -341,7 +341,7 @@ public class OrderService implements IOrderService {
         LocalDateTime upcomingThreshold = now.plusHours(24);
 
         // Lấy các lớp học sắp diễn ra trong khoảng thời gian từ now đến 24 giờ tới
-        List<Class> upcomingClasses = classRepository.findByStatusAndStartDateBetween(ClassStatus.ACTIVE, now.toLocalDate(), upcomingThreshold.toLocalDate());
+        List<Class> upcomingClasses = classRepository.findByStatusAndStartDateBetweenAndTeacher(ClassStatus.ACTIVE, now.toLocalDate(), upcomingThreshold.toLocalDate());
 
         for (Class upcomingClass : upcomingClasses) {
             // Lặp qua các ClassDateSlot của lớp học
@@ -530,7 +530,7 @@ public class OrderService implements IOrderService {
 
         while (true) {
             Pageable pageable = PageRequest.of(pageNumber, 50);
-            Page<Class> classesPage = classRepository.findByStatus(ClassStatus.PENDING, pageable);
+            Page<Class> classesPage = classRepository.findByStatusAndTeacherIsNotNull(ClassStatus.PENDING, pageable);
 
             if (classesPage.isEmpty()) {
                 break;
@@ -891,7 +891,7 @@ public class OrderService implements IOrderService {
             violation = new Violation();
             violation.setTeacher(teacher);
             violation.setViolationCount(1);  // Tăng số lần vi phạm
-            violation.setPenaltyPercentage(0.1);  // Tỉ lệ trừ (ví dụ là 10%)
+            violation.setPenaltyPercentage(0.2);  // Tỉ lệ trừ (ví dụ là 10%)
             violation.setLastViolationDate(LocalDateTime.now());
             violation.setDescription("Teacher cancelled a class.");
             violationRepository.save(violation);

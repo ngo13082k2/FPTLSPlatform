@@ -11,7 +11,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -45,9 +44,9 @@ public interface ClassRepository extends JpaRepository<Class, Long> {
             "JOIN c.dateSlots ds " +
             "WHERE c.status = :classStatus " +
             "AND ds.date BETWEEN :startDate AND :endDate")
-    List<Class> findByStatusAndStartDateBetween(@Param("classStatus") ClassStatus classStatus,
-                                               @Param("startDate") LocalDate startDate,
-                                               @Param("endDate") LocalDate endDate);
+    List<Class> findByStatusAndStartDateBetweenAndTeacher(@Param("classStatus") ClassStatus classStatus,
+                                                                   @Param("startDate") LocalDate startDate,
+                                                                   @Param("endDate") LocalDate endDate);
 
     List<Class> findByTeacherTeacherNameAndStatus(String teacherName, ClassStatus status);
 
@@ -67,4 +66,6 @@ public interface ClassRepository extends JpaRepository<Class, Long> {
     List<Class> findByCoursesCategoriesCategoryIdInAndTeacherIsNotNull(Set<Long> categoryIds);
 
     List<Class> findByTeacher_TeacherName(String teacherName);
+
+    Page<Class> findByStatusAndTeacherIsNotNull(ClassStatus classStatus, Pageable pageable);
 }
