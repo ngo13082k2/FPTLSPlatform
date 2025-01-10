@@ -12,4 +12,6 @@ public class DocumentDTO {
     private String content;
     private String courseCode;
     private String filePath;
+    private int completedSlots;
+
 }

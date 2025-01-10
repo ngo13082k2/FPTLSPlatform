@@ -118,6 +118,7 @@ public class DocumentService implements IDocumentService {
         document.setTitle(documentDTO.getTitle());
         document.setContent(documentDTO.getContent());
         document.setFilePath(documentDTO.getFilePath());
+        document.setCompletedSlots(documentDTO.getCompletedSlots());
         return document;
     }
 
@@ -128,6 +129,8 @@ public class DocumentService implements IDocumentService {
                 .content(document.getContent())
                 .courseCode(document.getCourse().getCourseCode())
                 .filePath(document.getFilePath())
+                .completedSlots(document.getCompletedSlots())
+
                 .build();
     }
 }

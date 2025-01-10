@@ -77,51 +77,76 @@ public class ClassService implements IClassService {
     private static final Logger log = LoggerFactory.getLogger(ClassService.class);
 
     public ClassDTO createClass(ClassDTO classDTO, MultipartFile image) throws IOException {
+        // Kiểm tra các trường không được null
         if (classDTO.getName() == null || classDTO.getDescription() == null ||
                 classDTO.getMaxStudents() == null || classDTO.getPrice() == null || classDTO.getCourseCode() == null) {
             throw new RuntimeException("All fields must be provided and cannot be null");
         }
 
+        // Tạo mã lớp nếu chưa có
         if (classDTO.getCode() == null || classDTO.getCode().isEmpty()) {
             classDTO.setCode(generateUniqueCode());
         }
 
+        // Lấy thông tin người tạo lớp
         String creatorName = getCurrentUsername();
-        String user = String.valueOf(userRepository.findByUserName(creatorName)
-                .orElseThrow(() -> new RuntimeException("User not found")));
+        String user = userRepository.findByUserName(creatorName)
+                .orElseThrow(() -> new RuntimeException("User not found"))
+                .getUserName();
 
+        // Thiết lập trạng thái và ngày tạo
         classDTO.setCreateDate(LocalDateTime.now());
         classDTO.setStatus(ClassStatus.PENDING);
 
-        Optional<Course> courseOpt = courseRepository.findByCourseCode(classDTO.getCourseCode());
-        if (courseOpt.isEmpty()) {
-            throw new RuntimeException("Course with code " + classDTO.getCourseCode() + " not found");
-        }
-        Course course = courseOpt.get();
+        // Lấy thông tin khóa học liên quan
+        Course course = courseRepository.findByCourseCode(classDTO.getCourseCode())
+                .orElseThrow(() -> new RuntimeException("Course with code " + classDTO.getCourseCode() + " not found"));
 
-        // Kiểm tra số lượng slot của lớp
-//        int requiredSlots = course.getDuration(); // Số lượng slot dựa trên thời lượng của khóa học
-//        if (classDTO.getDateSlots() == null || classDTO.getDateSlots().size() != requiredSlots) {
-//            throw new RuntimeException("Class must have exactly " + requiredSlots + " slots to match the course duration.");
-//        }
-        boolean hasDocument = documentRepository.existsByCourse_CourseCode(classDTO.getCourseCode());
-        if (!hasDocument) {
+        // Kiểm tra tài liệu (Document) liên quan đến khóa học
+        List<Document> documents = documentRepository.findByCourse_CourseCode(classDTO.getCourseCode());
+        if (documents.isEmpty()) {
             throw new RuntimeException("Cannot create class. No document associated with course code " + classDTO.getCourseCode());
         }
 
+        // Lấy Document đầu tiên và số lượng completedSlots
+        Document document = documents.get(0);
+        int completedSlots = document.getCompletedSlots();
+        if (completedSlots <= 0) {
+            throw new RuntimeException("Cannot create class. No available slots for course code " + classDTO.getCourseCode());
+        }
+
+        // Upload ảnh nếu có
         String imageUrl = null;
         if (image != null && !image.isEmpty()) {
             imageUrl = cloudinaryService.uploadFile(image);
             classDTO.setImageUrl(imageUrl);
         }
 
+        // Tạo đối tượng Class và lưu tạm thời để có ID
         Class newClass = mapDTOToEntity(classDTO, course, user);
-        Set<ClassDateSlot> dateSlots = mapDateSlots(classDTO, newClass);
-        newClass.setDateSlots(dateSlots);
-
         Class savedClass = classRepository.save(newClass);
-        return mapEntityToDTO(savedClass);
+
+        // Ánh xạ các dateSlots với đối tượng Class đã lưu
+        Set<ClassDateSlot> dateSlots = mapDateSlots(classDTO, savedClass);
+
+        // Kiểm tra số lượng dateSlots phải khớp với completedSlots
+        if (dateSlots.size() != completedSlots) {
+            throw new RuntimeException("The number of slots (" + dateSlots.size() +
+                    ") must match the number of completed slots (" + completedSlots + ")");
+        }
+
+        // Cập nhật dateSlots vào Class
+        savedClass.getDateSlots().clear(); // Xóa các phần tử cũ nếu có
+        savedClass.getDateSlots().addAll(dateSlots);
+
+        // Lưu lại Class với dateSlots được gán
+        Class fullySavedClass = classRepository.save(savedClass);
+
+        // Trả về ClassDTO đã ánh xạ
+        return mapEntityToDTO(fullySavedClass);
     }
+
+
 
 
 

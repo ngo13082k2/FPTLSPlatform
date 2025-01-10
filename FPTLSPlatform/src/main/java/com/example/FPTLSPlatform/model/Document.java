@@ -28,4 +28,7 @@ import lombok.*;
     private Course course;
     @Column(name = "file_path")
     private String filePath;
+    @Column(name = "completed_slots", nullable = false, columnDefinition = "int default 0")
+    private int completedSlots;
+
 }
