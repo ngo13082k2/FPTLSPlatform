@@ -129,15 +129,22 @@ public class CourseService implements ICourseService {
     }
 
     private CourseDTO mapEntityToDTO(Course course) {
+        Integer completedSlots = null;
+
+        if (course.getDocument() != null) {
+            completedSlots = course.getDocument().getCompletedSlots();
+        }
+
         return CourseDTO.builder()
                 .courseCode(course.getCourseCode())
                 .name(course.getName())
                 .description(course.getDescription())
                 .status(course.getStatus())
                 .image(course.getImage())
-//                .duration(course.getDuration())
                 .categoryId(course.getCategories().getCategoryId())
                 .categoryName(course.getCategories().getName())
+                .completedSlots(completedSlots)
                 .build();
     }
+
 }

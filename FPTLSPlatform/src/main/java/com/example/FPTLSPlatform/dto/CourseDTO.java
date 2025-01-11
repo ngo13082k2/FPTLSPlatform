@@ -23,4 +23,6 @@ public class CourseDTO {
     private Long categoryId;
 
     private String categoryName;
+    private Integer completedSlots;
+
 }

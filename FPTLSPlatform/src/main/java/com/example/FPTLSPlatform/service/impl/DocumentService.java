@@ -58,6 +58,7 @@ public class DocumentService implements IDocumentService {
 
         document.setTitle(documentDTO.getTitle());
         document.setContent(documentDTO.getContent());
+        document.setCompletedSlots(documentDTO.getCompletedSlots());
 
         Document updatedDocument = documentRepository.save(document);
         return mapEntityToDTO(updatedDocument);
