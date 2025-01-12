@@ -217,7 +217,9 @@ public class OrderService implements IOrderService {
             if (orderDetail.getOrder().getStatus().equals(OrderStatus.CANCELLED)) {
                 continue; // Bỏ qua các order đã bị hủy
             }
-
+            if (orderDetail.getOrder().getStatus().equals(OrderStatus.COMPLETED)) {
+                continue; // Bỏ qua các order đã bị hủy
+            }
             Class existingClass = orderDetail.getClasses();
             if (existingClass != null) {
                 // Lấy tất cả ClassDateSlot của lớp học hiện có
