@@ -204,13 +204,18 @@ public class ClassService implements IClassService {
                 .map(Category::getCategoryId)
                 .collect(Collectors.toSet());
 
-        // Tìm danh sách các Class thuộc các Category này thông qua Course
         List<Class> classes = classRepository.findByCoursesCategoriesCategoryIdIn(categoryIds);
 
-        return classes.stream()
+        // Lọc các lớp học có location khác null
+        List<Class> filteredClasses = classes.stream()
+                .filter(clazz -> clazz.getLocation() != null)
+                .collect(Collectors.toList());
+
+        return filteredClasses.stream()
                 .map(this::mapEntityToDTO)
                 .collect(Collectors.toList());
     }
+
 
     private String createGoogleMeetLink(String className, LocalDateTime startDateTime, LocalDateTime endDateTime) throws IOException, GeneralSecurityException {
         Calendar service = OAuth2Util.getCalendarService(); // Sử dụng OAuth2Util để khởi tạo Calendar service
