@@ -70,4 +70,6 @@ public interface ClassRepository extends JpaRepository<Class, Long> {
     List<Class> findByTeacherIsNullAndCoursesCategoriesCategoryIdInAndStatus(Set<Long> categoryIds, ClassStatus status);
 
     Page<Class> findByStatusAndTeacherIsNotNull(ClassStatus classStatus, Pageable pageable);
+    List<Class> findByCoursesCategoriesCategoryIdInAndTeacherIsNotNullAndLocationIsNotNull(Set<Long> categoryIds);
+
 }

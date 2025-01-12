@@ -75,7 +75,7 @@ public class ClassService implements IClassService {
     }
 
     private static final Logger log = LoggerFactory.getLogger(ClassService.class);
-
+    @Transactional
     public ClassDTO createClass(ClassDTO classDTO, MultipartFile image) throws IOException {
         // Kiểm tra các trường không được null
         if (classDTO.getName() == null || classDTO.getDescription() == null ||
@@ -83,22 +83,18 @@ public class ClassService implements IClassService {
             throw new RuntimeException("All fields must be provided and cannot be null");
         }
 
-        // Tạo mã lớp nếu chưa có
         if (classDTO.getCode() == null || classDTO.getCode().isEmpty()) {
             classDTO.setCode(generateUniqueCode());
         }
 
-        // Lấy thông tin người tạo lớp
         String creatorName = getCurrentUsername();
         String user = userRepository.findByUserName(creatorName)
                 .orElseThrow(() -> new RuntimeException("User not found"))
                 .getUserName();
 
-        // Thiết lập trạng thái và ngày tạo
         classDTO.setCreateDate(LocalDateTime.now());
         classDTO.setStatus(ClassStatus.PENDING);
 
-        // Lấy thông tin khóa học liên quan
         Course course = courseRepository.findByCourseCode(classDTO.getCourseCode())
                 .orElseThrow(() -> new RuntimeException("Course with code " + classDTO.getCourseCode() + " not found"));
 
@@ -685,9 +681,11 @@ public class ClassService implements IClassService {
 
     public List<ClassDTO> getAllClassesWithTeacher() {
         return classRepository.findByTeacherIsNotNull().stream()
+                .filter(clazz -> clazz.getLocation() != null)
                 .map(this::mapEntityToDTO)
                 .collect(Collectors.toList());
     }
+
     public List<ClassDTO> getAllClassesWithTeacherByMajor() {
         String username = getCurrentUsername();
 
