@@ -206,37 +206,33 @@ public class OrderService implements IOrderService {
 
 
     public boolean hasDuplicateSchedule(String username, Long classId) {
-        // Lấy tất cả các OrderDetail của user
         Page<OrderDetail> userOrders = orderDetailRepository.findByOrder_User_UserName(username, Pageable.unpaged());
         Class newClass = classRepository.getReferenceById(classId);
 
-        // Lấy tất cả ClassDateSlot của lớp học mới
         Set<ClassDateSlot> newClassDateSlots = newClass.getDateSlots();
 
         for (OrderDetail orderDetail : userOrders) {
             if (orderDetail.getOrder().getStatus().equals(OrderStatus.CANCELLED)) {
-                continue; // Bỏ qua các order đã bị hủy
+                continue;
             }
             if (orderDetail.getOrder().getStatus().equals(OrderStatus.COMPLETED)) {
-                continue; // Bỏ qua các order đã bị hủy
+                continue;
             }
             Class existingClass = orderDetail.getClasses();
             if (existingClass != null) {
-                // Lấy tất cả ClassDateSlot của lớp học hiện có
                 Set<ClassDateSlot> existingClassDateSlots = existingClass.getDateSlots();
 
-                // Kiểm tra trùng lịch giữa lớp học mới và lớp học hiện có
                 for (ClassDateSlot newDateSlot : newClassDateSlots) {
                     for (ClassDateSlot existingDateSlot : existingClassDateSlots) {
-                        if (newDateSlot.getDate().equals(existingDateSlot.getDate()) // Cùng ngày
-                                && newDateSlot.getSlot().getSlotId().equals(existingDateSlot.getSlot().getSlotId())) { // Cùng slot
-                            return true; // Trùng lịch
+                        if (newDateSlot.getDate().equals(existingDateSlot.getDate())
+                                && newDateSlot.getSlot().getSlotId().equals(existingDateSlot.getSlot().getSlotId())) {
+                            return true;
                         }
                     }
                 }
             }
         }
-        return false; // Không trùng lịch
+        return false;
     }
 
 
