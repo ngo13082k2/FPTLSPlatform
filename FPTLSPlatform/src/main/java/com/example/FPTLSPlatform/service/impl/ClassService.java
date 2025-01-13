@@ -704,6 +704,7 @@ public class ClassService implements IClassService {
         List<Class> classes = classRepository.findByCoursesCategoriesCategoryIdInAndTeacherIsNotNull(categoryIds);
 
         return classes.stream()
+                .filter(clazz -> clazz.getLocation() != null)
                 .map(this::mapEntityToDTO)
                 .collect(Collectors.toList());
     }
